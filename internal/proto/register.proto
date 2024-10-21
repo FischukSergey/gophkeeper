@@ -1,0 +1,148 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package server;
+option go_package = "./gophkeeper";
+
+service GophKeeper {
+    rpc Ping(PingRequest) returns (PingResponse) {}
+    rpc Registration(RegistrationRequest) returns (RegistrationResponse) {}
+    rpc Authorization(AuthorizationRequest) returns (AuthorizationResponse) {}
+
+    rpc FileUpload(FileUploadRequest) returns (FileUploadResponse) {}
+    rpc FileDownload(FileDownloadRequest) returns (FileDownloadResponse) {}
+    rpc FileDelete(FileDeleteRequest) returns (FileDeleteResponse) {}   
+    rpc FileGetList(FileGetListRequest) returns (FileGetListResponse) {}
+
+    rpc NoteAdd(NoteAddRequest) returns (NoteAddResponse) {}
+    rpc NoteGetList(NoteGetListRequest) returns (NoteGetListResponse) {}
+    rpc NoteUpdate(NoteUpdateRequest) returns (NoteUpdateResponse) {}
+    rpc NoteDelete(NoteDeleteRequest) returns (NoteDeleteResponse) {}
+}
+
+// Ping
+message PingRequest {}
+message PingResponse {
+    string message = 1;
+}
+
+// Token структура токена   
+message Token {
+    int64 userID = 1;
+    string token = 2;
+    google.protobuf.Timestamp createdAt = 3;
+    google.protobuf.Timestamp expiredAt = 4;
+}
+
+//User структура пользователя
+message User {
+    int64 userID = 1;
+    string username = 2;
+    google.protobuf.Timestamp createdAt = 3;
+    google.protobuf.Timestamp updatedAt = 4;
+    google.protobuf.Timestamp deletedAt = 5;
+}
+
+//RegistrationRequest
+message RegistrationRequest {
+    string username = 1;
+    string password = 2;
+}
+message RegistrationResponse {
+    Token accessToken = 1;
+}
+
+// Authorization
+message AuthorizationRequest {
+    string username = 1;
+    string password = 2;
+}
+message AuthorizationResponse {
+    Token accessToken = 1;
+}
+
+// File структура данных о пользовательском файле
+message File {
+    int64 fileID = 1;
+    string userID = 2;
+    string filename = 3;
+    google.protobuf.Timestamp createdAt = 4;
+    google.protobuf.Timestamp deletedAt = 5;
+}
+
+// FileUpload
+message FileUploadRequest {
+    string filename = 1;
+    bytes data = 2;
+}
+message FileUploadResponse {
+    string message = 1;
+}
+
+// FileDownload
+message FileDownloadRequest {
+    string filename = 1;
+}
+message FileDownloadResponse {
+    string filename = 1;
+    bytes data = 2;
+}
+
+// FileDelete
+message FileDeleteRequest {
+    string filename = 1;
+}
+message FileDeleteResponse {
+    int64 fileID = 1;
+}
+
+// FileGetList
+message FileGetListRequest {}
+message FileGetListResponse {
+    repeated File files = 1;
+}
+
+// Note структура заметки
+message Note {
+    int64 nodeID = 1;
+    int64 userID = 2;
+    bytes data = 3;
+    string metadata = 4;
+    google.protobuf.Timestamp createdAt = 5;
+    google.protobuf.Timestamp updatedAt = 6;
+    google.protobuf.Timestamp deletedAt = 7;
+}
+
+// NoteAdd
+message NoteAddRequest {
+    bytes data = 1;
+    string metadata = 2;
+}
+message NoteAddResponse {
+    int64 noteID = 1;
+}
+
+// NoteGetList
+message NoteGetListRequest {}
+message NoteGetListResponse {
+    repeated Note notes = 1;
+}
+
+// NoteUpdate
+message NoteUpdateRequest {
+    int64 noteID = 1;
+    bytes data = 2;
+    string metadata = 3;
+}
+message NoteUpdateResponse {
+    int64 noteID = 1;
+}
+
+// NoteDelete
+message NoteDeleteRequest {
+    int64 noteID = 1;
+}
+message NoteDeleteResponse {
+    int64 noteID = 1;
+}
