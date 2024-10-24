@@ -1,0 +1,16 @@
+# grpc server settings
+grpc:
+  port: localhost:8080
+  timeout: 10h
+
+# storage settings
+postgres:
+  dsn: postgres://postgres:postgres@localhost:5432/gophkeeper?sslmode=disable
+
+# log settings
+log:
+  level: local
+
+# token settings
+token_ttl: 1h
+
