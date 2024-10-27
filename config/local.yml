@@ -11,6 +11,10 @@ postgres:
 log:
   level: local
 
-# token settings
-token_ttl: 1h
+# jwt settings
+jwt:
+  secret_key: 1234567890
+  expires_key: 1h
 
+# token ttl
+token_ttl: 72h

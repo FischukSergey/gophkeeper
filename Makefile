@@ -1,5 +1,6 @@
 envConfigPath:=CONFIG_PATH=./config/local.yml
 envDBPassword:=DB_PASSWORD=postgres	
+envServerClientAddress:=SERVER_CLIENT_ADDRESS=localhost:8080
 
 server:	
 				@echo "Running server"
@@ -19,3 +20,8 @@ migration:
  		--storage-path="postgres://postgres:postgres@localhost:5432/gophkeeper?sslmode=disable" \
  		--migrations-path=./migrations
 .PHONY: migration
+
+client:
+	@echo "Running client"
+	$(envServerClientAddress) go run ./cmd/client/
+.PHONY: client	

@@ -14,6 +14,7 @@ type Config struct {
 	GRPC      GRPCConfig     `yaml:"grpc"`
 	Postgres  PostgresConfig `yaml:"postgres"`
 	Log       Log            `yaml:"log"`
+	JWT       JWTConfig      `yaml:"jwt"`
 }
 
 // структура конфигурации grpc
@@ -32,6 +33,11 @@ type Log struct {
 	Level string `yaml:"level"`
 }
 
+// структура конфигурации jwt
+type JWTConfig struct {
+	SecretKey string        `yaml:"secret_key"`
+	ExpiresKey time.Duration `yaml:"expires_key"`
+}
 
 // функция для загрузки конфигурации
 func MustLoad(path string) *Config {
