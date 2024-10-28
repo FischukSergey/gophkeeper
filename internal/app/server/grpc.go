@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -20,20 +21,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// GrpcServer структура для хранения gRPC сервера
+// GrpcServer структура для хранения gRPC сервера.
 type GrpcServer struct {
 	grpcServer *grpc.Server
 	log        *slog.Logger
 	port       string
 }
 
-// App для экземпляра	gRPC сервера
+// App для экземпляра	gRPC сервера.
 type App struct {
 	GrpcServer *GrpcServer
 	Storage    *dbstorage.Storage
 }
 
-// NewGrpcServer функция для инициализации gRPC сервера
+// NewGrpcServer функция для инициализации gRPC сервера.
 func NewGrpcServer(log *slog.Logger, port string) *App {
 	// инициализация хранилища
 	storage, err := initial.InitStorage()
@@ -44,25 +45,25 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 	err = storage.GetPingDB(context.Background())
 	if err != nil {
 		panic("Error pinging database: " + err.Error())
-	}	
-
-	//проверка на имплементацию интерфейса и методов хранилища на этапе компиляции
-	var _ services.PwdKeeper = (*dbstorage.Storage)(nil)
-
-	//создание сервиса 
-	grpcService := services.NewGRPCService(log, storage) 
-	
-	grpcApp := &GrpcServer{
-			log:        log,
-			port:       port,
 	}
 
-	//опции для логирования в middleware
+	// проверка на имплементацию интерфейса и методов хранилища на этапе компиляции
+	var _ services.PwdKeeper = (*dbstorage.Storage)(nil)
+
+	// создание сервиса
+	grpcService := services.NewGRPCService(log, storage)
+
+	grpcApp := &GrpcServer{
+		log:  log,
+		port: port,
+	}
+
+	// опции для логирования в middleware
 	loggingOpts := []logging.Option{
 		logging.WithLogOnEvents(
 			logging.PayloadReceived, logging.PayloadSent),
 	}
-	//опции для обработки паники в grpc сервере
+	// опции для обработки паники в grpc сервере
 	recoveryOpts := []recovery.Option{
 		recovery.WithRecoveryHandler(func(p any) (err error) {
 			log.Error("gRPC server panic", logger.Err(err))
@@ -70,7 +71,7 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 		}),
 	}
 
-	//создание gRPC сервера
+	// создание gRPC сервера
 	grpcApp.grpcServer = grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			logging.UnaryServerInterceptor(InterceptorLogger(log), loggingOpts...),
@@ -78,13 +79,13 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 		),
 	)
 
-	//регистрация сервиса в gRPC сервере
+	// регистрация сервиса в gRPC сервере
 	handlers.RegisterServerAPI(grpcApp.grpcServer, grpcService)
 
 	return &App{GrpcServer: grpcApp, Storage: storage}
 }
 
-// Run запуск grpc сервера
+// MustRun запуск grpc сервера.
 func (app *App) MustRun() {
 	go func() {
 		if err := app.GrpcServer.Run(); err != nil {
@@ -92,7 +93,7 @@ func (app *App) MustRun() {
 			panic(err)
 		}
 	}()
-	//graceful shutdown
+	// graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	<-stop
@@ -103,23 +104,23 @@ func (app *App) MustRun() {
 	app.GrpcServer.log.Info("Database closed")
 }
 
-// Run запуск grpc сервера
+// Run запуск grpc сервера.
 func (app *GrpcServer) Run() error {
 	lis, err := net.Listen("tcp", app.port)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to listen on port %s: %w", app.port, err)
 	}
 	app.log.Info("Starting gRPC server on port", slog.String("port", app.port))
 
-	//запускаем обработчик gRPC сообщений
+	// запускаем обработчик gRPC сообщений
 	if err := app.grpcServer.Serve(lis); err != nil {
-		return err
+		return fmt.Errorf("failed to serve: %w", err)
 	}
 	return nil
 }
 
-// InterceptorLogger обертка интерцептора для логирования
-// меняем logging.LevelInfo на slog.LevelInfo
+// InterceptorLogger обертка интерцептора для логирования.
+// Меняем logging.LevelInfo на slog.LevelInfo.
 func InterceptorLogger(l *slog.Logger) logging.Logger {
 	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
 		l.Log(ctx, slog.LevelInfo, msg, fields...)

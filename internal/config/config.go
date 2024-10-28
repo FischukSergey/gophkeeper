@@ -7,39 +7,39 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-// структура конфигурации приложения
+// Config структура конфигурации приложения.
 type Config struct {
 	TokenTTL  time.Duration  `yaml:"token_ttl" env-required:"true"`
 	SecretKey string         `yaml:"secret_key"`
-	GRPC      GRPCConfig     `yaml:"grpc"`
 	Postgres  PostgresConfig `yaml:"postgres"`
 	Log       Log            `yaml:"log"`
+	GRPC      GRPCConfig     `yaml:"grpc"`
 	JWT       JWTConfig      `yaml:"jwt"`
 }
 
-// структура конфигурации grpc
+// GRPCConfig структура конфигурации grpc.
 type GRPCConfig struct {
-	Port    string          `yaml:"port"`
-	Timeout time.Duration   `yaml:"timeout"`
+	Port    string        `yaml:"port"`
+	Timeout time.Duration `yaml:"timeout"`
 }
 
-// структура конфигурации postgres
+// PostgresConfig структура конфигурации postgres.
 type PostgresConfig struct {
 	DSN string `yaml:"dsn"`
 }
 
-// структура конфигурации логирования
+// Log структура конфигурации логирования.
 type Log struct {
 	Level string `yaml:"level"`
 }
 
-// структура конфигурации jwt
+// JWTConfig структура конфигурации jwt.
 type JWTConfig struct {
-	SecretKey string        `yaml:"secret_key"`
+	SecretKey  string        `yaml:"secret_key"`
 	ExpiresKey time.Duration `yaml:"expires_key"`
 }
 
-// функция для загрузки конфигурации
+// MustLoad функция для загрузки конфигурации.
 func MustLoad(path string) *Config {
 	if path == "" {
 		panic("config path is empty")
@@ -56,4 +56,3 @@ func MustLoad(path string) *Config {
 
 	return &cfg
 }
-

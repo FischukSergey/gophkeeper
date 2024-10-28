@@ -8,13 +8,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config структура для конфигурации
+// Config структура для конфигурации.
 type Config struct {
 	ServerAddress string `yaml:"server_address"`
 }
 
 var (
-	// Флаг для адреса сервера
+	// Флаг для адреса сервера.
 	FlagServerClientAddress string
 )
 
@@ -43,4 +43,3 @@ func NewConfigServerClient() (*Config, error) {
 
 	return &cfg, nil
 }
-

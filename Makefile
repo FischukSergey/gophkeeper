@@ -30,5 +30,5 @@ lint:
 	@echo "Running lint"
 	golangci-lint run \
 		-c .golangci.yml \
-		> ./golangci-lint/lint.json
+		> ./golangci-lint/lint.log
 .PHONY: lint

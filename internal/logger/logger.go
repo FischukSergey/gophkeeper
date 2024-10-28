@@ -4,7 +4,7 @@ import (
 	"log/slog"
 )
 
-// Err логирование ошибок
+// Err логирование ошибок.
 func Err(err error) slog.Attr {
 	return slog.Attr{
 		Key:   "error",

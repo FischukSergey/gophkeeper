@@ -15,45 +15,51 @@ import (
 
 const nameCommandRegister = "register"
 
-
-// IRegisterService интерфейс для сервиса регистрации
+// IRegisterService интерфейс для сервиса регистрации.
 type IRegisterService interface {
-	Register(ctx context.Context,login string, password string) (string, error)
+	Register(ctx context.Context, login string, password string) (string, error)
 }
 
-
-// commandRegister структура для команды регистрации
+// commandRegister структура для команды регистрации.
 type commandRegister struct {
 	registerService IRegisterService
-	token  *grpcclient.Token
-	reader io.Reader
-	writer io.Writer
+	token           *grpcclient.Token
+	reader          io.Reader
+	writer          io.Writer
 }
 
-// Name возвращает имя команды
+// Name возвращает имя команды.
 func (c *commandRegister) Name() string {
 	return nameCommandRegister
 }
 
-// Execute выполняет команду регистрации
+// Execute выполняет команду регистрации.
 func (c *commandRegister) Execute() {
-	fmt.Print("Введите логин: ")
+	_, err := fmt.Fprint(c.writer, "Введите логин: ")
+	if err != nil {
+		fmt.Printf(errOutputMessage, err)
+		return
+	}
 	scanner := bufio.NewScanner(c.reader)
 	scanner.Scan()
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Ошибка при вводе логина:", err)
 		return
-	}	
+	}
 	login := scanner.Text()
 	//валидация логина
-	err := modelsclient.ValidateLogin(login)
+	err = modelsclient.ValidateLogin(login)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Fprint(c.writer, "Введите пароль: ")
-	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+	_, err = fmt.Fprint(c.writer, "Введите пароль: ")
+	if err != nil {
+		fmt.Printf(errOutputMessage, err)
+		return
+	}
+	bytePassword, err := term.ReadPassword(syscall.Stdin)
 	if err != nil {
 		fmt.Println("Ошибка при вводе пароля:", err)
 		return
@@ -64,10 +70,14 @@ func (c *commandRegister) Execute() {
 	if err != nil {
 		fmt.Println(err)
 		return
-	}	
+	}
 	//повторный ввод пароля
-	fmt.Fprint(c.writer, "\nВведите пароль повторно: ")
-	bytePassword, err = term.ReadPassword(int(syscall.Stdin))
+	_, err = fmt.Fprint(c.writer, "\nВведите пароль повторно: ")
+	if err != nil {
+		fmt.Printf(errOutputMessage, err)
+		return
+	}
+	bytePassword, err = term.ReadPassword(syscall.Stdin)
 	if err != nil {
 		fmt.Println("Ошибка при вводе пароля:", err)
 		return
@@ -82,8 +92,8 @@ func (c *commandRegister) Execute() {
 	token, err := c.registerService.Register(context.Background(), strings.TrimSpace(login), strings.TrimSpace(password))
 	if err != nil {
 		//проверяем текст ошибки
-		if strings.Contains(err.Error(), "already exists") || 
-				strings.Contains(err.Error(), "SQLSTATE 23505") {
+		if strings.Contains(err.Error(), "already exists") ||
+			strings.Contains(err.Error(), "SQLSTATE 23505") {
 			fmt.Println("\nПользователь с таким логином уже зарегистрирован")
 			return
 		}
@@ -92,19 +102,19 @@ func (c *commandRegister) Execute() {
 	}
 	c.token.Token = token
 	fmt.Println("\nРегистрация прошла успешно")
-}	
+}
 
-// NewCommandRegister создание команды регистрации
+// NewCommandRegister создание команды регистрации.
 func NewCommandRegister(
-	registerService IRegisterService, 
-	token *grpcclient.Token, 
-	reader io.Reader, 
+	registerService IRegisterService,
+	token *grpcclient.Token,
+	reader io.Reader,
 	writer io.Writer,
 ) *commandRegister {
 	return &commandRegister{
-		registerService: registerService, 
-		token: token, 
-		reader: reader, 
-		writer: writer,
+		registerService: registerService,
+		token:           token,
+		reader:          reader,
+		writer:          writer,
 	}
 }

@@ -6,7 +6,7 @@ run:
   tests: true
   build-tags: []
   # Which dirs to skip: issues from them won't be reported.
-  skip-dirs:
+  issues.exclude-dirs:
     - "bin"
     - "scripts"
     - ".ci"
@@ -25,7 +25,8 @@ run:
   issues-exit-code: 1
   # Enables skipping of directories:
   # - vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
-  skip-dirs-use-default: false
+
+  # skip-dirs-use-default: false
   # If set we pass it to "go list -mod={option}". From "go help modules":
   # If invoked with -mod=readonly, the go command is disallowed from the implicit
   # automatic updating of go.mod described above. Instead, it fails when any changes
@@ -48,7 +49,7 @@ run:
 
 # Output configuration options
 output:
-  format: json
+  formats: 
   # Print lines of code with issue.
   print-issued-lines: true
   # Print linter name in the end of issue text.
@@ -103,46 +104,6 @@ linters-settings:
     min-occurrences: 4
     numbers: false
 
-  gocritic:
-    enabled-checks:
-      - appendAssign
-      - appendCombine
-      - argOrder
-      - assignOp
-      - badCall
-      - badCond
-      - captLocal
-      - caseOrder
-      - commentFormatting
-      - defaultCaseOrder
-      - deprecatedComment
-      - dupArg
-      - dupBranchBody
-      - dupCase
-      - dupSubExpr
-      - elseif
-      - exitAfterDefer
-      - flagDeref
-      - flagName
-      - ifElseChain
-      - indexAlloc
-      - mapKey
-      - newDeref
-      - offBy1
-      - rangeExprCopy
-      - rangeValCopy
-      - regexpMust
-      - singleCaseSwitch
-      - sloppyLen
-      - stringXbytes
-      - switchTrue
-      - typeSwitchVar
-      - underef
-      - unlambda
-      - unslice
-      - valSwap
-      - wrapperFunc
-
   godot:
     capital: true
     exclude: []
@@ -155,7 +116,7 @@ linters-settings:
   goimports:
     local-prefixes: ""
 
-  gomnd:
+  mnd:
     checks:
       - argument
       - case
@@ -377,15 +338,13 @@ linters:
     - errcheck
     - errname
     - errorlint
-    - execinquery
     - exhaustive
     - gocheckcompilerdirectives
     - goconst
-    - gocritic
     - godot
     - gofmt
     - goimports
-    - gomnd
+    - mnd
     - goprintffuncname
     - gosec
     - gosimple

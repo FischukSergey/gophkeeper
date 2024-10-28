@@ -17,18 +17,18 @@ import (
 
 const (
 	EnvLocal = "local"
-	EnvProd = "prod"
-	EnvDev = "dev"
-)	
+	EnvProd  = "prod"
+	EnvDev   = "dev"
+)
 
-// глобальные переменные для хранения флагов и конфигурации
+// глобальные переменные для хранения флагов и конфигурации.
 var (
-	FlagConfigPath string // путь к файлу конфигурации
-	FlagDBPassword string // пароль для подключения к базе данных
+	FlagConfigPath string         // путь к файлу конфигурации
+	FlagDBPassword string         // пароль для подключения к базе данных
 	Cfg            *config.Config // конфигурация
 )
 
-// InitConfig функция для инициализации конфигурации
+// InitConfig функция для инициализации конфигурации.
 func InitConfig() {
 	flag.StringVar(&FlagConfigPath, "config", "", "path to config file")
 	flag.StringVar(&FlagDBPassword, "db_password", "", "database password")
@@ -42,10 +42,10 @@ func InitConfig() {
 		FlagDBPassword = envDBPassword
 	}
 
-	Cfg = config.MustLoad(FlagConfigPath) // загрузка конфигурации	.yaml	
+	Cfg = config.MustLoad(FlagConfigPath) // загрузка конфигурации	.yaml
 }
 
-// InitStorage функция для инициализации подключения к базе данных
+// InitStorage функция для инициализации подключения к базе данных.
 func InitStorage() (*dbstorage.Storage, error) {
 	var dbConfig *pgconn.Config
 	dbConfig, err := pgconn.ParseConfig(Cfg.Postgres.DSN)
@@ -55,7 +55,7 @@ func InitStorage() (*dbstorage.Storage, error) {
 
 	dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
 		dbConfig.User, FlagDBPassword, dbConfig.Host, strconv.Itoa(int(dbConfig.Port)), dbConfig.Database)
-	
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -68,9 +68,9 @@ func InitStorage() (*dbstorage.Storage, error) {
 		return nil, fmt.Errorf("error pinging database: %w", err)
 	}
 	return &dbstorage.Storage{DB: db}, nil
-}	
+}
 
-// InitLogger функция для инициализации логгера
+// InitLogger функция для инициализации логгера.
 func InitLogger() *slog.Logger {
 	var log *slog.Logger
 	switch Cfg.Log.Level {
@@ -83,4 +83,3 @@ func InitLogger() *slog.Logger {
 	}
 	return log
 }
-

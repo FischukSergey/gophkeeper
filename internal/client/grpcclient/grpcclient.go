@@ -1,6 +1,7 @@
 package grpcclient
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/config"
@@ -9,22 +10,23 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// Token структура для токена
+// Token структура для токена.
 type Token struct {
 	Token string
 }
+
 func (t *Token) GetToken() string {
 	return t.Token
 }
 
-// NewClient создание клиента grpc	
+// NewClient создание клиента grpc.
 func NewClient(cfg *config.Config, log *slog.Logger) (*grpc.ClientConn, pb.GophKeeperClient, error) {
 	log.Info("server address", "address", cfg.ServerAddress)
 
-	conn, err := grpc.NewClient(cfg.ServerAddress, 
+	conn, err := grpc.NewClient(cfg.ServerAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create grpc client: %w", err)
 	}
 	log.Info("connected to server")
 

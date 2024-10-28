@@ -1,7 +1,7 @@
 package jwt
 
 import (
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/FischukSergey/gophkeeper/cmd/server/initial"
@@ -9,22 +9,24 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// GenerateToken генерирует токен
+// GenerateToken генерирует токен.
 func GenerateToken(user models.User) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", fmt.Errorf("can't create JWT, invalid user id or login")
+	}
 	if user.ID > 0 && user.Login != "" {
 		claims["uid"] = user.ID
 		claims["login"] = user.Login
-		claims["exp"] = time.Now().Add(time.Hour * initial.Cfg.JWT.ExpiresKey).Unix()
+		claims["exp"] = time.Now().Add(initial.Cfg.JWT.ExpiresKey).Unix()
 	} else {
-		return "", errors.New("can't create JWT, invalid user id or login")
+		return "", fmt.Errorf("can't create JWT, invalid user id or login")
 	}
 
 	tokenString, err := token.SignedString([]byte(initial.Cfg.JWT.SecretKey))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate token: %w", err)
 	}
-	return tokenString, err
+	return tokenString, nil
 }
-	
