@@ -8,6 +8,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 )
 
+// User структура для пользователя
 type User struct {
 	Login string
 	Password string

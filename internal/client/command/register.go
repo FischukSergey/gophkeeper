@@ -1,14 +1,16 @@
 package command
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
-	"bufio"
 	"strings"
+	"syscall"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
+	"golang.org/x/term"
 )
 
 const nameCommandRegister = "register"
@@ -50,24 +52,36 @@ func (c *commandRegister) Execute() {
 		return
 	}
 
-	fmt.Print("Введите пароль: ")
-	scanner.Scan()
-	if err := scanner.Err(); err != nil {
+	fmt.Fprint(c.writer, "Введите пароль: ")
+	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+	if err != nil {
 		fmt.Println("Ошибка при вводе пароля:", err)
 		return
-	}		
-	password := scanner.Text()
+	}
+	password := string(bytePassword)
 	//валидация пароля
 	err = modelsclient.ValidatePassword(password)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}	
+	//повторный ввод пароля
+	fmt.Fprint(c.writer, "\nВведите пароль повторно: ")
+	bytePassword, err = term.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		fmt.Println("Ошибка при вводе пароля:", err)
+		return
+	}
+	passwordConfirm := string(bytePassword)
+	if password != passwordConfirm {
+		fmt.Println("Пароли не совпадают")
+		return
+	}
 
 	//вызываем регистрацию
 	token, err := c.registerService.Register(context.Background(), strings.TrimSpace(login), strings.TrimSpace(password))
 	if err != nil {
-		//проверяем, есть ли ошибка в тексте ошибки
+		//проверяем текст ошибки
 		if strings.Contains(err.Error(), "already exists") || 
 				strings.Contains(err.Error(), "SQLSTATE 23505") {
 			fmt.Println("\nПользователь с таким логином уже зарегистрирован")
@@ -77,7 +91,7 @@ func (c *commandRegister) Execute() {
 		return
 	}
 	c.token.Token = token
-	fmt.Println("Регистрация прошла успешно")
+	fmt.Println("\nРегистрация прошла успешно")
 }	
 
 // NewCommandRegister создание команды регистрации

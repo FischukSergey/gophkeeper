@@ -5,3 +5,5 @@
 # Ignore executable files
 *.exe
 *.exe~
+#ignore golangci-lint cache
+golangci-lint/

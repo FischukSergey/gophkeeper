@@ -25,3 +25,10 @@ client:
 	@echo "Running client"
 	$(envServerClientAddress) go run ./cmd/client/
 .PHONY: client	
+
+lint:
+	@echo "Running lint"
+	golangci-lint run \
+		-c .golangci.yml \
+		> ./golangci-lint/lint.json
+.PHONY: lint

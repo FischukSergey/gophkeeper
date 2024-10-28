@@ -48,10 +48,12 @@ func main() {
 	token := &grpcclient.Token{}
 
 	commandRegister := command.NewCommandRegister(authService, token, reader, writer)
+	commandLogin := command.NewCommandLogin(authService, token, reader, writer)
 	commandExit := command.NewCommandExit(reader, writer)
 	
 	commands := []command.ICommand{
 		commandRegister, 
+		commandLogin,
 		commandExit,
 	}
 
