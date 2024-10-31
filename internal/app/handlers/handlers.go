@@ -115,12 +115,13 @@ func (s *pwdKeeperServer) Authorization(
 }
 
 // GetList метод для получения списка записей пользователя.
-func (s *pwdKeeperServer) NoteGetList(ctx context.Context, req *pb.NoteGetListRequest) (*pb.NoteGetListResponse, error) {
+func (s *pwdKeeperServer) NoteGetList(
+	ctx context.Context, req *pb.NoteGetListRequest) (*pb.NoteGetListResponse, error) {
 	// log.Info("Handler NoteGetList method called")
 	// userID := req.UserID
 	// notes, err := s.pwdKeeper.GetList(ctx, userID)
 	// if err != nil {
 	// 	return nil, status.Errorf(codes.Internal, "failed to get list: %v", err)
 	// }
-	return nil, nil
+	return &pb.NoteGetListResponse{}, nil
 }

@@ -34,7 +34,7 @@ func GenerateToken(user models.User) (string, error) {
 	return tokenString, nil
 }
 
-// GetUserID получает userID из токена.	
+// GetUserID получает userID из токена.
 func GetUserID(jwtToken string) (int, error) {
 	jwtClaims := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(jwtToken, jwtClaims, func(token *jwt.Token) (interface{}, error) {

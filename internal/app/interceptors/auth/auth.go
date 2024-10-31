@@ -15,16 +15,18 @@ import (
 type CtxKey int
 
 const (
-	CtxKeyUserGrpc CtxKey = iota + 1
+	ErrNotFound           = "token not found"
+	ErrExpired            = "token expired"
+	ErrInvalid            = "invalid token"
+	CtxKeyUserGrpc CtxKey = iota
 )
-
 
 // AuthInterceptor интерцептор для проверки токена.
 func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	var userID int
 	var err error
 	switch info.FullMethod {
-	case "/server.GophKeeper/Register": //исключаем регистрацию и авторизацию из проверки токена	
+	case "/server.GophKeeper/Register": //исключаем регистрацию и авторизацию из проверки токена
 		return handler(ctx, req)
 	case "/server.GophKeeper/Authorization":
 		return handler(ctx, req)
@@ -35,23 +37,24 @@ func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, h
 			values := md.Get("session_token")
 			switch len(values) {
 			case 0:
-				slog.Info("token not found")
-				return nil, status.Error(codes.Unauthenticated, "token not found")
+				slog.Info(ErrNotFound)
+				return nil, status.Errorf(codes.Unauthenticated, ErrNotFound)
 			default:
 				token := values[0]
 				slog.Info("token found")
 				userID, err = jwt.GetUserID(token)
 				if err != nil {
 					if errors.Is(err, jwt.ErrTokenExpired) {
-						slog.Info("token expired")
-						return nil, status.Error(codes.Unauthenticated, "token expired")
+						slog.Info(ErrExpired)
+						return nil, status.Errorf(codes.Unauthenticated, ErrExpired)
 					}
-					return nil, status.Error(codes.Unauthenticated, "invalid token")
+					slog.Info(ErrInvalid)
+					return nil, status.Errorf(codes.Unauthenticated, ErrInvalid)
 				}
 			}
 		} else {
-			slog.Info("token not found")
-			return nil, status.Error(codes.Unauthenticated, "token not found")
+			slog.Info(ErrNotFound)
+			return nil, status.Errorf(codes.Unauthenticated, ErrNotFound)
 		}
 	}
 	slog.Info("userID found", slog.Int("userID", userID))

@@ -8,8 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-
-func InitTestStorage() (*dbstorage.Storage) {
+func InitTestStorage() *dbstorage.Storage {
 	dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
 		"test", "test", "localhost", "5433", "test")
 
