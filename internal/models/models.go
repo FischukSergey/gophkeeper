@@ -18,21 +18,21 @@ const (
 
 // User структура для пользователя.
 type User struct {
-	ID             int64
-	Login          string
-	Password       string
-	HashedPassword string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      time.Time
+	Login          string
+	Password       string
+	HashedPassword string
+	ID             int64
 }
 
 // Token структура для токена.
 type Token struct {
-	UserID    int64
-	Token     string
 	CreatedAt time.Time
 	ExpiredAt time.Time
+	Token     string
+	UserID    int64
 }
 
 // ErrUserExists ошибка, если пользователь уже существует.

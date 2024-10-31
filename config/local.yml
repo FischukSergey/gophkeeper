@@ -14,7 +14,7 @@ log:
 # jwt settings
 jwt:
   secret_key: 1234567890
-  expires_key: 1h
+  expires_key: 24h
 
 # token ttl
 token_ttl: 72h

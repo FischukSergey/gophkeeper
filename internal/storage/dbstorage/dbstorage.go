@@ -62,7 +62,7 @@ func (s *Storage) RegisterUser(ctx context.Context, login, hashedPassword string
 func (s *Storage) GetUserByLogin(ctx context.Context, login string) (models.User, error) {
 	query := `SELECT user_id, username, password, created_at FROM users WHERE username=$1;`
 	var user models.User
-	err := s.DB.QueryRow(ctx, query, login).Scan(&user.ID, &user.Login, &user.Password, &user.CreatedAt)
+	err := s.DB.QueryRow(ctx, query, login).Scan(&user.ID, &user.Login, &user.HashedPassword, &user.CreatedAt)
 	if err != nil {
 		return models.User{}, fmt.Errorf("failed to get user by login: %w", err)
 	}

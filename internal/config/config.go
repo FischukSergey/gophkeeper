@@ -9,12 +9,12 @@ import (
 
 // Config структура конфигурации приложения.
 type Config struct {
-	TokenTTL  time.Duration  `yaml:"token_ttl" env-required:"true"`
-	SecretKey string         `yaml:"secret_key"`
-	Postgres  PostgresConfig `yaml:"postgres"`
-	Log       Log            `yaml:"log"`
 	GRPC      GRPCConfig     `yaml:"grpc"`
 	JWT       JWTConfig      `yaml:"jwt"`
+	Log       Log            `yaml:"log"`
+	Postgres  PostgresConfig `yaml:"postgres"`
+	SecretKey string         `yaml:"secret_key"`
+	TokenTTL  time.Duration  `yaml:"token_ttl" env-required:"true"`
 }
 
 // GRPCConfig структура конфигурации grpc.

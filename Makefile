@@ -32,3 +32,8 @@ lint:
 		-c .golangci.yml \
 		> ./golangci-lint/lint.log
 .PHONY: lint
+
+testdb:
+	@echo "Running docker compose for tests database"
+	docker compose -f docker-compose.test.yaml up -d --build
+.PHONY: testdb

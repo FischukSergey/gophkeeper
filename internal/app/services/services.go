@@ -85,7 +85,7 @@ func (g *GRPCService) Authorization(ctx context.Context, login, password string)
 	}
 
 	// проверяем пароль
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password))
 	if err != nil {
 		return models.Token{}, fmt.Errorf("invalid password: %w", err)
 	}

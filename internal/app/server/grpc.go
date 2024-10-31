@@ -11,6 +11,7 @@ import (
 
 	"github.com/FischukSergey/gophkeeper/cmd/server/initial"
 	"github.com/FischukSergey/gophkeeper/internal/app/handlers"
+	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/app/services"
 	"github.com/FischukSergey/gophkeeper/internal/logger"
 	"github.com/FischukSergey/gophkeeper/internal/storage/dbstorage"
@@ -76,6 +77,7 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 		grpc.ChainUnaryInterceptor(
 			logging.UnaryServerInterceptor(InterceptorLogger(log), loggingOpts...),
 			recovery.UnaryServerInterceptor(recoveryOpts...),
+			auth.AuthInterceptor,
 		),
 	)
 

@@ -19,7 +19,6 @@ func main() {
 	fmt.Printf("Build commit: %s\n", buildCommit)
 
 	initial.InitConfig() // инициализация конфигурации
-	fmt.Println(initial.Cfg.GRPC.Port)
 	log := initial.InitLogger()
 	application := server.NewGrpcServer(log, initial.Cfg.GRPC.Port)
 	application.MustRun()
