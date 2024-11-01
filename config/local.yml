@@ -18,3 +18,12 @@ jwt:
 
 # token ttl
 token_ttl: 72h
+
+# s3 settings
+s3:
+  region: ru-1
+  bucket: gophkeeper-bucket
+  endpoint: https://s3.ru-1.storage.selcloud.ru
+  access_key: e1f0f938e68049dbaa37aec42b0d8c84
+  secret_key: 02006774199d4233bc10f47130ceae82
+  force_path_style: true

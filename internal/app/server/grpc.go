@@ -15,6 +15,7 @@ import (
 	"github.com/FischukSergey/gophkeeper/internal/app/services"
 	"github.com/FischukSergey/gophkeeper/internal/logger"
 	"github.com/FischukSergey/gophkeeper/internal/storage/dbstorage"
+	"github.com/FischukSergey/gophkeeper/internal/storage/s3"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"google.golang.org/grpc"
@@ -32,12 +33,13 @@ type GrpcServer struct {
 // App для экземпляра	gRPC сервера.
 type App struct {
 	GrpcServer *GrpcServer
-	Storage    *dbstorage.Storage
+	Storage    *dbstorage.Storage //бд postgres
+	S3         *s3.S3             //S3 bucket
 }
 
 // NewGrpcServer функция для инициализации gRPC сервера.
 func NewGrpcServer(log *slog.Logger, port string) *App {
-	// инициализация хранилища
+	// инициализация хранилища бд postgres
 	storage, err := initial.InitStorage()
 	if err != nil {
 		panic("Error initializing storage: " + err.Error())
@@ -51,8 +53,15 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 	// проверка на имплементацию интерфейса и методов хранилища на этапе компиляции
 	var _ services.PwdKeeper = (*dbstorage.Storage)(nil)
 
+	//инициализация S3
+	s3Storage, err := initial.InitS3()
+	if err != nil {
+		panic("Error initializing s3: " + err.Error())
+	}
+	log.Info("S3 connected")	
+
 	// создание сервиса
-	grpcService := services.NewGRPCService(log, storage)
+	grpcService := services.NewGRPCService(log, storage, s3Storage)
 
 	grpcApp := &GrpcServer{
 		log:  log,
@@ -84,7 +93,11 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 	// регистрация сервиса в gRPC сервере
 	handlers.RegisterServerAPI(grpcApp.grpcServer, grpcService)
 
-	return &App{GrpcServer: grpcApp, Storage: storage}
+	return &App{
+		GrpcServer: grpcApp,
+		Storage:    storage,
+		S3:         s3Storage,
+	}
 }
 
 // MustRun запуск grpc сервера.
@@ -102,8 +115,14 @@ func (app *App) MustRun() {
 	app.GrpcServer.log.Info("Stopping gRPC server")
 	app.GrpcServer.grpcServer.GracefulStop()
 	app.GrpcServer.log.Info("gRPC server stopped")
+	// закрытие соединения с бд
 	app.Storage.Close()
 	app.GrpcServer.log.Info("Database closed")
+	// закрытие соединения с S3
+	if err := app.S3.Close(); err != nil {
+		app.GrpcServer.log.Error("Error closing S3", logger.Err(err))
+	}
+	app.GrpcServer.log.Info("S3 connection closed")
 }
 
 // Run запуск grpc сервера.

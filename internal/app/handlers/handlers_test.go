@@ -10,10 +10,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type fields struct {
-	UnimplementedGophKeeperServer pb.UnimplementedGophKeeperServer
-	pwdKeeper                     ProtoKeeperSaver
-}
 
 func Test_pwdKeeperServer_Registration(t *testing.T) {
 	type args struct {
@@ -21,7 +17,6 @@ func Test_pwdKeeperServer_Registration(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    *pb.RegistrationResponse
 		wantErr bool
@@ -78,10 +73,7 @@ func Test_pwdKeeperServer_Registration(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &pwdKeeperServer{
-				UnimplementedGophKeeperServer: tt.fields.UnimplementedGophKeeperServer,
-				pwdKeeper:                     tt.fields.pwdKeeper,
-			}
+			s := &pwdKeeperServer{}
 			got, err := s.Registration(context.Background(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("pwdKeeperServer.Registration() error = %v, wantErr %v", err, tt.wantErr)
@@ -103,7 +95,6 @@ func Test_pwdKeeperServer_Authorization(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    *pb.AuthorizationResponse
 		wantErr bool
@@ -160,10 +151,7 @@ func Test_pwdKeeperServer_Authorization(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &pwdKeeperServer{
-				UnimplementedGophKeeperServer: tt.fields.UnimplementedGophKeeperServer,
-				pwdKeeper:                     tt.fields.pwdKeeper,
-			}
+			s := &pwdKeeperServer{}
 			got, err := s.Authorization(context.Background(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("pwdKeeperServer.Authorization() error = %v, wantErr %v", err, tt.wantErr)
@@ -184,7 +172,6 @@ func Test_pwdKeeperServer_Ping(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    *pb.PingResponse
 		wantErr bool
@@ -193,10 +180,7 @@ func Test_pwdKeeperServer_Ping(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &pwdKeeperServer{
-				UnimplementedGophKeeperServer: tt.fields.UnimplementedGophKeeperServer,
-				pwdKeeper:                     tt.fields.pwdKeeper,
-			}
+			s := &pwdKeeperServer{}
 			got, err := s.Ping(context.Background(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("pwdKeeperServer.Ping() error = %v, wantErr %v", err, tt.wantErr)

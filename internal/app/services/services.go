@@ -19,15 +19,21 @@ type PwdKeeper interface {
 	GetUserByLogin(ctx context.Context, login string) (models.User, error)
 }
 
+type S3Keeper interface {
+	S3UploadFile(ctx context.Context, fileData []byte, filename string, bucket string) (string, error)
+}
+
 // GRPCService структура для сервиса.
 type GRPCService struct {
 	log     *slog.Logger
 	storage PwdKeeper
+	s3      S3Keeper
 }
 
+
 // NewGRPCService функция для создания сервиса.
-func NewGRPCService(log *slog.Logger, storage PwdKeeper) *GRPCService {
-	return &GRPCService{log: log, storage: storage}
+func NewGRPCService(log *slog.Logger, storage PwdKeeper, s3 S3Keeper) *GRPCService {
+	return &GRPCService{log: log, storage: storage, s3: s3}
 }
 
 // Ping метод для проверки соединения с сервером.
@@ -103,4 +109,20 @@ func (g *GRPCService) Authorization(ctx context.Context, login, password string)
 		ExpiredAt: time.Now().Add(initial.Cfg.JWT.ExpiresKey),
 	}
 	return tokenInfo, nil
+}
+
+// FileUploadToS3 метод для загрузки файла в S3.
+func (g *GRPCService) FileUploadToS3(ctx context.Context, fileData []byte, filename string, userID int64) (string, error) {
+	g.log.Info("Service FileUploadToS3 method called")
+	bucket := initial.Cfg.S3.Bucket
+	bucketID := fmt.Sprintf("%d/%s", userID, filename)
+	g.log.Info("bucketID", slog.String("bucketID", bucketID))
+	g.log.Info("bucket", slog.String("bucket", bucket))
+	g.log.Info("userID", slog.Int64("userID", userID))
+
+	url, err := g.s3.S3UploadFile(ctx, fileData, bucketID, bucket)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload file: %w", err)
+	}
+	return url, nil
 }

@@ -13,6 +13,7 @@ type Config struct {
 	JWT       JWTConfig      `yaml:"jwt"`
 	Log       Log            `yaml:"log"`
 	Postgres  PostgresConfig `yaml:"postgres"`
+	S3        S3Config       `yaml:"s3"`
 	SecretKey string         `yaml:"secret_key"`
 	TokenTTL  time.Duration  `yaml:"token_ttl" env-required:"true"`
 }
@@ -37,6 +38,16 @@ type Log struct {
 type JWTConfig struct {
 	SecretKey  string        `yaml:"secret_key"`
 	ExpiresKey time.Duration `yaml:"expires_key"`
+}
+
+// S3Config структура конфигурации s3.
+type S3Config struct {
+	Region         string `yaml:"region"`
+	Bucket         string `yaml:"bucket"`
+	Endpoint       string `yaml:"endpoint"`
+	AccessKey      string `yaml:"access_key"`
+	SecretKey      string `yaml:"secret_key"`
+	ForcePathStyle bool   `yaml:"force_path_style"`
 }
 
 // MustLoad функция для загрузки конфигурации.

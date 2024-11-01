@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
 	"google.golang.org/grpc"
@@ -26,6 +27,7 @@ type ProtoKeeperSaver interface {
 	Ping(ctx context.Context) error
 	RegisterUser(ctx context.Context, login, password string) (models.Token, error)
 	Authorization(ctx context.Context, login, password string) (models.Token, error)
+	FileUploadToS3	(ctx context.Context, fileData []byte, filename string, userID int64) (string, error)
 }
 
 // RegisterServerAPI регистрация сервера.
@@ -124,4 +126,21 @@ func (s *pwdKeeperServer) NoteGetList(
 	// 	return nil, status.Errorf(codes.Internal, "failed to get list: %v", err)
 	// }
 	return &pb.NoteGetListResponse{}, nil
+}
+
+// FileUpload метод для загрузки файла в S3.
+func (s *pwdKeeperServer) FileUpload(
+	ctx context.Context, req *pb.FileUploadRequest) (*pb.FileUploadResponse, error) {
+	log.Info("Handler FileUpload method called")
+	userID := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if userID == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+	}
+	log.Info("userID found", slog.Int("userID", int(userID)))
+
+	url, err := s.pwdKeeper.FileUploadToS3(ctx, req.Data, req.Filename, int64(userID))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to upload file: %v", err)
+	}
+	return &pb.FileUploadResponse{Message: url}, nil
 }

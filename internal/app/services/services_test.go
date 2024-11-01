@@ -43,12 +43,13 @@ func (m *mockStorage) GetUserByLogin(ctx context.Context, login string) (models.
 	return models.User{}, fmt.Errorf("user not found")
 }
 
+
 func TestAuthorization(t *testing.T) {
 	os.Setenv("CONFIG_PATH", "../../../config/local.yml")
 	initial.InitConfig()
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
 	mockStorage := &mockStorage{}
-	service := NewGRPCService(logger, mockStorage)
+	service := NewGRPCService(logger, mockStorage, nil)
 
 	type arg struct {
 		name          string
@@ -93,7 +94,7 @@ func TestRegisterUser(t *testing.T) {
 	initial.InitConfig()
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
 	mockStorage := &mockStorage{}
-	service := NewGRPCService(logger, mockStorage)
+	service := NewGRPCService(logger, mockStorage, nil)
 	type arg struct {
 		name          string
 		login         string
@@ -130,3 +131,5 @@ func TestRegisterUser(t *testing.T) {
 		})
 	}
 }
+
+//TODO: добавить тесты для S3

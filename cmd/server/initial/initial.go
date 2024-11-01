@@ -10,6 +10,10 @@ import (
 
 	"github.com/FischukSergey/gophkeeper/internal/config"
 	"github.com/FischukSergey/gophkeeper/internal/storage/dbstorage"
+	"github.com/FischukSergey/gophkeeper/internal/storage/s3"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -82,4 +86,23 @@ func InitLogger() *slog.Logger {
 		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	}
 	return log
+}
+
+// InitS3 функция для инициализации подключения к S3.
+func InitS3() (*s3.S3, error) {
+	session, err := session.NewSession(&aws.Config{
+		Region: aws.String(Cfg.S3.Region),
+		Endpoint: aws.String(Cfg.S3.Endpoint),
+		Credentials: credentials.NewStaticCredentials(
+			Cfg.S3.AccessKey,
+			Cfg.S3.SecretKey,
+			"",
+		),
+		S3ForcePathStyle: aws.Bool(Cfg.S3.ForcePathStyle),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating session s3: %w", err)
+	}
+
+	return &s3.S3{S3Session: session}, nil
 }

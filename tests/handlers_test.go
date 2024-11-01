@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 	logger := initial.InitLogger()
 	storage := suite.InitTestStorage()
 	logger.Info("TestMain database connected")
-	service = services.NewGRPCService(logger, storage)
+	service = services.NewGRPCService(logger, storage, nil)
 	logger.Info("TestMain service created")
 	os.Exit(m.Run())
 }

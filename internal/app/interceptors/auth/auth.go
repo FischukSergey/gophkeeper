@@ -12,13 +12,13 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type CtxKey int
+type CtxKey string
 
 const (
 	ErrNotFound           = "token not found"
 	ErrExpired            = "token expired"
 	ErrInvalid            = "invalid token"
-	CtxKeyUserGrpc CtxKey = iota
+	CtxKeyUserGrpc CtxKey = "userID"
 )
 
 // AuthInterceptor интерцептор для проверки токена.
@@ -26,7 +26,7 @@ func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, h
 	var userID int
 	var err error
 	switch info.FullMethod {
-	case "/server.GophKeeper/Register": //исключаем регистрацию и авторизацию из проверки токена
+	case "/server.GophKeeper/Registration": //исключаем регистрацию и авторизацию из проверки токена
 		return handler(ctx, req)
 	case "/server.GophKeeper/Authorization":
 		return handler(ctx, req)
@@ -58,6 +58,6 @@ func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, h
 		}
 	}
 	slog.Info("userID found", slog.Int("userID", userID))
-	ctx = context.WithValue(ctx, CtxKeyUserGrpc, userID)
-	return handler(ctx, req)
+	ctxWithUserID := context.WithValue(ctx, CtxKeyUserGrpc, userID)
+	return handler(ctxWithUserID, req)
 }
