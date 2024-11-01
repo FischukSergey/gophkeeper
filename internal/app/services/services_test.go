@@ -109,14 +109,23 @@ func TestRegisterUser(t *testing.T) {
 			expectedError: nil,
 			expectedID:    18,
 		},
+		{
+			name:          "invalid password",
+			login:         "qwerty",
+			password:      "password123",
+			expectedError: fmt.Errorf("invalid password"),
+		},
 	}
+
 	for _, arg := range args {
 		t.Run(arg.name, func(t *testing.T) {
 			token, err := service.RegisterUser(context.Background(), arg.login, arg.password)
 			switch arg.name {
 			case "success":
-				assert.Equal(t, arg.expectedError, err)
 				assert.Equal(t, arg.expectedID, token.UserID)
+				assert.Equal(t, arg.expectedError, err)
+			case "invalid password":
+				assert.Contains(t, err.Error(), arg.expectedError.Error())
 			}
 		})
 	}
