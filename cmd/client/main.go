@@ -39,7 +39,6 @@ func main() {
 	err = authService.Check(context.Background())
 	if err != nil {
 		log.Error("сервер хранения паролей не работает", logger.Err(err))
-		fmt.Println("сервер хранения паролей не работает")
 		os.Exit(1)
 	}
 
@@ -49,11 +48,13 @@ func main() {
 
 	commandRegister := command.NewCommandRegister(authService, token, reader, writer)
 	commandLogin := command.NewCommandLogin(authService, token, reader, writer)
+	commandFileUpload := command.NewCommandFileUpload(authService, token, reader, writer)
 	commandExit := command.NewCommandExit(reader, writer)
 
 	commands := []command.ICommand{
 		commandRegister,
 		commandLogin,
+		commandFileUpload,
 		commandExit,
 	}
 

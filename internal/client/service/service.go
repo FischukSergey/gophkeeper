@@ -5,6 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+
+	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
 )
 
@@ -54,4 +59,34 @@ func (s *AuthService) Authorization(ctx context.Context, login, password string)
 	s.log.Debug("авторизация клиента", "login", login, "password", password)
 	s.log.Debug("токен", "token", token)
 	return token.GetAccessToken().Token, nil
+}
+
+// S3FileUpload загрузка файла на сервер.
+func (s *AuthService) S3FileUpload(ctx context.Context, token string, fileData []byte, filename string) (string, error) {
+	// добавление токена авторизации в контекст
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	// загрузка файла на сервер
+	response, err := s.client.FileUpload(ctx, &pb.FileUploadRequest{
+		Filename: filename,
+		Data:     fileData,
+	})
+	if err != nil {
+		switch err {
+		case context.Canceled:
+			return "", fmt.Errorf("запрос отменен: %w", err)
+		case status.Error(codes.Unauthenticated, "user ID not found in context"):
+			return "", fmt.Errorf("не авторизован: %w", err)
+		case status.Error(codes.Unauthenticated, auth.ErrNotFound):
+			return "", fmt.Errorf("токен не найден: %w", err)
+		case status.Error(codes.Unauthenticated, auth.ErrInvalid):
+			return "", fmt.Errorf("токен не валиден: %w", err)
+		case status.Error(codes.Unauthenticated, auth.ErrExpired):
+			return "", fmt.Errorf("токен просрочен: %w", err)
+		default:
+			s.log.Error("ошибка загрузки файла", "error", err)
+			return "", fmt.Errorf("failed to upload file: %w", err)
+		}
+	}
+	s.log.Debug("файл загружен", "filename", response.GetMessage())
+	return response.GetMessage(), nil
 }
