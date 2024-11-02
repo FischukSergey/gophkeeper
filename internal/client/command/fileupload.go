@@ -69,7 +69,7 @@ func (c *CommandFileUpload) Execute() {
 	fileData, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Ошибка при чтении файла:", err)
-		return	
+		return
 	}
 	// получение названия файла
 	filename := filepath.Base(filePath)

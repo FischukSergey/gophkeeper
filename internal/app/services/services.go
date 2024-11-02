@@ -30,7 +30,6 @@ type GRPCService struct {
 	s3      S3Keeper
 }
 
-
 // NewGRPCService функция для создания сервиса.
 func NewGRPCService(log *slog.Logger, storage PwdKeeper, s3 S3Keeper) *GRPCService {
 	return &GRPCService{log: log, storage: storage, s3: s3}
@@ -112,7 +111,12 @@ func (g *GRPCService) Authorization(ctx context.Context, login, password string)
 }
 
 // FileUploadToS3 метод для загрузки файла в S3.
-func (g *GRPCService) FileUploadToS3(ctx context.Context, fileData []byte, filename string, userID int64) (string, error) {
+func (g *GRPCService) FileUploadToS3(
+	ctx context.Context,
+	fileData []byte,
+	filename string,
+	userID int64,
+) (string, error) {
 	g.log.Info("Service FileUploadToS3 method called")
 	bucket := initial.Cfg.S3.Bucket
 	bucketID := fmt.Sprintf("%d/%s", userID, filename)

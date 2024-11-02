@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/FischukSergey/gophkeeper/cmd/server/initial"
@@ -58,7 +59,7 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 	if err != nil {
 		panic("Error initializing s3: " + err.Error())
 	}
-	log.Info("S3 connected")	
+	log.Info("S3 connected")
 
 	// создание сервиса
 	grpcService := services.NewGRPCService(log, storage, s3Storage)
@@ -71,7 +72,9 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 	// опции для логирования в middleware
 	loggingOpts := []logging.Option{
 		logging.WithLogOnEvents(
-			logging.PayloadReceived, logging.PayloadSent),
+			logging.StartCall,
+			logging.FinishCall,
+		),
 	}
 	// опции для обработки паники в grpc сервере
 	recoveryOpts := []recovery.Option{
@@ -141,9 +144,24 @@ func (app *GrpcServer) Run() error {
 }
 
 // InterceptorLogger обертка интерцептора для логирования.
-// Меняем logging.LevelInfo на slog.LevelInfo.
 func InterceptorLogger(l *slog.Logger) logging.Logger {
 	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
-		l.Log(ctx, slog.LevelInfo, msg, fields...)
+		// Фильтруем чувствительные данные
+		filteredFields := make([]any, 0, len(fields))
+		for i := 0; i < len(fields); i += 2 {
+			if i+1 >= len(fields) {
+				break
+			}
+			key, ok := fields[i].(string)
+			if !ok {
+				continue
+			}
+			// Пропускаем логирование содержимого запросов и ответов
+			if strings.HasPrefix(key, "grpc.request.content.") || strings.HasPrefix(key, "grpc.response.content.") {
+				continue
+			}
+			filteredFields = append(filteredFields, fields[i], fields[i+1])
+		}
+		l.Log(ctx, slog.LevelInfo, msg, filteredFields...)
 	})
 }

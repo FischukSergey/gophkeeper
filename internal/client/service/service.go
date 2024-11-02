@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -62,7 +63,12 @@ func (s *AuthService) Authorization(ctx context.Context, login, password string)
 }
 
 // S3FileUpload загрузка файла на сервер.
-func (s *AuthService) S3FileUpload(ctx context.Context, token string, fileData []byte, filename string) (string, error) {
+func (s *AuthService) S3FileUpload(
+	ctx context.Context,
+	token string,
+	fileData []byte,
+	filename string,
+) (string, error) {
 	// добавление токена авторизации в контекст
 	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
 	// загрузка файла на сервер
@@ -71,16 +77,16 @@ func (s *AuthService) S3FileUpload(ctx context.Context, token string, fileData [
 		Data:     fileData,
 	})
 	if err != nil {
-		switch err {
-		case context.Canceled:
+		switch {
+		case errors.Is(err, context.Canceled):
 			return "", fmt.Errorf("запрос отменен: %w", err)
-		case status.Error(codes.Unauthenticated, "user ID not found in context"):
+		case errors.Is(err, status.Error(codes.Unauthenticated, "user ID not found in context")):
 			return "", fmt.Errorf("не авторизован: %w", err)
-		case status.Error(codes.Unauthenticated, auth.ErrNotFound):
+		case errors.Is(err, status.Error(codes.Unauthenticated, auth.ErrNotFound)):
 			return "", fmt.Errorf("токен не найден: %w", err)
-		case status.Error(codes.Unauthenticated, auth.ErrInvalid):
+		case errors.Is(err, status.Error(codes.Unauthenticated, auth.ErrInvalid)):
 			return "", fmt.Errorf("токен не валиден: %w", err)
-		case status.Error(codes.Unauthenticated, auth.ErrExpired):
+		case errors.Is(err, status.Error(codes.Unauthenticated, auth.ErrExpired)):
 			return "", fmt.Errorf("токен просрочен: %w", err)
 		default:
 			s.log.Error("ошибка загрузки файла", "error", err)

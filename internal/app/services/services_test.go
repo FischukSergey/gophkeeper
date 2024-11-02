@@ -43,7 +43,6 @@ func (m *mockStorage) GetUserByLogin(ctx context.Context, login string) (models.
 	return models.User{}, fmt.Errorf("user not found")
 }
 
-
 func TestAuthorization(t *testing.T) {
 	os.Setenv("CONFIG_PATH", "../../../config/local.yml")
 	initial.InitConfig()
@@ -132,4 +131,4 @@ func TestRegisterUser(t *testing.T) {
 	}
 }
 
-//TODO: добавить тесты для S3
+//TODO: добавить тесты для S3.

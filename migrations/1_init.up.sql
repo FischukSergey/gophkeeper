@@ -18,4 +18,4 @@ CREATE TABLE IF NOT EXISTS users
 		  updated_at TIMESTAMP NULL,
 		  deleted_at TIMESTAMP NULL
 		);
-    CREATE INDEX idx_entity_user_id ON entities (user_id);
+CREATE INDEX idx_entity_user_id ON entities (user_id);

@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-
 func Test_pwdKeeperServer_Registration(t *testing.T) {
 	type args struct {
 		req *pb.RegistrationRequest

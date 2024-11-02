@@ -3,15 +3,15 @@ envDBPassword:=DB_PASSWORD=postgres
 envServerClientAddress:=SERVER_CLIENT_ADDRESS=localhost:8080
 
 server:	
-				@echo "Running server"
-				$(envConfigPath) $(envDBPassword) go run ./cmd/server/
+	@echo "Running server"
+	$(envConfigPath) $(envDBPassword) go run ./cmd/server/
 .PHONY: server
 
 proto:
-				@echo "Generating proto"
-				protoc --go_out=. --go_opt=paths=source_relative \
-				--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-				internal/proto/registry.proto
+	@echo "Generating proto"
+	protoc --go_out=. --go_opt=paths=source_relative \
+	--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+	internal/proto/registry.proto
 .PHONY: proto
 
 migration:

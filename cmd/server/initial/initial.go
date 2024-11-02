@@ -91,7 +91,7 @@ func InitLogger() *slog.Logger {
 // InitS3 функция для инициализации подключения к S3.
 func InitS3() (*s3.S3, error) {
 	session, err := session.NewSession(&aws.Config{
-		Region: aws.String(Cfg.S3.Region),
+		Region:   aws.String(Cfg.S3.Region),
 		Endpoint: aws.String(Cfg.S3.Endpoint),
 		Credentials: credentials.NewStaticCredentials(
 			Cfg.S3.AccessKey,

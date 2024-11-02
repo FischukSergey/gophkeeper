@@ -27,7 +27,7 @@ type ProtoKeeperSaver interface {
 	Ping(ctx context.Context) error
 	RegisterUser(ctx context.Context, login, password string) (models.Token, error)
 	Authorization(ctx context.Context, login, password string) (models.Token, error)
-	FileUploadToS3	(ctx context.Context, fileData []byte, filename string, userID int64) (string, error)
+	FileUploadToS3(ctx context.Context, fileData []byte, filename string, userID int64) (string, error)
 }
 
 // RegisterServerAPI регистрация сервера.
@@ -132,11 +132,11 @@ func (s *pwdKeeperServer) NoteGetList(
 func (s *pwdKeeperServer) FileUpload(
 	ctx context.Context, req *pb.FileUploadRequest) (*pb.FileUploadResponse, error) {
 	log.Info("Handler FileUpload method called")
-	userID := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if userID == 0 {
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
 	}
-	log.Info("userID found", slog.Int("userID", int(userID)))
+	log.Info("userID found", slog.Int("userID", userID))
 
 	url, err := s.pwdKeeper.FileUploadToS3(ctx, req.Data, req.Filename, int64(userID))
 	if err != nil {

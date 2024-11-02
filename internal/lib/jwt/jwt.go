@@ -44,7 +44,7 @@ func GetUserID(jwtToken string) (int, error) {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return 0, ErrTokenExpired
 		}
-		return 0, err
+		return 0, fmt.Errorf("failed to parse token: %w", err)
 	}
 	if !token.Valid {
 		return 0, fmt.Errorf("invalid token")
