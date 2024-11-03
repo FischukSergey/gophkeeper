@@ -1,16 +1,14 @@
 package command
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"strings"
-	"syscall"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
-	"golang.org/x/term"
+	"github.com/manifoldco/promptui"
 )
 
 const nameCommandRegister = "register"
@@ -35,36 +33,31 @@ func (c *commandRegister) Name() string {
 
 // Execute выполняет команду регистрации.
 func (c *commandRegister) Execute() {
-	_, err := fmt.Fprint(c.writer, "Введите логин: ")
-	if err != nil {
-		fmt.Printf(errOutputMessage, err)
-		return
+	//ввод логина	
+	loginPrompt := promptui.Prompt{
+		Label: "Введите логин: ",
 	}
-	scanner := bufio.NewScanner(c.reader)
-	scanner.Scan()
-	if err := scanner.Err(); err != nil {
+	login, err := loginPrompt.Run()
+	if err != nil {
 		fmt.Println("Ошибка при вводе логина:", err)
 		return
 	}
-	login := scanner.Text()
 	//валидация логина
 	err = modelsclient.ValidateLogin(login)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	_, err = fmt.Fprint(c.writer, "Введите пароль: ")
-	if err != nil {
-		fmt.Printf(errOutputMessage, err)
-		return
+	//ввод пароля
+	passwordPrompt := promptui.Prompt{
+		Label: "Введите пароль: ",
+		Mask:  '*',
 	}
-	bytePassword, err := term.ReadPassword(syscall.Stdin)
+	password, err := passwordPrompt.Run()
 	if err != nil {
 		fmt.Println("Ошибка при вводе пароля:", err)
 		return
 	}
-	password := string(bytePassword)
 	//валидация пароля
 	err = modelsclient.ValidatePassword(password)
 	if err != nil {
@@ -72,36 +65,31 @@ func (c *commandRegister) Execute() {
 		return
 	}
 	//повторный ввод пароля
-	_, err = fmt.Fprint(c.writer, "\nВведите пароль повторно: ")
-	if err != nil {
-		fmt.Printf(errOutputMessage, err)
-		return
+	passwordConfirmPrompt := promptui.Prompt{
+		Label: "Введите пароль повторно: ",
+		Mask:  '*',
 	}
-	bytePassword, err = term.ReadPassword(syscall.Stdin)
+	passwordConfirm, err := passwordConfirmPrompt.Run()
 	if err != nil {
 		fmt.Println("Ошибка при вводе пароля:", err)
 		return
 	}
-	passwordConfirm := string(bytePassword)
 	if password != passwordConfirm {
 		fmt.Println("Пароли не совпадают")
 		return
 	}
-
-	//вызываем регистрацию
+	//вызываем регистрацию	
 	token, err := c.registerService.Register(context.Background(), strings.TrimSpace(login), strings.TrimSpace(password))
 	if err != nil {
-		//проверяем текст ошибки
-		if strings.Contains(err.Error(), "already exists") ||
-			strings.Contains(err.Error(), "SQLSTATE 23505") {
-			fmt.Println("\nПользователь с таким логином уже зарегистрирован")
-			return
-		}
-		fmt.Println(err)
+		fmt.Println("Ошибка при регистрации:", err)
 		return
 	}
 	c.token.Token = token
 	fmt.Println("\nРегистрация прошла успешно")
+	// Ожидание нажатия клавиши
+	fmt.Print("\nНажмите Enter для продолжения...")
+	var input string
+	fmt.Scanln(&input)
 }
 
 // NewCommandRegister создание команды регистрации.

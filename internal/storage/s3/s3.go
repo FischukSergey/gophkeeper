@@ -5,7 +5,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"path/filepath"
+	"time"
 
+	"github.com/FischukSergey/gophkeeper/internal/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -51,6 +54,33 @@ func (s *S3) S3UploadFile(ctx context.Context, fileData []byte, filename string,
 
 	// Возвращаем URL загруженного файла
 	return result.Location, nil
+}
+
+// S3GetFileList получает список файлов из S3.
+func (s *S3) S3GetFileList(ctx context.Context, bucketID string, bucket string) ([]models.File, error) {
+	svc := s3.New(s.S3Session)
+	// Получаем список объектов в бакете
+	result, err := svc.ListObjectsV2WithContext(ctx, &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(bucketID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file list: %w", err)
+	}
+	// формируем ответ
+	files := make([]models.File, len(result.Contents))
+	prefix := *result.Prefix
+	for i, content := range result.Contents {
+		files[i] = models.File{
+			FileID:    *content.Key,
+			UserID:    prefix,
+			Filename:  filepath.Base(*content.Key),
+			CreatedAt: *content.LastModified,
+			DeletedAt: time.Time{},
+			Size:      *content.Size,
+		}
+	}
+	return files, nil
 }
 
 // Close закрытие соединения с S3.

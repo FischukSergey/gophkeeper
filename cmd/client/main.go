@@ -1,19 +1,18 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/command"
 	"github.com/FischukSergey/gophkeeper/internal/client/config"
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/FischukSergey/gophkeeper/internal/client/service"
 	"github.com/FischukSergey/gophkeeper/internal/logger"
+	"github.com/manifoldco/promptui"
 )
+
 
 func main() {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
@@ -62,22 +61,20 @@ func main() {
 	for _, command := range commands {
 		commandsMenu[command.Name()] = command.Execute
 	}
-
-	fmt.Println("\nДоступные команды:")
+	commandsNames := make([]string, 0, len(commands))
 	for _, command := range commands {
-		fmt.Println(command.Name())
+		commandsNames = append(commandsNames, command.Name())
 	}
-
 	for {
-		fmt.Print("Введите команду: ")
-		input, _ := bufio.NewReader(reader).ReadString('\n')
-		input = strings.TrimSpace(input)
-
-		command, ok := commandsMenu[input]
-		if !ok {
-			fmt.Println("Неверная команда, попробуйте снова.")
-			continue
+		promt := promptui.Select{
+			Label: "Введите команду",
+			Items: commandsNames,
 		}
-		command()
+		_, result, err := promt.Run()
+		if err != nil {
+			log.Error("failed to run prompt", logger.Err(err))
+			os.Exit(1)
+		}
+		commandsMenu[result]()
 	}
 }

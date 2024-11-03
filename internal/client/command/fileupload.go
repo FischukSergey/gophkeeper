@@ -1,7 +1,6 @@
 package command
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -9,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
+	"github.com/manifoldco/promptui"
 )
 
 const nameCommandFileUpload = "fileupload"
@@ -48,36 +48,37 @@ func (c *CommandFileUpload) Name() string {
 
 // Execute выполняет команду загрузки файла.
 func (c *CommandFileUpload) Execute() {
-	_, err := fmt.Fprint(c.writer, "Введите путь к файлу: ")
-	if err != nil {
-		fmt.Printf(errOutputMessage, err)
-		return
+	//ввод пути к файлу
+	filePathPrompt := promptui.Prompt{
+		Label: "Введите путь к файлу: ",
 	}
-	scanner := bufio.NewScanner(c.reader)
-	scanner.Scan()
-	if err := scanner.Err(); err != nil {
+	filePath, err := filePathPrompt.Run()
+	if err != nil {
 		fmt.Println("Ошибка при вводе пути к файлу:", err)
 		return
 	}
-	filePath := scanner.Text()
-	// проверка, что файл существует
+	//проверка, что файл существует
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		fmt.Println("Файл не найден:", err)
 		return
 	}
-	// чтение файла
+	//чтение файла
 	fileData, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Ошибка при чтении файла:", err)
 		return
 	}
-	// получение названия файла
+	//получение названия файла
 	filename := filepath.Base(filePath)
-	// загрузка файла на сервер
+	//загрузка файла на сервер
 	s3Filepath, err := c.fileUploadService.S3FileUpload(context.Background(), c.token.Token, fileData, filename)
 	if err != nil {
 		fmt.Println("Ошибка при загрузке файла:", err)
 		return
 	}
 	fmt.Println("Файл загружен на S3:", s3Filepath)
+	//ожидание нажатия клавиши
+	fmt.Print("\nНажмите Enter для продолжения...")
+	var input string
+	fmt.Scanln(&input)
 }

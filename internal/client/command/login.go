@@ -1,16 +1,13 @@
 package command
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
-	"syscall"
-
-	"golang.org/x/term"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
+	"github.com/manifoldco/promptui"
 )
 
 const nameCommandLogin = "login"
@@ -50,50 +47,46 @@ func (c *CommandLogin) Name() string {
 // Execute выполнение команды авторизации.
 func (c *CommandLogin) Execute() {
 	//ввод логина
-	_, err := fmt.Fprint(c.writer, "Введите логин: ")
-	if err != nil {
-		fmt.Printf(errOutputMessage, err)
-		return
+	loginPrompt := promptui.Prompt{
+		Label: "Введите логин: ",
 	}
-	scanner := bufio.NewScanner(c.reader)
-	scanner.Scan()
-	if err := scanner.Err(); err != nil {
+	login, err := loginPrompt.Run()
+	if err != nil {
 		fmt.Println("Ошибка при вводе логина:", err)
 		return
 	}
-	login := scanner.Text()
-	// валидация логина
+	//валидация логина
 	err = modelsclient.ValidateLogin(login)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	// ввод пароля без отображения в терминале
-	_, err = fmt.Fprint(c.writer, "Введите пароль: ")
-	if err != nil {
-		fmt.Printf(errOutputMessage, err)
-		return
+	//ввод пароля
+	passwordPrompt := promptui.Prompt{
+		Label: "Введите пароль: ",
+		Mask:  '*',
 	}
-	bytePassword, err := term.ReadPassword(syscall.Stdin)
+	password, err := passwordPrompt.Run()
 	if err != nil {
 		fmt.Println("Ошибка при вводе пароля:", err)
 		return
 	}
-	password := string(bytePassword)
 	//валидация пароля
 	err = modelsclient.ValidatePassword(password)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	// авторизация
+	//авторизация
 	token, err := c.authService.Authorization(context.Background(), login, password)
 	if err != nil {
 		fmt.Println("Ошибка при авторизации:", err)
 		return
 	}
 	c.token.Token = token
-	fmt.Println("\nАвторизация успешна")
+	fmt.Println("\nАвторизация прошла успешно")
+	// Ожидание нажатия клавиши
+	fmt.Print("\nНажмите Enter для продолжения...")
+	var input string
+	fmt.Scanln(&input)
 }

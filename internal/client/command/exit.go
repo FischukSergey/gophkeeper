@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/manifoldco/promptui"
 )
 
 const nameCommand = "exit"
@@ -19,21 +21,18 @@ func NewCommandExit(reader io.Reader, writer io.Writer) *commandExit {
 	return &commandExit{reader: reader, writer: writer}
 }
 
+
 // Execute выполнение команды выхода.
 func (c *commandExit) Execute() {
-	_, err := fmt.Fprint(c.writer, "Действительно хотите выйти? (y/n): ")
+	confirmation := promptui.Prompt{
+		Label: "Действительно хотите выйти? (y/n): ",
+	}
+	response, err := confirmation.Run()
 	if err != nil {
 		fmt.Printf(errOutputMessage, err)
 		return
 	}
-	var response string
-	_, err = fmt.Fscan(c.reader, &response)
-	if err != nil {
-		fmt.Printf(errReadMessage, err)
-		return
-	}
 	if response != "y" && response != "Y" {
-		fmt.Println("Exit отменен.")
 		return
 	}
 	os.Exit(0)

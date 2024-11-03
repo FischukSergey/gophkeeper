@@ -15,6 +15,7 @@ type Token struct {
 	Token string
 }
 
+// GetToken возвращает токен.
 func (t *Token) GetToken() string {
 	return t.Token
 }

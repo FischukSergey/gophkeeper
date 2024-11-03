@@ -64,11 +64,12 @@ message AuthorizationResponse {
 
 // File структура данных о пользовательском файле
 message File {
-    int64 fileID = 1;
+    string fileID = 1;
     string userID = 2;
     string filename = 3;
-    google.protobuf.Timestamp createdAt = 4;
-    google.protobuf.Timestamp deletedAt = 5;
+    int64 size = 4;
+    google.protobuf.Timestamp createdAt = 5;
+    google.protobuf.Timestamp deletedAt = 6;
 }
 
 // FileUpload

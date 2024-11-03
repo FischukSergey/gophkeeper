@@ -28,6 +28,7 @@ type ProtoKeeperSaver interface {
 	RegisterUser(ctx context.Context, login, password string) (models.Token, error)
 	Authorization(ctx context.Context, login, password string) (models.Token, error)
 	FileUploadToS3(ctx context.Context, fileData []byte, filename string, userID int64) (string, error)
+	FileGetListFromS3(ctx context.Context, userID int64) ([]models.File, error)
 }
 
 // RegisterServerAPI регистрация сервера.
@@ -143,4 +144,31 @@ func (s *pwdKeeperServer) FileUpload(
 		return nil, status.Errorf(codes.Internal, "failed to upload file: %v", err)
 	}
 	return &pb.FileUploadResponse{Message: url}, nil
+}
+
+// FileGetList метод для получения списка файлов пользователя.
+func (s *pwdKeeperServer) FileGetList(
+	ctx context.Context, req *pb.FileGetListRequest) (*pb.FileGetListResponse, error) {
+	log.Info("Handler FileGetList method called")
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+	}
+	log.Info("userID found", slog.Int("userID", userID))
+	files, err := s.pwdKeeper.FileGetListFromS3(ctx, int64(userID))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get file list: %v", err)
+	}
+	// формируем ответ
+	filesPb := make([]*pb.File, len(files))
+	for i, file := range files {
+		filesPb[i] = &pb.File{
+			FileID:    file.FileID,
+			UserID:    file.UserID,
+			Filename:  file.Filename,
+			Size:      file.Size,
+			CreatedAt: timestamppb.New(file.CreatedAt),
+		}
+	}
+	return &pb.FileGetListResponse{Files: filesPb}, nil
 }

@@ -35,6 +35,16 @@ type Token struct {
 	UserID    int64
 }
 
+// File структура для файла.
+type File struct {
+	FileID    string
+	UserID    string
+	Filename  string
+	CreatedAt time.Time
+	DeletedAt time.Time
+	Size      int64
+}
+
 // ErrUserExists ошибка, если пользователь уже существует.
 var ErrUserExists = errors.New("user exists")
 

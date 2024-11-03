@@ -21,6 +21,7 @@ type PwdKeeper interface {
 
 type S3Keeper interface {
 	S3UploadFile(ctx context.Context, fileData []byte, filename string, bucket string) (string, error)
+	S3GetFileList(ctx context.Context, bucketID string, bucket string) ([]models.File, error)
 }
 
 // GRPCService структура для сервиса.
@@ -129,4 +130,16 @@ func (g *GRPCService) FileUploadToS3(
 		return "", fmt.Errorf("failed to upload file: %w", err)
 	}
 	return url, nil
+}
+
+// FileGetListFromS3 метод для получения списка файлов пользователя из S3.
+func (g *GRPCService) FileGetListFromS3(ctx context.Context, userID int64) ([]models.File, error) {
+	g.log.Info("Service FileGetListFromS3 method called")
+	bucket := initial.Cfg.S3.Bucket
+	bucketID := fmt.Sprintf("%d", userID)
+	files, err := g.s3.S3GetFileList(ctx, bucketID, bucket)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file list: %w", err)
+	}
+	return files, nil
 }
