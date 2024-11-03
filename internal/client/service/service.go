@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
+	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
 )
 
@@ -71,6 +72,21 @@ func (s *AuthService) S3FileUpload(
 ) (string, error) {
 	// добавление токена авторизации в контекст
 	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	// проверка наличия файла в S3
+	files, err := s.GetFileList(ctx, token)
+	if err == nil || len(files) > 0 {
+		for _, file := range files {
+			if file.Filename == filename {
+				// файл уже существует спрашиваем пользователя хочет ли он его перезаписать
+				fmt.Println("Файл уже существует. Хотите перезаписать? (y/n)")
+				var input string
+				fmt.Scanln(&input)
+				if input != "y" && input != "Y" {
+					return "", fmt.Errorf("file already exists")
+				}
+			}
+		}
+	}
 	// загрузка файла на сервер
 	response, err := s.client.FileUpload(ctx, &pb.FileUploadRequest{
 		Filename: filename,
@@ -95,4 +111,28 @@ func (s *AuthService) S3FileUpload(
 	}
 	s.log.Debug("файл загружен", "filename", response.GetMessage())
 	return response.GetMessage(), nil
+}
+
+// GetFileList получение списка файлов.
+func (s *AuthService) GetFileList(ctx context.Context, token string) ([]models.File, error) {
+	// добавление токена авторизации в контекст
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+
+	// получение списка файлов
+	response, err := s.client.FileGetList(ctx, &pb.FileGetListRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file list: %w", err)
+	}
+	files := make([]models.File, 0, len(response.GetFiles()))
+	for _, file := range response.GetFiles() {
+		files = append(files, models.File{
+			FileID:    file.GetFileID(),
+			UserID:    file.GetUserID(),
+			Filename:  file.GetFilename(),
+			CreatedAt: file.GetCreatedAt().AsTime(),
+			DeletedAt: file.GetDeletedAt().AsTime(),
+			Size:      file.GetSize(),
+		})
+	}
+	return files, nil
 }

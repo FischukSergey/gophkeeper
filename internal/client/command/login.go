@@ -10,7 +10,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-const nameCommandLogin = "login"
+const nameCommandLogin = "Login"
 
 // IAuthService интерфейс для сервиса авторизации.
 type IAuthService interface {
@@ -48,7 +48,7 @@ func (c *CommandLogin) Name() string {
 func (c *CommandLogin) Execute() {
 	//ввод логина
 	loginPrompt := promptui.Prompt{
-		Label: "Введите логин: ",
+		Label: "Введите логин",
 	}
 	login, err := loginPrompt.Run()
 	if err != nil {
@@ -63,7 +63,7 @@ func (c *CommandLogin) Execute() {
 	}
 	//ввод пароля
 	passwordPrompt := promptui.Prompt{
-		Label: "Введите пароль: ",
+		Label: "Введите пароль",
 		Mask:  '*',
 	}
 	password, err := passwordPrompt.Run()

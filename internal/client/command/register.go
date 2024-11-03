@@ -11,7 +11,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-const nameCommandRegister = "register"
+const nameCommandRegister = "Registration"
 
 // IRegisterService интерфейс для сервиса регистрации.
 type IRegisterService interface {
@@ -35,7 +35,7 @@ func (c *commandRegister) Name() string {
 func (c *commandRegister) Execute() {
 	//ввод логина	
 	loginPrompt := promptui.Prompt{
-		Label: "Введите логин: ",
+		Label: "Введите логин",
 	}
 	login, err := loginPrompt.Run()
 	if err != nil {
@@ -50,7 +50,7 @@ func (c *commandRegister) Execute() {
 	}
 	//ввод пароля
 	passwordPrompt := promptui.Prompt{
-		Label: "Введите пароль: ",
+		Label: "Введите пароль",
 		Mask:  '*',
 	}
 	password, err := passwordPrompt.Run()
@@ -66,7 +66,7 @@ func (c *commandRegister) Execute() {
 	}
 	//повторный ввод пароля
 	passwordConfirmPrompt := promptui.Prompt{
-		Label: "Введите пароль повторно: ",
+		Label: "Введите пароль повторно",
 		Mask:  '*',
 	}
 	passwordConfirm, err := passwordConfirmPrompt.Run()

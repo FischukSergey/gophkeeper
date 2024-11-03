@@ -8,7 +8,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-const nameCommand = "exit"
+const nameCommandExit = "Exit"
 
 // commandExit структура для команды выхода.
 type commandExit struct {
@@ -25,7 +25,7 @@ func NewCommandExit(reader io.Reader, writer io.Writer) *commandExit {
 // Execute выполнение команды выхода.
 func (c *commandExit) Execute() {
 	confirmation := promptui.Prompt{
-		Label: "Действительно хотите выйти? (y/n): ",
+		Label: "Действительно хотите выйти? (y/n)",
 	}
 	response, err := confirmation.Run()
 	if err != nil {
@@ -40,5 +40,5 @@ func (c *commandExit) Execute() {
 
 // Name возвращает имя команды.
 func (c *commandExit) Name() string {
-	return nameCommand
+	return nameCommandExit
 }

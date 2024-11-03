@@ -11,7 +11,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-const nameCommandFileUpload = "fileupload"
+const nameCommandFileUpload = "FileUpload"
 
 // IFileUploadService интерфейс для загрузки файла в хранилище.
 type IFileUploadService interface {
@@ -48,9 +48,18 @@ func (c *CommandFileUpload) Name() string {
 
 // Execute выполняет команду загрузки файла.
 func (c *CommandFileUpload) Execute() {
+	//проверка наличия токена
+	if c.token.Token == "" {
+		fmt.Println("Вы не авторизованы. Авторизуйтесь с помощью команды login.")
+		// ожидание нажатия клавиши
+		fmt.Println("\nНажмите Enter для продолжения...")
+		var input string
+		fmt.Scanln(&input)
+		return
+	}	
 	//ввод пути к файлу
 	filePathPrompt := promptui.Prompt{
-		Label: "Введите путь к файлу: ",
+		Label: "Введите путь к файлу",
 	}
 	filePath, err := filePathPrompt.Run()
 	if err != nil {

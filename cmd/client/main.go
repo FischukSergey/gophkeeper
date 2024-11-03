@@ -48,12 +48,14 @@ func main() {
 	commandRegister := command.NewCommandRegister(authService, token, reader, writer)
 	commandLogin := command.NewCommandLogin(authService, token, reader, writer)
 	commandFileUpload := command.NewCommandFileUpload(authService, token, reader, writer)
+	commandFileGetList := command.NewCommandFileGetList(authService, token, reader, writer)
 	commandExit := command.NewCommandExit(reader, writer)
 
 	commands := []command.ICommand{
 		commandRegister,
 		commandLogin,
 		commandFileUpload,
+		commandFileGetList,
 		commandExit,
 	}
 
