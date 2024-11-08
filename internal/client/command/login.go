@@ -86,7 +86,10 @@ func (c *CommandLogin) Execute() {
 	c.token.Token = token
 	fmt.Println("\nАвторизация прошла успешно")
 	// Ожидание нажатия клавиши
-	fmt.Print("\nНажмите Enter для продолжения...")
+	fmt.Println(messageContinue)
 	var input string
-	fmt.Scanln(&input)
+	_, err = fmt.Scanln(&input)
+	if err != nil {
+		fmt.Printf(errInputMessage, err)
+	}
 }

@@ -33,7 +33,7 @@ func (c *commandRegister) Name() string {
 
 // Execute выполняет команду регистрации.
 func (c *commandRegister) Execute() {
-	//ввод логина	
+	//ввод логина
 	loginPrompt := promptui.Prompt{
 		Label: "Введите логин",
 	}
@@ -78,7 +78,7 @@ func (c *commandRegister) Execute() {
 		fmt.Println("Пароли не совпадают")
 		return
 	}
-	//вызываем регистрацию	
+	//вызываем регистрацию
 	token, err := c.registerService.Register(context.Background(), strings.TrimSpace(login), strings.TrimSpace(password))
 	if err != nil {
 		fmt.Println("Ошибка при регистрации:", err)
@@ -87,9 +87,12 @@ func (c *commandRegister) Execute() {
 	c.token.Token = token
 	fmt.Println("\nРегистрация прошла успешно")
 	// Ожидание нажатия клавиши
-	fmt.Print("\nНажмите Enter для продолжения...")
+	fmt.Println(messageContinue)
 	var input string
-	fmt.Scanln(&input)
+	_, err = fmt.Scanln(&input)
+	if err != nil {
+		fmt.Printf(errInputMessage, err)
+	}
 }
 
 // NewCommandRegister создание команды регистрации.

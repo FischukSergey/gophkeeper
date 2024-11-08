@@ -1,7 +1,7 @@
 envConfigPath:=CONFIG_PATH=./config/local.yml
 envDBPassword:=DB_PASSWORD=postgres	
 envServerClientAddress:=SERVER_CLIENT_ADDRESS=localhost:8080
-
+envDBTest:=DB_TEST=true
 server:	
 	@echo "Running server"
 	$(envConfigPath) $(envDBPassword) go run ./cmd/server/
@@ -36,4 +36,7 @@ lint:
 testdb:
 	@echo "Running docker compose for tests database"
 	docker compose -f docker-compose.test.yaml up -d --build
+	@echo "Database is ready"
+	@echo "Run server with test database"
+	$(envDBTest) $(envConfigPath) go run ./cmd/server/
 .PHONY: testdb

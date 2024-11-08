@@ -80,7 +80,10 @@ func (s *AuthService) S3FileUpload(
 				// файл уже существует спрашиваем пользователя хочет ли он его перезаписать
 				fmt.Println("Файл уже существует. Хотите перезаписать? (y/n)")
 				var input string
-				fmt.Scanln(&input)
+				_, err = fmt.Scanln(&input)
+				if err != nil {
+					fmt.Printf("Ошибка ввода: %s\n", err)
+				}
 				if input != "y" && input != "Y" {
 					return "", fmt.Errorf("file already exists")
 				}
@@ -93,21 +96,8 @@ func (s *AuthService) S3FileUpload(
 		Data:     fileData,
 	})
 	if err != nil {
-		switch {
-		case errors.Is(err, context.Canceled):
-			return "", fmt.Errorf("запрос отменен: %w", err)
-		case errors.Is(err, status.Error(codes.Unauthenticated, "user ID not found in context")):
-			return "", fmt.Errorf("не авторизован: %w", err)
-		case errors.Is(err, status.Error(codes.Unauthenticated, auth.ErrNotFound)):
-			return "", fmt.Errorf("токен не найден: %w", err)
-		case errors.Is(err, status.Error(codes.Unauthenticated, auth.ErrInvalid)):
-			return "", fmt.Errorf("токен не валиден: %w", err)
-		case errors.Is(err, status.Error(codes.Unauthenticated, auth.ErrExpired)):
-			return "", fmt.Errorf("токен просрочен: %w", err)
-		default:
-			s.log.Error("ошибка загрузки файла", "error", err)
-			return "", fmt.Errorf("failed to upload file: %w", err)
-		}
+		s.log.Error("ошибка загрузки файла", "error", err)
+		return "", fmt.Errorf("failed to upload file: %w", err)
 	}
 	s.log.Debug("файл загружен", "filename", response.GetMessage())
 	return response.GetMessage(), nil
@@ -121,7 +111,12 @@ func (s *AuthService) GetFileList(ctx context.Context, token string) ([]models.F
 	// получение списка файлов
 	response, err := s.client.FileGetList(ctx, &pb.FileGetListRequest{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get file list: %w", err)
+		switch {
+		case errors.Is(err, status.Error(codes.Unauthenticated, auth.ErrNotFound)):
+			return nil, fmt.Errorf("токен не найден: %w", err)
+		default:
+			return nil, fmt.Errorf("failed to get file list: %w", err)
+		}
 	}
 	files := make([]models.File, 0, len(response.GetFiles()))
 	for _, file := range response.GetFiles() {
@@ -135,4 +130,19 @@ func (s *AuthService) GetFileList(ctx context.Context, token string) ([]models.F
 		})
 	}
 	return files, nil
+}
+
+// S3FileDelete удаление файла.
+func (s *AuthService) S3FileDelete(ctx context.Context, token string, filename string) error {
+	// добавление токена авторизации в контекст
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	// удаление файла
+	_, err := s.client.FileDelete(ctx, &pb.FileDeleteRequest{
+		Filename: filename,
+	})
+	if err != nil {
+		s.log.Error("ошибка удаления файла", "error", err)
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+	return nil
 }

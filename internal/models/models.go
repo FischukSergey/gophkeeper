@@ -46,7 +46,11 @@ type File struct {
 }
 
 // ErrUserExists ошибка, если пользователь уже существует.
-var ErrUserExists = errors.New("user exists")
+var (
+	ErrUserExists   = errors.New("user exists")
+	ErrFileExists   = errors.New("file exists")
+	ErrFileNotExist = errors.New("file does not exist")
+)
 
 // Validate валидация логина и пароля.
 func (u *User) Validate() error {

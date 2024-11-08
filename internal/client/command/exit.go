@@ -21,7 +21,6 @@ func NewCommandExit(reader io.Reader, writer io.Writer) *commandExit {
 	return &commandExit{reader: reader, writer: writer}
 }
 
-
 // Execute выполнение команды выхода.
 func (c *commandExit) Execute() {
 	confirmation := promptui.Prompt{

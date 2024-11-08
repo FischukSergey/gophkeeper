@@ -29,6 +29,7 @@ const (
 var (
 	FlagConfigPath string         // путь к файлу конфигурации
 	FlagDBPassword string         // пароль для подключения к базе данных
+	FlagDBTest     bool           // флаг для тестовой базы данных
 	Cfg            *config.Config // конфигурация
 )
 
@@ -36,6 +37,7 @@ var (
 func InitConfig() {
 	flag.StringVar(&FlagConfigPath, "config", "", "path to config file")
 	flag.StringVar(&FlagDBPassword, "db_password", "", "database password")
+	flag.BoolVar(&FlagDBTest, "db_test", false, "use test database")
 	flag.Parse()
 
 	if envConfigPath := os.Getenv("CONFIG_PATH"); envConfigPath != "" {
@@ -44,6 +46,9 @@ func InitConfig() {
 
 	if envDBPassword := os.Getenv("DB_PASSWORD"); envDBPassword != "" {
 		FlagDBPassword = envDBPassword
+	}
+	if envDBTest, ok := os.LookupEnv("DB_TEST"); ok && envDBTest == "true" {
+		FlagDBTest = true
 	}
 
 	Cfg = config.MustLoad(FlagConfigPath) // загрузка конфигурации	.yaml

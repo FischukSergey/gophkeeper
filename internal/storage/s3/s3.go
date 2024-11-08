@@ -83,6 +83,46 @@ func (s *S3) S3GetFileList(ctx context.Context, bucketID string, bucket string) 
 	return files, nil
 }
 
+// S3DeleteFile удаляет файл из S3.
+func (s *S3) S3DeleteFile(ctx context.Context, bucketID string, bucket string) error {
+	svc := s3.New(s.S3Session)
+
+	// Проверяем существование файла
+	_, err := svc.HeadObjectWithContext(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(bucketID),
+	})
+	if err != nil {
+		return models.ErrFileNotExist
+	}
+
+	// Удаляем файл
+	result, err := svc.DeleteObjectWithContext(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(bucketID),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+
+	// Проверяем успешность удаления
+	if result.DeleteMarker != nil && *result.DeleteMarker {
+		return nil
+	}
+
+	// Дополнительная проверка, что файл действительно удален
+	_, err = svc.HeadObjectWithContext(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(bucketID),
+	})
+	if err == nil {
+		// Если получаем ошибку, значит файл успешно удален
+		return fmt.Errorf("file deletion could not be confirmed")
+	}
+
+	return nil
+}
+
 // Close закрытие соединения с S3.
 func (s *S3) Close() error {
 	s.S3Session = nil

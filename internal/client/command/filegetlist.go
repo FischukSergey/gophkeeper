@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sort"
+	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/FischukSergey/gophkeeper/internal/models"
@@ -51,15 +54,23 @@ func (c *CommandFileGetList) Execute() {
 	if c.token.Token == "" {
 		fmt.Println("Вы не авторизованы. Авторизуйтесь с помощью команды login.")
 		// ожидание нажатия клавиши
-		fmt.Println("\nНажмите Enter для продолжения...")
+		fmt.Println(messageContinue)
 		var input string
-		fmt.Scanln(&input)
+		_, err := fmt.Scanln(&input)
+		if err != nil {
+			fmt.Printf(errInputMessage, err)
+		}
 		return
 	}
 	// получение списка файлов
 	files, err := c.fileGetListService.GetFileList(context.Background(), c.token.Token)
 	if err != nil {
-		fmt.Println("Ошибка при получении списка файлов:", err)
+		// проверка ошибки
+		if strings.Contains(err.Error(), "токен не найден") {
+			fmt.Println("Ошибка авторизации. Пожалуйста, войдите в систему заново")
+		} else {
+			fmt.Println("Ошибка при получении списка файлов:", err)
+		}
 		return
 	}
 
@@ -67,23 +78,41 @@ func (c *CommandFileGetList) Execute() {
 	w := tabwriter.NewWriter(c.writer, 0, 0, 2, ' ', 0)
 
 	// выводим заголовки таблицы
-	fmt.Fprintln(w, "Имя файла\tРазмер\tДата создания\t")
-	fmt.Fprintln(w, "----------\t------\t-------------\t")
+	_, err = fmt.Fprintln(w, "Имя файла\tРазмер\tДата создания")
+	if err != nil {
+		fmt.Printf(errOutputMessage, err)
+	}
+	_, err = fmt.Fprintln(w, "----------\t------\t-------------")
+	if err != nil {
+		fmt.Printf(errOutputMessage, err)
+	}
 
 	// выводим данные
+	sort.Slice(files, func(i, j int) bool {
+		return strings.ToLower(files[i].Filename) < strings.ToLower(files[j].Filename)
+	})
 	for _, file := range files {
-		fmt.Fprintf(w, "%s\t%d kb\t%s\t\n",
+		_, err = fmt.Fprintf(w, "%s\t%d kb\t%s\n",
 			file.Filename,
 			file.Size/1024,
-			file.CreatedAt.Format("2006-01-02 15:04:05"),
+			file.CreatedAt.Format(time.DateTime),
 		)
+		if err != nil {
+			fmt.Printf(errOutputMessage, err)
+		}
 	}
 
 	// применяем форматирование таблицы
-	w.Flush()
+	err = w.Flush()
+	if err != nil {
+		fmt.Printf(errOutputMessage, err)
+	}
 
 	// ожидание нажатия клавиши
-	fmt.Print("\nНажмите Enter для продолжения...")
+	fmt.Println(messageContinue)
 	var input string
-	fmt.Scanln(&input)
+	_, err = fmt.Scanln(&input)
+	if err != nil {
+		fmt.Printf(errInputMessage, err)
+	}
 }

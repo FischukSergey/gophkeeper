@@ -22,6 +22,7 @@ type PwdKeeper interface {
 type S3Keeper interface {
 	S3UploadFile(ctx context.Context, fileData []byte, filename string, bucket string) (string, error)
 	S3GetFileList(ctx context.Context, bucketID string, bucket string) ([]models.File, error)
+	S3DeleteFile(ctx context.Context, bucketID string, bucket string) error
 }
 
 // GRPCService структура для сервиса.
@@ -142,4 +143,16 @@ func (g *GRPCService) FileGetListFromS3(ctx context.Context, userID int64) ([]mo
 		return nil, fmt.Errorf("failed to get file list: %w", err)
 	}
 	return files, nil
+}
+
+// FileDeleteFromS3 метод для удаления файла из S3.
+func (g *GRPCService) FileDeleteFromS3(ctx context.Context, userID int64, filename string) error {
+	g.log.Info("Service FileDeleteFromS3 method called")
+	bucket := initial.Cfg.S3.Bucket
+	bucketID := fmt.Sprintf("%d/%s", userID, filename)
+	err := g.s3.S3DeleteFile(ctx, bucketID, bucket)
+	if err != nil {
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+	return nil
 }

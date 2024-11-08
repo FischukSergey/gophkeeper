@@ -6,7 +6,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/manifoldco/promptui"
 )
@@ -52,11 +54,14 @@ func (c *CommandFileUpload) Execute() {
 	if c.token.Token == "" {
 		fmt.Println("Вы не авторизованы. Авторизуйтесь с помощью команды login.")
 		// ожидание нажатия клавиши
-		fmt.Println("\nНажмите Enter для продолжения...")
+		fmt.Println(messageContinue)
 		var input string
-		fmt.Scanln(&input)
+		_, err := fmt.Scanln(&input)
+		if err != nil {
+			fmt.Printf(errInputMessage, err)
+		}
 		return
-	}	
+	}
 	//ввод пути к файлу
 	filePathPrompt := promptui.Prompt{
 		Label: "Введите путь к файлу",
@@ -82,12 +87,22 @@ func (c *CommandFileUpload) Execute() {
 	//загрузка файла на сервер
 	s3Filepath, err := c.fileUploadService.S3FileUpload(context.Background(), c.token.Token, fileData, filename)
 	if err != nil {
-		fmt.Println("Ошибка при загрузке файла:", err)
+		// проверка ошибки
+		if strings.Contains(err.Error(), auth.ErrNotFound) ||
+			strings.Contains(err.Error(), auth.ErrInvalid) ||
+			strings.Contains(err.Error(), "user ID not found in context") {
+			fmt.Println("Ошибка авторизации. Пожалуйста, войдите в систему заново")
+		} else {
+			fmt.Printf(errOutputMessage, err)
+		}
 		return
 	}
 	fmt.Println("Файл загружен на S3:", s3Filepath)
 	//ожидание нажатия клавиши
-	fmt.Print("\nНажмите Enter для продолжения...")
+	fmt.Println(messageContinue)
 	var input string
-	fmt.Scanln(&input)
+	_, err = fmt.Scanln(&input)
+	if err != nil {
+		fmt.Printf(errInputMessage, err)
+	}
 }

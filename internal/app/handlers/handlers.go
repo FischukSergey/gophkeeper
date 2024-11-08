@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 
@@ -29,6 +30,7 @@ type ProtoKeeperSaver interface {
 	Authorization(ctx context.Context, login, password string) (models.Token, error)
 	FileUploadToS3(ctx context.Context, fileData []byte, filename string, userID int64) (string, error)
 	FileGetListFromS3(ctx context.Context, userID int64) ([]models.File, error)
+	FileDeleteFromS3(ctx context.Context, userID int64, filename string) error
 }
 
 // RegisterServerAPI регистрация сервера.
@@ -90,7 +92,7 @@ func (s *pwdKeeperServer) Authorization(
 
 	//проводим валидацию данных
 	if login == "" || password == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "username or password cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "username and password cannot be empty")
 	}
 	user := models.User{
 		Login:    login,
@@ -138,7 +140,7 @@ func (s *pwdKeeperServer) FileUpload(
 		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
 	}
 	log.Info("userID found", slog.Int("userID", userID))
-
+	// загружаем файл в S3
 	url, err := s.pwdKeeper.FileUploadToS3(ctx, req.Data, req.Filename, int64(userID))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to upload file: %v", err)
@@ -171,4 +173,23 @@ func (s *pwdKeeperServer) FileGetList(
 		}
 	}
 	return &pb.FileGetListResponse{Files: filesPb}, nil
+}
+
+// FileDelete метод для удаления файла из S3.
+func (s *pwdKeeperServer) FileDelete(
+	ctx context.Context, req *pb.FileDeleteRequest) (*pb.FileDeleteResponse, error) {
+	log.Info("Handler FileDelete method called")
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+	}
+	log.Info("userID found", slog.Int("userID", userID))
+	err := s.pwdKeeper.FileDeleteFromS3(ctx, int64(userID), req.Filename)
+	if err != nil {
+		if errors.Is(err, models.ErrFileNotExist) {
+			return nil, status.Errorf(codes.NotFound, "file does not exist: %v", err)
+		}
+		return nil, status.Errorf(codes.Internal, "failed to delete file: %v", err)
+	}
+	return &pb.FileDeleteResponse{}, nil
 }

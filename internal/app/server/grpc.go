@@ -17,6 +17,7 @@ import (
 	"github.com/FischukSergey/gophkeeper/internal/logger"
 	"github.com/FischukSergey/gophkeeper/internal/storage/dbstorage"
 	"github.com/FischukSergey/gophkeeper/internal/storage/s3"
+	"github.com/FischukSergey/gophkeeper/tests/suite"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"google.golang.org/grpc"
@@ -41,11 +42,19 @@ type App struct {
 // NewGrpcServer функция для инициализации gRPC сервера.
 func NewGrpcServer(log *slog.Logger, port string) *App {
 	// инициализация хранилища бд postgres
-	storage, err := initial.InitStorage()
+	var storage *dbstorage.Storage
+	var err error
+	if initial.FlagDBTest {
+		storage, err = suite.InitTestStorage()
+		log.Info("Test database connected")
+	} else {
+		storage, err = initial.InitStorage()
+		log.Info("Production database connected")
+	}
 	if err != nil {
 		panic("Error initializing storage: " + err.Error())
 	}
-	log.Info("Database connected")
+	log.Info("Database connection successful")
 	err = storage.GetPingDB(context.Background())
 	if err != nil {
 		panic("Error pinging database: " + err.Error())
