@@ -26,23 +26,28 @@ func init() {
 }
 
 // Mock structures.
-type MockPwdKeeper struct {
+type MockDBKeeper struct {
 	mock.Mock
 }
 
-func (m *MockPwdKeeper) GetPingDB(ctx context.Context) error {
+func (m *MockDBKeeper) GetPingDB(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
 }
 
-func (m *MockPwdKeeper) RegisterUser(ctx context.Context, login, password string) (int64, error) {
+func (m *MockDBKeeper) RegisterUser(ctx context.Context, login, password string) (int64, error) {
 	args := m.Called(ctx, login, password)
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (m *MockPwdKeeper) GetUserByLogin(ctx context.Context, login string) (models.User, error) {
+func (m *MockDBKeeper) GetUserByLogin(ctx context.Context, login string) (models.User, error) {
 	args := m.Called(ctx, login)
 	return args.Get(0).(models.User), args.Error(1)
+}
+
+func (m *MockDBKeeper) CardAdd(ctx context.Context, card models.Card) (int64, error) {
+	args := m.Called(ctx, card)
+	return args.Get(0).(int64), args.Error(1)
 }
 
 type MockS3Keeper struct {
@@ -95,7 +100,7 @@ func TestPing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockStorage := new(MockPwdKeeper)
+			mockStorage := new(MockDBKeeper)
 			mockS3 := new(MockS3Keeper)
 			logger := slog.Default()
 			service := NewGRPCService(logger, mockStorage, mockS3)
@@ -151,7 +156,7 @@ func TestRegisterUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockStorage := new(MockPwdKeeper)
+			mockStorage := new(MockDBKeeper)
 			mockS3 := new(MockS3Keeper)
 			logger := slog.Default()
 			service := NewGRPCService(logger, mockStorage, mockS3)
@@ -213,7 +218,7 @@ func TestAuthorization(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockStorage := new(MockPwdKeeper)
+			mockStorage := new(MockDBKeeper)
 			mockS3 := new(MockS3Keeper)
 			logger := slog.Default()
 			service := NewGRPCService(logger, mockStorage, mockS3)
@@ -275,7 +280,7 @@ func TestFileUploadToS3(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockStorage := new(MockPwdKeeper)
+			mockStorage := new(MockDBKeeper)
 			mockS3 := new(MockS3Keeper)
 			logger := slog.Default()
 			service := NewGRPCService(logger, mockStorage, mockS3)
@@ -305,7 +310,7 @@ func TestFileUploadToS3(t *testing.T) {
 }
 
 func TestFileGetListFromS3(t *testing.T) {
-	mockStorage := new(MockPwdKeeper)
+	mockStorage := new(MockDBKeeper)
 	mockS3 := new(MockS3Keeper)
 	logger := slog.Default()
 	service := NewGRPCService(logger, mockStorage, mockS3)
@@ -329,7 +334,7 @@ func TestFileGetListFromS3(t *testing.T) {
 }
 
 func TestFileDeleteFromS3(t *testing.T) {
-	mockStorage := new(MockPwdKeeper)
+	mockStorage := new(MockDBKeeper)
 	mockS3 := new(MockS3Keeper)
 	logger := slog.Default()
 	service := NewGRPCService(logger, mockStorage, mockS3)

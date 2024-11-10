@@ -19,7 +19,9 @@ service GophKeeper {
     rpc NoteGetList(NoteGetListRequest) returns (NoteGetListResponse) {}
     rpc NoteUpdate(NoteUpdateRequest) returns (NoteUpdateResponse) {}
     rpc NoteDelete(NoteDeleteRequest) returns (NoteDeleteResponse) {}
+}
 
+service CardService {
     rpc CardAdd(CardAddRequest) returns (CardAddResponse) {}
     rpc CardGetList(CardGetListRequest) returns (CardGetListResponse) {}
 }

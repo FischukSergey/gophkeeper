@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
@@ -17,10 +18,10 @@ import (
 
 var log = slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-// pwdKeeperServer структура для сервера.
-type pwdKeeperServer struct {
+// PwdKeeperServer структура для сервера.
+type PwdKeeperServer struct {
 	pb.UnimplementedGophKeeperServer
-	pwdKeeper ProtoKeeperSaver
+	PwdKeeper   ProtoKeeperSaver
 }
 
 // ProtoKeeperSaver интерфейс для методов сервера.
@@ -35,13 +36,16 @@ type ProtoKeeperSaver interface {
 }
 
 // RegisterServerAPI регистрация сервера.
-func RegisterServerAPI(server *grpc.Server, pwdKeeper ProtoKeeperSaver) {
-	pb.RegisterGophKeeperServer(server, &pwdKeeperServer{pwdKeeper: pwdKeeper})
+func RegisterServerAPI(
+	server *grpc.Server,
+	pwdKeeper ProtoKeeperSaver,
+) {
+	pb.RegisterGophKeeperServer(server, &PwdKeeperServer{PwdKeeper: pwdKeeper})
 }
 
 // Ping метод для проверки соединения с сервером.
-func (s *pwdKeeperServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
-	err := s.pwdKeeper.Ping(ctx)
+func (s *PwdKeeperServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+	err := s.PwdKeeper.Ping(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to ping: %v", err)
 	}
@@ -49,7 +53,7 @@ func (s *pwdKeeperServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.Pi
 }
 
 // Registration метод для регистрации пользователя.
-func (s *pwdKeeperServer) Registration(
+func (s *PwdKeeperServer) Registration(
 	ctx context.Context, req *pb.RegistrationRequest) (*pb.RegistrationResponse, error) {
 	log.Info("Handler Registration method called")
 	login := req.Username
@@ -70,7 +74,7 @@ func (s *pwdKeeperServer) Registration(
 	}
 
 	// регистрируем пользователя
-	token, err := s.pwdKeeper.RegisterUser(ctx, req.Username, req.Password)
+	token, err := s.PwdKeeper.RegisterUser(ctx, req.Username, req.Password)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to register user: %v", err)
 	}
@@ -85,7 +89,7 @@ func (s *pwdKeeperServer) Registration(
 }
 
 // Authorization метод для авторизации пользователя.
-func (s *pwdKeeperServer) Authorization(
+func (s *PwdKeeperServer) Authorization(
 	ctx context.Context, req *pb.AuthorizationRequest) (*pb.AuthorizationResponse, error) {
 	log.Info("Handler Authorization method called")
 	login := req.Username
@@ -105,7 +109,7 @@ func (s *pwdKeeperServer) Authorization(
 	}
 
 	// авторизуем пользователя
-	token, err := s.pwdKeeper.Authorization(ctx, login, password)
+	token, err := s.PwdKeeper.Authorization(ctx, login, password)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to authorize user: %v", err)
 	}
@@ -121,7 +125,7 @@ func (s *pwdKeeperServer) Authorization(
 }
 
 // GetList метод для получения списка записей пользователя.
-func (s *pwdKeeperServer) NoteGetList(
+func (s *PwdKeeperServer) NoteGetList(
 	ctx context.Context, req *pb.NoteGetListRequest) (*pb.NoteGetListResponse, error) {
 	// log.Info("Handler NoteGetList method called")
 	// userID := req.UserID
@@ -133,7 +137,7 @@ func (s *pwdKeeperServer) NoteGetList(
 }
 
 // FileUpload метод для загрузки файла в S3.
-func (s *pwdKeeperServer) FileUpload(
+func (s *PwdKeeperServer) FileUpload(
 	ctx context.Context, req *pb.FileUploadRequest) (*pb.FileUploadResponse, error) {
 	log.Info("Handler FileUpload method called")
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
@@ -142,7 +146,7 @@ func (s *pwdKeeperServer) FileUpload(
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 	// загружаем файл в S3
-	url, err := s.pwdKeeper.FileUploadToS3(ctx, req.Data, req.Filename, int64(userID))
+	url, err := s.PwdKeeper.FileUploadToS3(ctx, req.Data, req.Filename, int64(userID))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to upload file: %v", err)
 	}
@@ -150,7 +154,7 @@ func (s *pwdKeeperServer) FileUpload(
 }
 
 // FileGetList метод для получения списка файлов пользователя.
-func (s *pwdKeeperServer) FileGetList(
+func (s *PwdKeeperServer) FileGetList(
 	ctx context.Context, req *pb.FileGetListRequest) (*pb.FileGetListResponse, error) {
 	log.Info("Handler FileGetList method called")
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
@@ -158,7 +162,7 @@ func (s *pwdKeeperServer) FileGetList(
 		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
 	}
 	log.Info("userID found", slog.Int("userID", userID))
-	files, err := s.pwdKeeper.FileGetListFromS3(ctx, int64(userID))
+	files, err := s.PwdKeeper.FileGetListFromS3(ctx, int64(userID))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get file list: %v", err)
 	}
@@ -177,7 +181,7 @@ func (s *pwdKeeperServer) FileGetList(
 }
 
 // FileDelete метод для удаления файла из S3.
-func (s *pwdKeeperServer) FileDelete(
+func (s *PwdKeeperServer) FileDelete(
 	ctx context.Context, req *pb.FileDeleteRequest) (*pb.FileDeleteResponse, error) {
 	log.Info("Handler FileDelete method called")
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
@@ -185,7 +189,7 @@ func (s *pwdKeeperServer) FileDelete(
 		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
 	}
 	log.Info("userID found", slog.Int("userID", userID))
-	err := s.pwdKeeper.FileDeleteFromS3(ctx, int64(userID), req.Filename)
+	err := s.PwdKeeper.FileDeleteFromS3(ctx, int64(userID), req.Filename)
 	if err != nil {
 		if errors.Is(err, models.ErrFileNotExist) {
 			return nil, status.Errorf(codes.NotFound, "file does not exist: %v", err)
@@ -196,7 +200,7 @@ func (s *pwdKeeperServer) FileDelete(
 }
 
 // FileDownload метод для скачивания файла из S3.
-func (s *pwdKeeperServer) FileDownload(
+func (s *PwdKeeperServer) FileDownload(
 	ctx context.Context, req *pb.FileDownloadRequest) (*pb.FileDownloadResponse, error) {
 	log.Info("Handler FileDownload method called")
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
@@ -205,7 +209,7 @@ func (s *pwdKeeperServer) FileDownload(
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 	// скачиваем файл из S3
-	data, err := s.pwdKeeper.FileDownloadFromS3(ctx, int64(userID), req.Filename)
+	data, err := s.PwdKeeper.FileDownloadFromS3(ctx, int64(userID), req.Filename)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to download file: %v", err)
 	}

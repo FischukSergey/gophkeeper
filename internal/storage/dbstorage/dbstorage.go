@@ -70,6 +70,35 @@ func (s *Storage) GetUserByLogin(ctx context.Context, login string) (models.User
 	return user, nil
 }
 
+// CardAdd метод для добавления карты.
+func (s *Storage) CardAdd(ctx context.Context, card models.Card) error {
+	query := `INSERT INTO cards 
+	(
+		user_id,
+		card_bank, 
+		card_number, 
+		card_holder, 
+		card_expiration_date, 
+		card_cvv, 
+		created_at
+	) 
+	VALUES($1,$2,$3,$4,$5,$6,now());`
+	_, err := s.DB.Exec(
+		ctx,
+		query,
+		card.UserID,
+		card.CardBank,
+		card.CardNumber,
+		card.CardHolder,
+		card.CardExpirationDate,
+		card.CardCVV,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to add card: %w", err)
+	}
+	return nil
+}
+
 // Close закрытие подключения к базе данных.
 func (s *Storage) Close() {
 	s.DB.Close()

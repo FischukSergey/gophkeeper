@@ -147,8 +147,8 @@ func Test_pwdKeeperServer_Registration(t *testing.T) {
 			if tt.mock != nil {
 				tt.mock()
 			}
-			s := &pwdKeeperServer{
-				pwdKeeper: mockService,
+			s := &PwdKeeperServer{
+				PwdKeeper: mockService,
 			}
 			got, err := s.Registration(context.Background(), tt.args.req)
 			if !assert.ErrorIs(t, err, tt.want.err) {
@@ -165,7 +165,7 @@ func Test_pwdKeeperServer_Registration(t *testing.T) {
 	}
 }
 
-func Test_pwdKeeperServer_Authorization(t *testing.T) {
+func Test_PwdKeeperServer_Authorization(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockService := mock_handlers.NewMockProtoKeeperSaver(ctrl)
@@ -282,8 +282,8 @@ func Test_pwdKeeperServer_Authorization(t *testing.T) {
 			if tt.mock != nil {
 				tt.mock()
 			}
-			s := &pwdKeeperServer{
-				pwdKeeper: mockService,
+			s := &PwdKeeperServer{
+				PwdKeeper: mockService,
 			}
 			got, err := s.Authorization(context.Background(), tt.args.req)
 			if !assert.ErrorIs(t, err, tt.want.err) {
@@ -300,7 +300,7 @@ func Test_pwdKeeperServer_Authorization(t *testing.T) {
 	}
 }
 
-func Test_pwdKeeperServer_Ping(t *testing.T) {
+func Test_PwdKeeperServer_Ping(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockService := mock_handlers.NewMockProtoKeeperSaver(ctrl)
@@ -341,8 +341,8 @@ func Test_pwdKeeperServer_Ping(t *testing.T) {
 			if tt.mock != nil {
 				tt.mock()
 			}
-			s := &pwdKeeperServer{
-				pwdKeeper: mockService,
+			s := &PwdKeeperServer{
+				PwdKeeper: mockService,
 			}
 			got, err := s.Ping(context.Background(), tt.args.req)
 			if !assert.ErrorIs(t, err, tt.want.err) {
@@ -359,7 +359,7 @@ func Test_pwdKeeperServer_Ping(t *testing.T) {
 	}
 }
 
-func Test_pwdKeeperServer_FileUploadToS3(t *testing.T) {
+	func Test_PwdKeeperServer_FileUploadToS3(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockService := mock_handlers.NewMockProtoKeeperSaver(ctrl)
@@ -443,8 +443,8 @@ func Test_pwdKeeperServer_FileUploadToS3(t *testing.T) {
 			if tt.mock != nil {
 				tt.mock()
 			}
-			s := &pwdKeeperServer{
-				pwdKeeper: mockService,
+			s := &PwdKeeperServer{
+				PwdKeeper: mockService,
 			}
 			var got *pb.FileUploadResponse
 			var err error
@@ -468,7 +468,7 @@ func Test_pwdKeeperServer_FileUploadToS3(t *testing.T) {
 	}
 }
 
-func Test_pwdKeeperServer_FileDeleteFromS3(t *testing.T) {
+func Test_PwdKeeperServer_FileDeleteFromS3(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockService := mock_handlers.NewMockProtoKeeperSaver(ctrl)
@@ -547,8 +547,8 @@ func Test_pwdKeeperServer_FileDeleteFromS3(t *testing.T) {
 			if tt.mock != nil {
 				tt.mock()
 			}
-			s := &pwdKeeperServer{
-				pwdKeeper: mockService,
+			s := &PwdKeeperServer{
+				PwdKeeper: mockService,
 			}
 			var got *pb.FileDeleteResponse
 			var err error
@@ -572,7 +572,7 @@ func Test_pwdKeeperServer_FileDeleteFromS3(t *testing.T) {
 	}
 }
 
-func Test_pwdKeeperServer_FileGetListS3(t *testing.T) {
+func Test_PwdKeeperServer_FileGetListS3(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockService := mock_handlers.NewMockProtoKeeperSaver(ctrl)
@@ -660,8 +660,8 @@ func Test_pwdKeeperServer_FileGetListS3(t *testing.T) {
 			if tt.mock != nil {
 				tt.mock()
 			}
-			s := &pwdKeeperServer{
-				pwdKeeper: mockService,
+			s := &PwdKeeperServer{
+				PwdKeeper: mockService,
 			}
 			var got *pb.FileGetListResponse
 			var err error

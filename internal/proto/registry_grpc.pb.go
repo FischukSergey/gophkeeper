@@ -30,8 +30,6 @@ const (
 	GophKeeper_NoteGetList_FullMethodName   = "/server.GophKeeper/NoteGetList"
 	GophKeeper_NoteUpdate_FullMethodName    = "/server.GophKeeper/NoteUpdate"
 	GophKeeper_NoteDelete_FullMethodName    = "/server.GophKeeper/NoteDelete"
-	GophKeeper_CardAdd_FullMethodName       = "/server.GophKeeper/CardAdd"
-	GophKeeper_CardGetList_FullMethodName   = "/server.GophKeeper/CardGetList"
 )
 
 // GophKeeperClient is the client API for GophKeeper service.
@@ -49,8 +47,6 @@ type GophKeeperClient interface {
 	NoteGetList(ctx context.Context, in *NoteGetListRequest, opts ...grpc.CallOption) (*NoteGetListResponse, error)
 	NoteUpdate(ctx context.Context, in *NoteUpdateRequest, opts ...grpc.CallOption) (*NoteUpdateResponse, error)
 	NoteDelete(ctx context.Context, in *NoteDeleteRequest, opts ...grpc.CallOption) (*NoteDeleteResponse, error)
-	CardAdd(ctx context.Context, in *CardAddRequest, opts ...grpc.CallOption) (*CardAddResponse, error)
-	CardGetList(ctx context.Context, in *CardGetListRequest, opts ...grpc.CallOption) (*CardGetListResponse, error)
 }
 
 type gophKeeperClient struct {
@@ -171,26 +167,6 @@ func (c *gophKeeperClient) NoteDelete(ctx context.Context, in *NoteDeleteRequest
 	return out, nil
 }
 
-func (c *gophKeeperClient) CardAdd(ctx context.Context, in *CardAddRequest, opts ...grpc.CallOption) (*CardAddResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CardAddResponse)
-	err := c.cc.Invoke(ctx, GophKeeper_CardAdd_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gophKeeperClient) CardGetList(ctx context.Context, in *CardGetListRequest, opts ...grpc.CallOption) (*CardGetListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CardGetListResponse)
-	err := c.cc.Invoke(ctx, GophKeeper_CardGetList_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // GophKeeperServer is the server API for GophKeeper service.
 // All implementations must embed UnimplementedGophKeeperServer
 // for forward compatibility.
@@ -206,8 +182,6 @@ type GophKeeperServer interface {
 	NoteGetList(context.Context, *NoteGetListRequest) (*NoteGetListResponse, error)
 	NoteUpdate(context.Context, *NoteUpdateRequest) (*NoteUpdateResponse, error)
 	NoteDelete(context.Context, *NoteDeleteRequest) (*NoteDeleteResponse, error)
-	CardAdd(context.Context, *CardAddRequest) (*CardAddResponse, error)
-	CardGetList(context.Context, *CardGetListRequest) (*CardGetListResponse, error)
 	mustEmbedUnimplementedGophKeeperServer()
 }
 
@@ -250,12 +224,6 @@ func (UnimplementedGophKeeperServer) NoteUpdate(context.Context, *NoteUpdateRequ
 }
 func (UnimplementedGophKeeperServer) NoteDelete(context.Context, *NoteDeleteRequest) (*NoteDeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NoteDelete not implemented")
-}
-func (UnimplementedGophKeeperServer) CardAdd(context.Context, *CardAddRequest) (*CardAddResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CardAdd not implemented")
-}
-func (UnimplementedGophKeeperServer) CardGetList(context.Context, *CardGetListRequest) (*CardGetListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CardGetList not implemented")
 }
 func (UnimplementedGophKeeperServer) mustEmbedUnimplementedGophKeeperServer() {}
 func (UnimplementedGophKeeperServer) testEmbeddedByValue()                    {}
@@ -476,42 +444,6 @@ func _GophKeeper_NoteDelete_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GophKeeper_CardAdd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CardAddRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GophKeeperServer).CardAdd(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: GophKeeper_CardAdd_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServer).CardAdd(ctx, req.(*CardAddRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GophKeeper_CardGetList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CardGetListRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GophKeeperServer).CardGetList(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: GophKeeper_CardGetList_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServer).CardGetList(ctx, req.(*CardGetListRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // GophKeeper_ServiceDesc is the grpc.ServiceDesc for GophKeeper service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -563,13 +495,145 @@ var GophKeeper_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "NoteDelete",
 			Handler:    _GophKeeper_NoteDelete_Handler,
 		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "internal/proto/registry.proto",
+}
+
+const (
+	CardService_CardAdd_FullMethodName     = "/server.CardService/CardAdd"
+	CardService_CardGetList_FullMethodName = "/server.CardService/CardGetList"
+)
+
+// CardServiceClient is the client API for CardService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type CardServiceClient interface {
+	CardAdd(ctx context.Context, in *CardAddRequest, opts ...grpc.CallOption) (*CardAddResponse, error)
+	CardGetList(ctx context.Context, in *CardGetListRequest, opts ...grpc.CallOption) (*CardGetListResponse, error)
+}
+
+type cardServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewCardServiceClient(cc grpc.ClientConnInterface) CardServiceClient {
+	return &cardServiceClient{cc}
+}
+
+func (c *cardServiceClient) CardAdd(ctx context.Context, in *CardAddRequest, opts ...grpc.CallOption) (*CardAddResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CardAddResponse)
+	err := c.cc.Invoke(ctx, CardService_CardAdd_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cardServiceClient) CardGetList(ctx context.Context, in *CardGetListRequest, opts ...grpc.CallOption) (*CardGetListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CardGetListResponse)
+	err := c.cc.Invoke(ctx, CardService_CardGetList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CardServiceServer is the server API for CardService service.
+// All implementations must embed UnimplementedCardServiceServer
+// for forward compatibility.
+type CardServiceServer interface {
+	CardAdd(context.Context, *CardAddRequest) (*CardAddResponse, error)
+	CardGetList(context.Context, *CardGetListRequest) (*CardGetListResponse, error)
+	mustEmbedUnimplementedCardServiceServer()
+}
+
+// UnimplementedCardServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedCardServiceServer struct{}
+
+func (UnimplementedCardServiceServer) CardAdd(context.Context, *CardAddRequest) (*CardAddResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CardAdd not implemented")
+}
+func (UnimplementedCardServiceServer) CardGetList(context.Context, *CardGetListRequest) (*CardGetListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CardGetList not implemented")
+}
+func (UnimplementedCardServiceServer) mustEmbedUnimplementedCardServiceServer() {}
+func (UnimplementedCardServiceServer) testEmbeddedByValue()                     {}
+
+// UnsafeCardServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CardServiceServer will
+// result in compilation errors.
+type UnsafeCardServiceServer interface {
+	mustEmbedUnimplementedCardServiceServer()
+}
+
+func RegisterCardServiceServer(s grpc.ServiceRegistrar, srv CardServiceServer) {
+	// If the following call pancis, it indicates UnimplementedCardServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&CardService_ServiceDesc, srv)
+}
+
+func _CardService_CardAdd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CardAddRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CardServiceServer).CardAdd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CardService_CardAdd_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CardServiceServer).CardAdd(ctx, req.(*CardAddRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CardService_CardGetList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CardGetListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CardServiceServer).CardGetList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CardService_CardGetList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CardServiceServer).CardGetList(ctx, req.(*CardGetListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// CardService_ServiceDesc is the grpc.ServiceDesc for CardService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var CardService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "server.CardService",
+	HandlerType: (*CardServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CardAdd",
-			Handler:    _GophKeeper_CardAdd_Handler,
+			Handler:    _CardService_CardAdd_Handler,
 		},
 		{
 			MethodName: "CardGetList",
-			Handler:    _GophKeeper_CardGetList_Handler,
+			Handler:    _CardService_CardGetList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

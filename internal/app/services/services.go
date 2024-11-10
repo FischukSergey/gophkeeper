@@ -4,16 +4,18 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/FischukSergey/gophkeeper/cmd/server/initial"
 	"github.com/FischukSergey/gophkeeper/internal/lib/jwt"
+	"github.com/FischukSergey/gophkeeper/internal/lib/luhn"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// PwdKeeper интерфейс для сервиса парольного хранилища.
-type PwdKeeper interface {
+// DBKeeper интерфейс для сервиса парольного хранилища.
+type DBKeeper interface {
 	GetPingDB(ctx context.Context) error
 	RegisterUser(ctx context.Context, login, password string) (int64, error)
 	GetUserByLogin(ctx context.Context, login string) (models.User, error)
@@ -26,16 +28,32 @@ type S3Keeper interface {
 	S3DownloadFile(ctx context.Context, bucketID string, bucket string) ([]byte, error)
 }
 
+type CardKeeper interface {
+	CardAdd(ctx context.Context, card models.Card) error
+}
+
+
 // GRPCService структура для сервиса.
 type GRPCService struct {
 	log     *slog.Logger
-	storage PwdKeeper
+	storage DBKeeper
 	s3      S3Keeper
 }
 
+// CardService структура для сервиса карт.
+type CardService struct {
+	log     *slog.Logger
+	storage CardKeeper
+}
+
 // NewGRPCService функция для создания сервиса.
-func NewGRPCService(log *slog.Logger, storage PwdKeeper, s3 S3Keeper) *GRPCService {
+func NewGRPCService(log *slog.Logger, storage DBKeeper, s3 S3Keeper) *GRPCService {
 	return &GRPCService{log: log, storage: storage, s3: s3}
+}
+
+// NewCardService функция для создания сервиса карт.
+func NewCardService(log *slog.Logger, storage CardKeeper) *CardService {
+	return &CardService{log: log, storage: storage}
 }
 
 // Ping метод для проверки соединения с сервером.
@@ -168,4 +186,25 @@ func (g *GRPCService) FileDownloadFromS3(ctx context.Context, userID int64, file
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}
 	return data, nil
-}	
+}
+
+// CardAdd метод для добавления карты.
+func (g *CardService) CardAddService(ctx context.Context, card models.Card) error {
+	g.log.Info("Service CardAdd method called")
+	//валидируем данные
+	if card.CardNumber == "" || card.CardHolder == "" || card.CardCVV == "" {
+		return fmt.Errorf("invalid card data")
+	}
+	card.CardNumber = strings.ReplaceAll(card.CardNumber, "-", "")
+	//валидируем номер карты
+	if !luhn.Valid(card.CardNumber) || len(card.CardNumber) != 16 {
+		return fmt.Errorf("invalid card number")
+	}
+	card.CardHolder = strings.ToUpper(card.CardHolder)
+	//добавляем карту в базу данных
+	err := g.storage.CardAdd(ctx, card)
+	if err != nil {
+		return fmt.Errorf("failed to add card: %w", err)
+	}
+	return nil
+}
