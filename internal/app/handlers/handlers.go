@@ -31,6 +31,7 @@ type ProtoKeeperSaver interface {
 	FileUploadToS3(ctx context.Context, fileData []byte, filename string, userID int64) (string, error)
 	FileGetListFromS3(ctx context.Context, userID int64) ([]models.File, error)
 	FileDeleteFromS3(ctx context.Context, userID int64, filename string) error
+	FileDownloadFromS3(ctx context.Context, userID int64, filename string) ([]byte, error)
 }
 
 // RegisterServerAPI регистрация сервера.
@@ -192,4 +193,21 @@ func (s *pwdKeeperServer) FileDelete(
 		return nil, status.Errorf(codes.Internal, "failed to delete file: %v", err)
 	}
 	return &pb.FileDeleteResponse{}, nil
+}
+
+// FileDownload метод для скачивания файла из S3.
+func (s *pwdKeeperServer) FileDownload(
+	ctx context.Context, req *pb.FileDownloadRequest) (*pb.FileDownloadResponse, error) {
+	log.Info("Handler FileDownload method called")
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+	}
+	log.Info("userID found", slog.Int("userID", userID))
+	// скачиваем файл из S3
+	data, err := s.pwdKeeper.FileDownloadFromS3(ctx, int64(userID), req.Filename)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to download file: %v", err)
+	}
+	return &pb.FileDownloadResponse{Data: data}, nil
 }

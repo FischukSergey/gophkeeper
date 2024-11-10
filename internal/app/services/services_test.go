@@ -69,6 +69,11 @@ func (m *MockS3Keeper) S3DeleteFile(ctx context.Context, bucketID string, bucket
 	return args.Error(0)
 }
 
+func (m *MockS3Keeper) S3DownloadFile(ctx context.Context, bucketID string, bucket string) ([]byte, error) {
+	args := m.Called(ctx, bucketID, bucket)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
 // Test functions.
 func TestPing(t *testing.T) {
 	tests := []struct {

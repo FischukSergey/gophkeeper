@@ -64,6 +64,21 @@ func (mr *MockProtoKeeperSaverMockRecorder) FileDeleteFromS3(ctx, userID, filena
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FileDeleteFromS3", reflect.TypeOf((*MockProtoKeeperSaver)(nil).FileDeleteFromS3), ctx, userID, filename)
 }
 
+// FileDownloadFromS3 mocks base method.
+func (m *MockProtoKeeperSaver) FileDownloadFromS3(ctx context.Context, userID int64, filename string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FileDownloadFromS3", ctx, userID, filename)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FileDownloadFromS3 indicates an expected call of FileDownloadFromS3.
+func (mr *MockProtoKeeperSaverMockRecorder) FileDownloadFromS3(ctx, userID, filename interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FileDownloadFromS3", reflect.TypeOf((*MockProtoKeeperSaver)(nil).FileDownloadFromS3), ctx, userID, filename)
+}
+
 // FileGetListFromS3 mocks base method.
 func (m *MockProtoKeeperSaver) FileGetListFromS3(ctx context.Context, userID int64) ([]models.File, error) {
 	m.ctrl.T.Helper()

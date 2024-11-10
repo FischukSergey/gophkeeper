@@ -59,30 +59,55 @@ func main() {
 	writer := os.Stdout
 	token := &grpcclient.Token{}
 
+	// Создаем все команды
 	commandRegister := command.NewCommandRegister(authService, token, reader, writer)
 	commandLogin := command.NewCommandLogin(authService, token, reader, writer)
 	commandFileUpload := command.NewCommandFileUpload(authService, token, reader, writer)
+	commandFileDownload := command.NewCommandFileDownload(authService, token, reader, writer)
 	commandFileDelete := command.NewCommandFileDelete(authService, token, reader, writer)
 	commandFileGetList := command.NewCommandFileGetList(authService, token, reader, writer)
 	commandExit := command.NewCommandExit(reader, writer)
 
-	commands := []command.ICommand{
+	// Определяем основное меню и подменю файлов
+	mainCommands := []command.ICommand{
 		commandLogin,
 		commandRegister,
-		commandFileUpload,
-		commandFileGetList,
-		commandFileDelete,
 		commandExit,
 	}
 
-	commandsMenu := make(map[string]func())
-	for _, command := range commands {
-		commandsMenu[command.Name()] = command.Execute
+	fileCommands := []command.ICommand{
+		commandFileUpload,
+		commandFileDownload,
+		commandFileGetList,
+		commandFileDelete,
 	}
-	commandsNames := make([]string, 0, len(commands))
-	for _, command := range commands {
-		commandsNames = append(commandsNames, command.Name())
+
+	// Создаем мапы для команд
+	mainCommandsMenu := make(map[string]func())
+	fileCommandsMenu := make(map[string]func())
+
+	// Заполняем мапу основного меню
+	for _, cmd := range mainCommands {
+		mainCommandsMenu[cmd.Name()] = cmd.Execute
 	}
+	// Добавляем специальную команду для перехода в подменю файлов
+	mainCommandsMenu["Работа с файлами"] = func() {
+		handleFileSubmenu(fileCommands, fileCommandsMenu)
+	}
+
+	// Заполняем мапу подменю файлов
+	for _, cmd := range fileCommands {
+		fileCommandsMenu[cmd.Name()] = cmd.Execute
+	}
+	// Добавляем команду возврата в главное меню
+	fileCommandsMenu["Назад"] = func() {}
+
+	// Формируем список названий команд для главного меню
+	mainCommandNames := make([]string, 0, len(mainCommands)+1)
+	for _, cmd := range mainCommands {
+		mainCommandNames = append(mainCommandNames, cmd.Name())
+	}
+	mainCommandNames = append(mainCommandNames, "Работа с файлами")
 
 	for {
 		templates := promptui.SelectTemplates{
@@ -91,16 +116,48 @@ func main() {
 			Inactive: "  {{ . | cyan }}",
 			Selected: "-> {{ . | green }}",
 		}
-		promt := promptui.Select{
+		prompt := promptui.Select{
 			Templates: &templates,
 			Label:     "Введите команду:",
-			Items:     commandsNames,
+			Items:     mainCommandNames,
 		}
-		_, result, err := promt.Run()
+		_, result, err := prompt.Run()
 		if err != nil {
 			log.Error("failed to run prompt", logger.Err(err))
 			os.Exit(1)
 		}
-		commandsMenu[result]()
+		mainCommandsMenu[result]()
+	}
+}
+
+// Функция для обработки подменю файлов
+func handleFileSubmenu(fileCommands []command.ICommand, fileCommandsMenu map[string]func()) {
+	fileCommandNames := make([]string, 0, len(fileCommands)+1)
+	for _, cmd := range fileCommands {
+		fileCommandNames = append(fileCommandNames, cmd.Name())
+	}
+	fileCommandNames = append(fileCommandNames, "Назад")
+
+	for {
+		templates := promptui.SelectTemplates{
+			Label:    "{{ . | red }}",
+			Active:   "\U0001F449 {{ . | green }}",
+			Inactive: "  {{ . | cyan }}",
+			Selected: "-> {{ . | green }}",
+		}
+		prompt := promptui.Select{
+			Templates: &templates,
+			Label:     "Меню работы с файлами:",
+			Items:     fileCommandNames,
+		}
+		_, result, err := prompt.Run()
+		if err != nil {
+			log.Error("failed to run prompt", logger.Err(err))
+			os.Exit(1)
+		}
+		if result == "Назад" {
+			return
+		}
+		fileCommandsMenu[result]()
 	}
 }

@@ -86,13 +86,7 @@ func (c *commandRegister) Execute() {
 	}
 	c.token.Token = token
 	fmt.Println("\nРегистрация прошла успешно")
-	// Ожидание нажатия клавиши
-	fmt.Println(messageContinue)
-	var input string
-	_, err = fmt.Scanln(&input)
-	if err != nil {
-		fmt.Printf(errInputMessage, err)
-	}
+	waitEnter(c.reader)
 }
 
 // NewCommandRegister создание команды регистрации.

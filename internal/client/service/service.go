@@ -146,3 +146,18 @@ func (s *AuthService) S3FileDelete(ctx context.Context, token string, filename s
 	}
 	return nil
 }
+
+// S3FileDownload загрузка файла с сервера.
+func (s *AuthService) S3FileDownload(ctx context.Context, token string, filename string) ([]byte, error) {
+	// добавление токена авторизации в контекст
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	// загрузка файла
+	response, err := s.client.FileDownload(ctx, &pb.FileDownloadRequest{
+		Filename: filename,
+	})
+	if err != nil {
+		s.log.Error("ошибка загрузки файла", "error", err)
+		return nil, fmt.Errorf("failed to download file: %w", err)
+	}
+	return response.GetData(), nil
+}

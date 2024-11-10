@@ -49,17 +49,7 @@ func (c *CommandFileDelete) Name() string {
 // Execute выполнение команды удаления файла.
 func (c *CommandFileDelete) Execute() {
 	//проверка наличия токена
-	if c.token.Token == "" {
-		fmt.Println("Вы не авторизованы. Авторизуйтесь с помощью команды login.")
-		// ожидание нажатия клавиши
-		fmt.Println(messageContinue)
-		var input string
-		_, err := fmt.Scanln(&input)
-		if err != nil {
-			fmt.Printf(errInputMessage, err)
-		}
-		return
-	}
+	checkToken(c.token, c.reader)
 	// запрос на удаление файла
 	fmt.Println("Введите имя файла для удаления (внимание, чувствительно к регистру):")
 	var filename string
@@ -82,20 +72,10 @@ func (c *CommandFileDelete) Execute() {
 			fmt.Printf("Ошибка при удалении файла: %v\n", err)
 		}
 		// ожидание нажатия клавиши
-		fmt.Println(messageContinue)
-		var input string
-		_, err = fmt.Scanln(&input)
-		if err != nil {
-			fmt.Printf(errInputMessage, err)
-		}
+		waitEnter(c.reader)
 		return
 	}
 
 	fmt.Println("Файл успешно удален")
-	fmt.Println(messageContinue)
-	var input string
-	_, err = fmt.Scanln(&input)
-	if err != nil {
-		fmt.Printf(errInputMessage, err)
-	}
+	waitEnter(c.reader)
 }

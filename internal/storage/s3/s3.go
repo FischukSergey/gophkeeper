@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"path/filepath"
 	"time"
@@ -121,6 +122,33 @@ func (s *S3) S3DeleteFile(ctx context.Context, bucketID string, bucket string) e
 	}
 
 	return nil
+}
+
+// S3DownloadFile скачивает файл из S3.
+func (s *S3) S3DownloadFile(ctx context.Context, bucketID string, bucket string) ([]byte, error) {
+	svc := s3.New(s.S3Session)
+	// проверяем существование файла
+	_, err := svc.HeadObjectWithContext(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(bucketID),
+	})
+	if err != nil {
+		return nil, models.ErrFileNotExist
+	}
+	// скачиваем файл
+	result, err := svc.GetObjectWithContext(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(bucketID),
+	})
+	if err != nil {			
+		return nil, fmt.Errorf("failed to download file: %w", err)
+	}
+	// преобразуем io.ReadCloser в []byte
+	data, err := io.ReadAll(result.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+	return data, nil
 }
 
 // Close закрытие соединения с S3.

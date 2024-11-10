@@ -45,7 +45,18 @@ type File struct {
 	Size      int64
 }
 
-// ErrUserExists ошибка, если пользователь уже существует.
+// Card структура для карты.
+type Card struct {
+	CardID             string
+	UserID             string
+	CardNumber         string
+	CardHolder         string
+	CardExpirationDate time.Time
+	CardCVV            string
+	CardBank           string
+}
+
+// Ошибки для пользователя.
 var (
 	ErrUserExists   = errors.New("user exists")
 	ErrFileExists   = errors.New("file exists")

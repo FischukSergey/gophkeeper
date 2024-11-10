@@ -51,17 +51,7 @@ func (c *CommandFileUpload) Name() string {
 // Execute выполняет команду загрузки файла.
 func (c *CommandFileUpload) Execute() {
 	//проверка наличия токена
-	if c.token.Token == "" {
-		fmt.Println("Вы не авторизованы. Авторизуйтесь с помощью команды login.")
-		// ожидание нажатия клавиши
-		fmt.Println(messageContinue)
-		var input string
-		_, err := fmt.Scanln(&input)
-		if err != nil {
-			fmt.Printf(errInputMessage, err)
-		}
-		return
-	}
+	checkToken(c.token, c.reader)
 	//ввод пути к файлу
 	filePathPrompt := promptui.Prompt{
 		Label: "Введите путь к файлу",
@@ -99,10 +89,5 @@ func (c *CommandFileUpload) Execute() {
 	}
 	fmt.Println("Файл загружен на S3:", s3Filepath)
 	//ожидание нажатия клавиши
-	fmt.Println(messageContinue)
-	var input string
-	_, err = fmt.Scanln(&input)
-	if err != nil {
-		fmt.Printf(errInputMessage, err)
-	}
+	waitEnter(c.reader)
 }

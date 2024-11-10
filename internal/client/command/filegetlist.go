@@ -51,17 +51,7 @@ func (c *CommandFileGetList) Name() string {
 // Execute выполнение команды получения списка файлов.
 func (c *CommandFileGetList) Execute() {
 	//проверка наличия токена
-	if c.token.Token == "" {
-		fmt.Println("Вы не авторизованы. Авторизуйтесь с помощью команды login.")
-		// ожидание нажатия клавиши
-		fmt.Println(messageContinue)
-		var input string
-		_, err := fmt.Scanln(&input)
-		if err != nil {
-			fmt.Printf(errInputMessage, err)
-		}
-		return
-	}
+	checkToken(c.token, c.reader)
 	// получение списка файлов
 	files, err := c.fileGetListService.GetFileList(context.Background(), c.token.Token)
 	if err != nil {
@@ -109,10 +99,5 @@ func (c *CommandFileGetList) Execute() {
 	}
 
 	// ожидание нажатия клавиши
-	fmt.Println(messageContinue)
-	var input string
-	_, err = fmt.Scanln(&input)
-	if err != nil {
-		fmt.Printf(errInputMessage, err)
-	}
+	waitEnter(c.reader)
 }

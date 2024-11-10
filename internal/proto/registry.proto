@@ -19,6 +19,9 @@ service GophKeeper {
     rpc NoteGetList(NoteGetListRequest) returns (NoteGetListResponse) {}
     rpc NoteUpdate(NoteUpdateRequest) returns (NoteUpdateResponse) {}
     rpc NoteDelete(NoteDeleteRequest) returns (NoteDeleteResponse) {}
+
+    rpc CardAdd(CardAddRequest) returns (CardAddResponse) {}
+    rpc CardGetList(CardGetListRequest) returns (CardGetListResponse) {}
 }
 
 // Ping
@@ -146,4 +149,27 @@ message NoteDeleteRequest {
 }
 message NoteDeleteResponse {
     int64 noteID = 1;
+}
+
+// Card структура карты
+message Card {
+    string cardNumber = 1;
+    string cardHolder = 2;
+    google.protobuf.Timestamp cardExpirationDate = 3;
+    string cardCVV = 4;
+    string cardBank = 5;
+}
+
+// CardAdd
+message CardAddRequest {
+    Card card = 1;
+}
+message CardAddResponse {
+    int64 cardID = 1;
+}
+
+// CardGetList
+message CardGetListRequest {}
+message CardGetListResponse {
+    repeated Card cards = 1;
 }

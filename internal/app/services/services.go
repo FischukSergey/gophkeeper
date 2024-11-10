@@ -23,6 +23,7 @@ type S3Keeper interface {
 	S3UploadFile(ctx context.Context, fileData []byte, filename string, bucket string) (string, error)
 	S3GetFileList(ctx context.Context, bucketID string, bucket string) ([]models.File, error)
 	S3DeleteFile(ctx context.Context, bucketID string, bucket string) error
+	S3DownloadFile(ctx context.Context, bucketID string, bucket string) ([]byte, error)
 }
 
 // GRPCService структура для сервиса.
@@ -156,3 +157,15 @@ func (g *GRPCService) FileDeleteFromS3(ctx context.Context, userID int64, filena
 	}
 	return nil
 }
+
+// FileDownloadFromS3 метод для скачивания файла из S3.
+func (g *GRPCService) FileDownloadFromS3(ctx context.Context, userID int64, filename string) ([]byte, error) {
+	g.log.Info("Service FileDownloadFromS3 method called")
+	bucket := initial.Cfg.S3.Bucket
+	bucketID := fmt.Sprintf("%d/%s", userID, filename)
+	data, err := g.s3.S3DownloadFile(ctx, bucketID, bucket)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download file: %w", err)
+	}
+	return data, nil
+}	
