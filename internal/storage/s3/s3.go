@@ -140,7 +140,7 @@ func (s *S3) S3DownloadFile(ctx context.Context, bucketID string, bucket string)
 		Bucket: aws.String(bucket),
 		Key:    aws.String(bucketID),
 	})
-	if err != nil {			
+	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}
 	// преобразуем io.ReadCloser в []byte

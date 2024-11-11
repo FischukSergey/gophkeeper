@@ -359,7 +359,7 @@ func Test_PwdKeeperServer_Ping(t *testing.T) {
 	}
 }
 
-	func Test_PwdKeeperServer_FileUploadToS3(t *testing.T) {
+func Test_PwdKeeperServer_FileUploadToS3(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockService := mock_handlers.NewMockProtoKeeperSaver(ctrl)

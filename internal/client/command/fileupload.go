@@ -10,6 +10,7 @@ import (
 
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
+	"github.com/FischukSergey/gophkeeper/internal/models"
 	"github.com/manifoldco/promptui"
 )
 
@@ -50,8 +51,10 @@ func (c *CommandFileUpload) Name() string {
 
 // Execute выполняет команду загрузки файла.
 func (c *CommandFileUpload) Execute() {
-	//проверка наличия токена
-	checkToken(c.token, c.reader)
+	// Проверка наличия токена
+	if !checkToken(c.token, c.reader) {
+		return // Выходим из функции если токен невалидный
+	}
 	//ввод пути к файлу
 	filePathPrompt := promptui.Prompt{
 		Label: "Введите путь к файлу",
@@ -80,8 +83,8 @@ func (c *CommandFileUpload) Execute() {
 		// проверка ошибки
 		if strings.Contains(err.Error(), auth.ErrNotFound) ||
 			strings.Contains(err.Error(), auth.ErrInvalid) ||
-			strings.Contains(err.Error(), "user ID not found in context") {
-			fmt.Println("Ошибка авторизации. Пожалуйста, войдите в систему заново")
+			strings.Contains(err.Error(), models.UserIDNotFound) {
+			fmt.Println(errorAuth)
 		} else {
 			fmt.Printf(errOutputMessage, err)
 		}

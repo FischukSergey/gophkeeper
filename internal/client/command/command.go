@@ -21,7 +21,7 @@ type ICommand interface {
 	Name() string
 }
 
-// Ожидание нажатия клавиши
+// waitEnter ожидание нажатия клавиши.
 func waitEnter(reader io.Reader) {
 	fmt.Println(messageContinue)
 	buffer := make([]byte, 1)
@@ -31,51 +31,75 @@ func waitEnter(reader io.Reader) {
 	}
 }
 
-// проверка наличия токена
-func checkToken(token *grpcclient.Token, reader io.Reader) {
+// checkToken проверка наличия токена.
+func checkToken(token *grpcclient.Token, reader io.Reader) bool {
 	if token.Token == "" {
 		fmt.Println("Вы не авторизованы. Авторизуйтесь с помощью команды login.")
 		waitEnter(reader)
+		return false
 	}
+	return true
 }
 
-// validatePath проверяет существование и доступность указанного пути
+// validatePath проверяет существование и доступность указанного пути.
 func validatePath(path string) error {
-	// Проверяем существование директории
+	// Проверяем существование директории.
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Printf("Путь '%s' не существует\n", path)
-			return err
+			return fmt.Errorf("путь '%s' не существует", path)
 		}
-		fmt.Printf("Ошибка при проверке пути: %v\n", err)
-		return err
+		return fmt.Errorf("ошибка при проверке пути: %w", err)
 	}
 
-	// Проверяем, что это директория
+	// Проверяем, что это директория.
 	if !fileInfo.IsDir() {
-		fmt.Printf("Путь '%s' не является директорией\n", path)
-		return err
+		return fmt.Errorf("путь '%s' не является директорией", path)
 	}
 
-	// Проверяем права на запись
+	// Проверяем права на запись.
 	tmpFile := path + "/.tmp_test"
 	f, err := os.Create(tmpFile)
 	if err != nil {
-		fmt.Printf("Нет прав на запись в директорию '%s': %v\n", path, err)
-		return err
+		return fmt.Errorf("нет прав на запись в директорию '%s': %w", path, err)
 	}
-	f.Close()
-	os.Remove(tmpFile)
+	err = f.Close()
+	if err != nil {
+		return fmt.Errorf("ошибка при закрытии временного файла: %w", err)
+	}
+	err = os.Remove(tmpFile)
+	if err != nil {
+		return fmt.Errorf("ошибка при удалении временного файла: %w", err)
+	}
 	return nil
 }
 
-// проверка существования файла
+// checkFileExists проверка существования файла.
 func checkFileExists(path, filename string) error {
 	filepath := path + "/" + filename
 	_, err := os.Stat(filepath)
 	if err != nil {
-		return err
+		return fmt.Errorf("файл '%s' не существует", filepath)
 	}
 	return nil
+}
+
+// fprintln обертка над fmt.Fprintln, игнорирующая ошибку.
+func fprintln(w io.Writer, a ...any) {
+	_, _ = fmt.Fprintln(w, a...)
+}
+
+// fprint обертка над fmt.Fprint, игнорирующая ошибку.
+func fprint(w io.Writer, a ...any) {
+	_, _ = fmt.Fprint(w, a...)
+}
+
+// fscanln обертка над fmt.Fscanln, игнорирующая ошибку.
+func fscanln(w io.Reader, a ...any) {
+	_, _ = fmt.Fscanln(w, a...)
+}
+
+// fprintf обертка над fmt.Fprintf, игнорирующая ошибку.
+func fprintf(w io.Writer, format string, a ...any) {
+	_, _ = fmt.Fprintf(w, format, a...)
 }

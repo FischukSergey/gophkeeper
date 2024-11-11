@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 
-
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
@@ -21,7 +20,7 @@ var log = slog.New(slog.NewTextHandler(os.Stdout, nil))
 // PwdKeeperServer структура для сервера.
 type PwdKeeperServer struct {
 	pb.UnimplementedGophKeeperServer
-	PwdKeeper   ProtoKeeperSaver
+	PwdKeeper ProtoKeeperSaver
 }
 
 // ProtoKeeperSaver интерфейс для методов сервера.
@@ -124,7 +123,7 @@ func (s *PwdKeeperServer) Authorization(
 	return &pb.AuthorizationResponse{AccessToken: accessToken}, nil
 }
 
-// GetList метод для получения списка записей пользователя.
+// NoteGetList метод для получения списка записей пользователя.
 func (s *PwdKeeperServer) NoteGetList(
 	ctx context.Context, req *pb.NoteGetListRequest) (*pb.NoteGetListResponse, error) {
 	// log.Info("Handler NoteGetList method called")
@@ -142,7 +141,7 @@ func (s *PwdKeeperServer) FileUpload(
 	log.Info("Handler FileUpload method called")
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 	// загружаем файл в S3
@@ -159,7 +158,7 @@ func (s *PwdKeeperServer) FileGetList(
 	log.Info("Handler FileGetList method called")
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 	files, err := s.PwdKeeper.FileGetListFromS3(ctx, int64(userID))
@@ -186,7 +185,7 @@ func (s *PwdKeeperServer) FileDelete(
 	log.Info("Handler FileDelete method called")
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 	err := s.PwdKeeper.FileDeleteFromS3(ctx, int64(userID), req.Filename)
@@ -205,7 +204,7 @@ func (s *PwdKeeperServer) FileDownload(
 	log.Info("Handler FileDownload method called")
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 	// скачиваем файл из S3

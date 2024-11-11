@@ -21,16 +21,22 @@ func (t *Token) GetToken() string {
 }
 
 // NewClient создание клиента grpc.
-func NewClient(cfg *config.Config, log *slog.Logger) (*grpc.ClientConn, pb.GophKeeperClient, error) {
+func NewClient(cfg *config.Config, log *slog.Logger) (
+	*grpc.ClientConn,
+	pb.GophKeeperClient,
+	pb.CardServiceClient,
+	error,
+) {
 	log.Info("server address", "address", cfg.ServerAddress)
 
 	conn, err := grpc.NewClient(cfg.ServerAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create grpc client: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to create grpc client: %w", err)
 	}
 	log.Info("connected to server")
 
 	client := pb.NewGophKeeperClient(conn)
-	return conn, client, nil
+	cardClient := pb.NewCardServiceClient(conn)
+	return conn, client, cardClient, nil
 }

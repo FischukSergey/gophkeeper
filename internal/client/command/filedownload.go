@@ -46,8 +46,10 @@ func (c *CommandFileDownload) Name() string {
 
 // Execute выполняет команду загрузки файла.
 func (c *CommandFileDownload) Execute() {
-	//проверка наличия токена
-	checkToken(c.token, c.reader)
+	// Проверка наличия токена
+	if !checkToken(c.token, c.reader) {
+		return // Выходим из функции если токен невалидный
+	}
 	// запрос на загрузку файла
 	fmt.Println("Введите имя файла из хранилища (внимание, чувствительно к регистру):")
 	var filename string
@@ -96,9 +98,9 @@ func (c *CommandFileDownload) Execute() {
 		case strings.Contains(err.Error(), auth.ErrNotFound) ||
 			strings.Contains(err.Error(), auth.ErrInvalid) ||
 			strings.Contains(err.Error(), auth.ErrExpired):
-			fmt.Println("Ошибка авторизации. Пожалуйста, войдите в систему заново")
+			fmt.Println(errorAuth)
 		default:
-			fmt.Printf("Ошибка при загрузке файла: %v\n", err)
+			fmt.Printf(errOutputMessage, err)
 		}
 		// ожидание нажатия клавиши
 		waitEnter(c.reader)

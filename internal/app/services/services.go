@@ -32,7 +32,6 @@ type CardKeeper interface {
 	CardAdd(ctx context.Context, card models.Card) error
 }
 
-
 // GRPCService структура для сервиса.
 type GRPCService struct {
 	log     *slog.Logger
@@ -188,7 +187,7 @@ func (g *GRPCService) FileDownloadFromS3(ctx context.Context, userID int64, file
 	return data, nil
 }
 
-// CardAdd метод для добавления карты.
+// CardAddService метод для добавления карты.
 func (g *CardService) CardAddService(ctx context.Context, card models.Card) error {
 	g.log.Info("Service CardAdd method called")
 	//валидируем данные

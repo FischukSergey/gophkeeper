@@ -50,14 +50,16 @@ func (c *CommandFileGetList) Name() string {
 
 // Execute выполнение команды получения списка файлов.
 func (c *CommandFileGetList) Execute() {
-	//проверка наличия токена
-	checkToken(c.token, c.reader)
+	// Проверка наличия токена
+	if !checkToken(c.token, c.reader) {
+		return // Выходим из функции если токен невалидный
+	}
 	// получение списка файлов
 	files, err := c.fileGetListService.GetFileList(context.Background(), c.token.Token)
 	if err != nil {
 		// проверка ошибки
 		if strings.Contains(err.Error(), "токен не найден") {
-			fmt.Println("Ошибка авторизации. Пожалуйста, войдите в систему заново")
+			fmt.Println(errorAuth)
 		} else {
 			fmt.Println("Ошибка при получении списка файлов:", err)
 		}

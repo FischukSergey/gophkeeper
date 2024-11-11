@@ -48,8 +48,10 @@ func (c *CommandFileDelete) Name() string {
 
 // Execute выполнение команды удаления файла.
 func (c *CommandFileDelete) Execute() {
-	//проверка наличия токена
-	checkToken(c.token, c.reader)
+	// Проверка наличия токена
+	if !checkToken(c.token, c.reader) {
+		return // Выходим из функции если токен невалидный
+	}
 	// запрос на удаление файла
 	fmt.Println("Введите имя файла для удаления (внимание, чувствительно к регистру):")
 	var filename string
@@ -67,7 +69,7 @@ func (c *CommandFileDelete) Execute() {
 		case strings.Contains(err.Error(), auth.ErrNotFound) ||
 			strings.Contains(err.Error(), auth.ErrInvalid) ||
 			strings.Contains(err.Error(), auth.ErrExpired):
-			fmt.Println("Ошибка авторизации. Пожалуйста, войдите в систему заново")
+			fmt.Println(errorAuth)
 		default:
 			fmt.Printf("Ошибка при удалении файла: %v\n", err)
 		}

@@ -15,6 +15,9 @@ const (
 	MinPasswordLength = 6
 	MaxPasswordLength = 72
 )
+const (
+	UserIDNotFound = "user ID not found in context"
+)
 
 // User структура для пользователя.
 type User struct {

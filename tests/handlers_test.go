@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 		ServerAddress: initial.Cfg.GRPC.Port,
 	}
 	//создание клиента grpc
-	grpcConn, grpcClient, err := grpcclient.NewClient(serverConfig, logger)
+	grpcConn, grpcClient, serviceClient, err := grpcclient.NewClient(serverConfig, logger)
 	if err != nil {
 		logger.Error("failed to create grpc client", "error", err)
 		os.Exit(1)
@@ -42,6 +42,8 @@ func TestMain(m *testing.M) {
 	}()
 	// создание сервиса аутентификации
 	authService = service.NewAuthService(grpcClient, logger)
+	// создание сервиса карт
+	_ = service.NewCardService(serviceClient, logger)
 	// проверяем, что сервер хранения паролей работает
 	err = authService.Check(context.Background())
 	if err != nil {

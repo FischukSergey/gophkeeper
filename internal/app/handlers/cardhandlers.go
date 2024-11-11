@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"strconv"
 
@@ -36,7 +37,7 @@ func (h *CardServer) CardAdd(ctx context.Context, req *pb.CardAddRequest) (*pb.C
 	log.Info("CardAdd", "req", req)
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 
@@ -51,7 +52,7 @@ func (h *CardServer) CardAdd(ctx context.Context, req *pb.CardAddRequest) (*pb.C
 	}
 	err := h.CardService.CardAddService(ctx, card)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ошибка при добавлении карты: %w", err)
 	}
 	return &pb.CardAddResponse{}, nil
 }
@@ -61,9 +62,9 @@ func (h *CardServer) CardGetList(ctx context.Context, req *pb.CardGetListRequest
 	log.Info("CardGetList", "req", req)
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "user ID not found in context")
+		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 
-	return nil, nil
+	return &pb.CardGetListResponse{}, nil
 }
