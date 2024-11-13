@@ -21,6 +21,7 @@ type DBKeeper interface {
 	GetUserByLogin(ctx context.Context, login string) (models.User, error)
 }
 
+// S3Keeper интерфейс для сервиса S3.
 type S3Keeper interface {
 	S3UploadFile(ctx context.Context, fileData []byte, filename string, bucket string) (string, error)
 	S3GetFileList(ctx context.Context, bucketID string, bucket string) ([]models.File, error)
@@ -28,8 +29,11 @@ type S3Keeper interface {
 	S3DownloadFile(ctx context.Context, bucketID string, bucket string) ([]byte, error)
 }
 
+// CardKeeper интерфейс для сервиса карт.
 type CardKeeper interface {
 	CardAdd(ctx context.Context, card models.Card) error
+	CardGetList(ctx context.Context, userID int64) ([]models.Card, error)
+	CardDelete(ctx context.Context, cardID int64) error
 }
 
 // GRPCService структура для сервиса.
@@ -204,6 +208,26 @@ func (g *CardService) CardAddService(ctx context.Context, card models.Card) erro
 	err := g.storage.CardAdd(ctx, card)
 	if err != nil {
 		return fmt.Errorf("failed to add card: %w", err)
+	}
+	return nil
+}
+
+// CardGetListService метод для получения списка карт.
+func (g *CardService) CardGetListService(ctx context.Context, userID int64) ([]models.Card, error) {
+	g.log.Info("Service CardGetList method called")
+	cards, err := g.storage.CardGetList(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get card list: %w", err)
+	}
+	return cards, nil
+}
+
+// CardDeleteService метод для удаления карты.
+func (g *CardService) CardDeleteService(ctx context.Context, cardID int64) error {
+	g.log.Info("Service CardDelete method called")
+	err := g.storage.CardDelete(ctx, cardID)	
+	if err != nil {
+		return fmt.Errorf("failed to delete card: %w", err)
 	}
 	return nil
 }

@@ -24,6 +24,7 @@ service GophKeeper {
 service CardService {
     rpc CardAdd(CardAddRequest) returns (CardAddResponse) {}
     rpc CardGetList(CardGetListRequest) returns (CardGetListResponse) {}
+    rpc CardDelete(CardDeleteRequest) returns (CardDeleteResponse) {}
 }
 
 // Ping
@@ -160,6 +161,8 @@ message Card {
     google.protobuf.Timestamp cardExpirationDate = 3;
     string cardCVV = 4;
     string cardBank = 5;
+    string metadata = 6;
+    int64 cardID = 7;
 }
 
 // CardAdd
@@ -174,4 +177,12 @@ message CardAddResponse {
 message CardGetListRequest {}
 message CardGetListResponse {
     repeated Card cards = 1;
+}
+
+// CardDelete
+message CardDeleteRequest {
+    int64 cardID = 1;
+}
+message CardDeleteResponse {
+    bool success = 1;
 }

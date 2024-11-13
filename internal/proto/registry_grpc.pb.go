@@ -8,7 +8,6 @@ package gophkeeper
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -504,6 +503,7 @@ var GophKeeper_ServiceDesc = grpc.ServiceDesc{
 const (
 	CardService_CardAdd_FullMethodName     = "/server.CardService/CardAdd"
 	CardService_CardGetList_FullMethodName = "/server.CardService/CardGetList"
+	CardService_CardDelete_FullMethodName  = "/server.CardService/CardDelete"
 )
 
 // CardServiceClient is the client API for CardService service.
@@ -512,6 +512,7 @@ const (
 type CardServiceClient interface {
 	CardAdd(ctx context.Context, in *CardAddRequest, opts ...grpc.CallOption) (*CardAddResponse, error)
 	CardGetList(ctx context.Context, in *CardGetListRequest, opts ...grpc.CallOption) (*CardGetListResponse, error)
+	CardDelete(ctx context.Context, in *CardDeleteRequest, opts ...grpc.CallOption) (*CardDeleteResponse, error)
 }
 
 type cardServiceClient struct {
@@ -542,12 +543,23 @@ func (c *cardServiceClient) CardGetList(ctx context.Context, in *CardGetListRequ
 	return out, nil
 }
 
+func (c *cardServiceClient) CardDelete(ctx context.Context, in *CardDeleteRequest, opts ...grpc.CallOption) (*CardDeleteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CardDeleteResponse)
+	err := c.cc.Invoke(ctx, CardService_CardDelete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CardServiceServer is the server API for CardService service.
 // All implementations must embed UnimplementedCardServiceServer
 // for forward compatibility.
 type CardServiceServer interface {
 	CardAdd(context.Context, *CardAddRequest) (*CardAddResponse, error)
 	CardGetList(context.Context, *CardGetListRequest) (*CardGetListResponse, error)
+	CardDelete(context.Context, *CardDeleteRequest) (*CardDeleteResponse, error)
 	mustEmbedUnimplementedCardServiceServer()
 }
 
@@ -563,6 +575,9 @@ func (UnimplementedCardServiceServer) CardAdd(context.Context, *CardAddRequest) 
 }
 func (UnimplementedCardServiceServer) CardGetList(context.Context, *CardGetListRequest) (*CardGetListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CardGetList not implemented")
+}
+func (UnimplementedCardServiceServer) CardDelete(context.Context, *CardDeleteRequest) (*CardDeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CardDelete not implemented")
 }
 func (UnimplementedCardServiceServer) mustEmbedUnimplementedCardServiceServer() {}
 func (UnimplementedCardServiceServer) testEmbeddedByValue()                     {}
@@ -621,6 +636,24 @@ func _CardService_CardGetList_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CardService_CardDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CardDeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CardServiceServer).CardDelete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CardService_CardDelete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CardServiceServer).CardDelete(ctx, req.(*CardDeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CardService_ServiceDesc is the grpc.ServiceDesc for CardService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -635,6 +668,10 @@ var CardService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CardGetList",
 			Handler:    _CardService_CardGetList_Handler,
+		},
+		{
+			MethodName: "CardDelete",
+			Handler:    _CardService_CardDelete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

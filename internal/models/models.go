@@ -50,7 +50,7 @@ type File struct {
 
 // Card структура для карты.
 type Card struct {
-	CardID             string
+	CardID             int64
 	UserID             string
 	CardNumber         string
 	CardHolder         string

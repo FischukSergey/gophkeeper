@@ -67,3 +67,26 @@ func (s *CardService) CardAdd(ctx context.Context, card models.Card, token strin
 	}
 	return nil
 }
+
+// GetCardList метод для получения списка карт.
+func (s *CardService) GetCardList(ctx context.Context, token string) ([]models.Card, error) {
+	// добавление токена авторизации в контекст
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	// получение списка карт
+	response, err := s.client.CardGetList(ctx, &pb.CardGetListRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get card list: %w", err)
+	}
+	cards := make([]models.Card, 0, len(response.GetCards()))
+	for _, card := range response.GetCards() {
+		cards = append(cards, models.Card{
+			CardBank:           card.GetCardBank(),
+			CardNumber:         card.GetCardNumber(),
+			CardHolder:         card.GetCardHolder(),
+			CardExpirationDate: card.GetCardExpirationDate().AsTime(),
+			CardCVV:            card.GetCardCVV(),
+			CardID:             card.GetCardID(),
+		})
+	}
+	return cards, nil
+}

@@ -41,7 +41,6 @@ func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, h
 				return nil, status.Errorf(codes.Unauthenticated, ErrNotFound)
 			default:
 				token := values[0]
-				slog.Info("token found")
 				userID, err = jwt.GetUserID(token)
 				if err != nil {
 					if errors.Is(err, jwt.ErrTokenExpired) {
@@ -57,7 +56,6 @@ func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, h
 			return nil, status.Errorf(codes.Unauthenticated, ErrNotFound)
 		}
 	}
-	slog.Info("userID found", slog.Int("userID", userID))
 	ctxWithUserID := context.WithValue(ctx, CtxKeyUserGrpc, userID)
 	return handler(ctxWithUserID, req)
 }

@@ -28,6 +28,7 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	commandFileDelete := command.NewCommandFileDelete(authService, token, reader, writer)
 	commandFileGetList := command.NewCommandFileGetList(authService, token, reader, writer)
 	commandCardAdd := command.NewCommandCardAdd(cardService, token, reader, writer)
+	commandCardGetList := command.NewCommandCardGetList(cardService, token, reader, writer)
 	commandExit := command.NewCommandExit(reader, writer)
 
 	// Определяем основное меню и подменю файлов
@@ -46,6 +47,7 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	// команды для работы с картами
 	cardCommands := []command.ICommand{
 		commandCardAdd,
+		commandCardGetList,
 	}
 
 	// Создаем мапы для команд

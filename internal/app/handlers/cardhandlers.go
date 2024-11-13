@@ -12,11 +12,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ProtoCardService интерфейс для методов сервера.
 type ProtoCardService interface {
 	CardAddService(ctx context.Context, card models.Card) error
+	CardGetListService(ctx context.Context, userID int64) ([]models.Card, error)
+	CardDeleteService(ctx context.Context, cardID int64) error
 }
 
 type CardServer struct {
@@ -66,5 +69,36 @@ func (h *CardServer) CardGetList(ctx context.Context, req *pb.CardGetListRequest
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 
-	return &pb.CardGetListResponse{}, nil
+	cards, err := h.CardService.CardGetListService(ctx, int64(userID))
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при получении списка карт: %w", err)
+	}
+
+	cardsPb := make([]*pb.Card, len(cards))
+	for i, card := range cards {
+		cardsPb[i] = &pb.Card{
+			CardID:             card.CardID,
+			CardBank:           card.CardBank,
+			CardNumber:         card.CardNumber,
+			CardHolder:         card.CardHolder,
+			CardExpirationDate: timestamppb.New(card.CardExpirationDate),
+			CardCVV:            card.CardCVV,
+		}
+	}
+	return &pb.CardGetListResponse{Cards: cardsPb}, nil
+}
+
+// CardDelete хендлер для удаления карты.
+func (h *CardServer) CardDelete(ctx context.Context, req *pb.CardDeleteRequest) (*pb.CardDeleteResponse, error) {
+	log.Info("CardDelete", "req", req)
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
+		return &pb.CardDeleteResponse{Success: false}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	}
+	log.Info("userID found", slog.Int("userID", userID))
+	err := h.CardService.CardDeleteService(ctx, req.CardID)
+	if err != nil {
+		return &pb.CardDeleteResponse{Success: false}, fmt.Errorf("ошибка при удалении карты: %w", err)
+	}
+	return &pb.CardDeleteResponse{Success: true}, nil
 }
