@@ -22,7 +22,7 @@ func init() {
 		os.Exit(1)
 	}
 	// Создаем handler для записи в файл
-	log = slog.New(slog.NewTextHandler(logFile, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	log = slog.New(slog.NewTextHandler(logFile, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(log)
 }
 

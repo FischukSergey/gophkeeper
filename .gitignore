@@ -6,5 +6,6 @@
 *.exe
 *.exe~
 *.log
+*.pdf
 #ignore golangci-lint cache
 golangci-lint/

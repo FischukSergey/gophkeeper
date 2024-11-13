@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestAuthInterceptor(t *testing.T) {
+func TestUnaryAuthInterceptor(t *testing.T) {
 	//генерируем токен
 	userID := int64(18)
 	token, err := jwt.GenerateToken(models.User{ID: userID, Login: "test"})
@@ -99,7 +99,7 @@ func TestAuthInterceptor(t *testing.T) {
 			//пишем в метаданные токен
 			ctx := context.Background()
 			ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("session_token", tt.args.token))
-			got, err := AuthInterceptor(ctx, tt.args.req, tt.args.info, tt.args.handler)
+			got, err := UnaryAuthInterceptor(ctx, tt.args.req, tt.args.info, tt.args.handler)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AuthInterceptor() error = %v, wantErr %v", err, tt.wantErr)
 				return

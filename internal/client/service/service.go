@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 
 	"google.golang.org/grpc/codes"
@@ -90,17 +91,71 @@ func (s *AuthService) S3FileUpload(
 			}
 		}
 	}
-	// загрузка файла на сервер
-	response, err := s.client.FileUpload(ctx, &pb.FileUploadRequest{
-		Filename: filename,
-		Data:     fileData,
+	//открываем стрим для загрузки файла
+	stream, err := s.client.FileUpload(ctx)
+	if err != nil {
+		s.log.Error("ошибка открытия стрима", "error", err)
+		return "", fmt.Errorf("failed to open stream: %w", err)
+	}
+	//сначала отправляем имя файла
+	err = stream.Send(&pb.FileUploadRequest{
+		File: &pb.FileUploadRequest_Info{
+			Info: &pb.FileInfo{
+				Filename: filename,
+				Size:     int64(len(fileData)),
+			},
+		},
 	})
 	if err != nil {
-		s.log.Error("ошибка загрузки файла", "error", err)
-		return "", fmt.Errorf("failed to upload file: %w", err)
+		s.log.Error("ошибка отправки файла", "error", err)
+		return "", fmt.Errorf("failed to send file info: %w", err)
 	}
-	s.log.Debug("файл загружен", "filename", response.GetMessage())
-	return response.GetMessage(), nil
+	const chunkSize = 1024
+	totalSize := len(fileData)
+	var lastPercent int
+	_, _ = fmt.Printf("Uploading %s (%d bytes):\n", filename, totalSize)
+
+	// отправляем файл частями
+	for i := 0; i < totalSize; i += chunkSize {
+		end := i + chunkSize
+		if end > totalSize {
+			end = totalSize
+		}
+		err = stream.Send(&pb.FileUploadRequest{
+			File: &pb.FileUploadRequest_Chunk{
+				Chunk: fileData[i:end],
+			},
+		})
+		if err != nil {
+			fmt.Print("\n")
+			s.log.Error("ошибка загрузки файла", "error", err)
+			return "", fmt.Errorf("failed to send chunk: %w", err)
+		}
+		// Показываем процент каждые 5%
+		currentPercent := (i * 100) / totalSize
+		if currentPercent >= lastPercent+5 {
+			fmt.Printf("\r%d%%", currentPercent)
+			lastPercent = currentPercent
+		}
+	}
+	// Закрываем стрим и получаем ответ
+	response, err := stream.CloseAndRecv()
+	if err != nil && err != io.EOF {
+		fmt.Print("\n")
+		s.log.Error("ошибка закрытия стрима", "error", err)
+		return "", fmt.Errorf("failed to close stream: %w", err)
+	}
+
+	fmt.Printf("\r100%%\nUpload complete: %s\n", filename)
+	
+	// Проверяем response только если он не nil
+	if response != nil {
+		s.log.Debug("файл загружен", "filename", filename, "size", totalSize)
+		return response.GetMessage(), nil
+	} else {
+		s.log.Debug("файл загружен", "filename", filename, "size", totalSize)
+	}
+	return "", nil
 }
 
 // GetFileList получение списка файлов.
@@ -151,13 +206,36 @@ func (s *AuthService) S3FileDelete(ctx context.Context, token string, filename s
 func (s *AuthService) S3FileDownload(ctx context.Context, token string, filename string) ([]byte, error) {
 	// добавление токена авторизации в контекст
 	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
-	// загрузка файла
-	response, err := s.client.FileDownload(ctx, &pb.FileDownloadRequest{
+	//открываем стрим для загрузки файла
+	stream, err := s.client.FileDownload(ctx, &pb.FileDownloadRequest{
 		Filename: filename,
 	})
 	if err != nil {
-		s.log.Error("ошибка загрузки файла", "error", err)
-		return nil, fmt.Errorf("failed to download file: %w", err)
+		return nil, fmt.Errorf("failed to open stream: %w", err)
 	}
-	return response.GetData(), nil
+	fmt.Printf("Downloading %s:\n", filename)
+	var fileData []byte
+	var lastPercent int
+	for {
+		response, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			fmt.Print("\n")
+			s.log.Error("ошибка получения чанка", "error", err)
+			return nil, fmt.Errorf("failed to receive chunk: %w", err)
+		}
+		fileData = append(fileData, response.GetChunk()...)
+		// Показываем процент каждые 5%.
+		currentPercent := (len(fileData) / 1024) % 100 // примерный процент от каждого мегабайта
+		if currentPercent >= lastPercent + 5 {
+			fmt.Printf("\r%d%%", currentPercent)
+			lastPercent = currentPercent
+		}
+		
+	}
+	fmt.Printf("\r100%%\nDownload complete: %s (%d bytes)\n", filename, len(fileData))
+	s.log.Debug("файл загружен", "filename", filename)
+	return fileData, nil
 }

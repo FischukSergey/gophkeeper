@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"os"
 
@@ -137,19 +139,51 @@ func (s *PwdKeeperServer) NoteGetList(
 
 // FileUpload метод для загрузки файла в S3.
 func (s *PwdKeeperServer) FileUpload(
-	ctx context.Context, req *pb.FileUploadRequest) (*pb.FileUploadResponse, error) {
+	stream pb.GophKeeper_FileUploadServer) error {
 	log.Info("Handler FileUpload method called")
+	ctx := stream.Context()
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+		return status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
 	log.Info("userID found", slog.Int("userID", userID))
-	// загружаем файл в S3
-	url, err := s.PwdKeeper.FileUploadToS3(ctx, req.Data, req.Filename, int64(userID))
+
+	// получаем информацию о файле
+	req, err := stream.Recv()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to upload file: %v", err)
+		return status.Errorf(codes.Internal, "failed to receive file info: %v", err)
 	}
-	return &pb.FileUploadResponse{Message: url}, nil
+	fileInfo := req.GetInfo()
+	log.Info("fileInfo", slog.String("filename", fileInfo.Filename), slog.Int64("size", fileInfo.Size))
+	if fileInfo.Filename == "" {
+		return status.Errorf(codes.InvalidArgument, "filename cannot be empty")
+	}
+	if fileInfo.Size == 0 {
+		return status.Errorf(codes.InvalidArgument, "file size cannot be 0")
+	}
+	// создаем буфер для хранения файла
+	var buffer bytes.Buffer
+	// получаем файл по частям
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to receive file chunk: %v", err)
+		}
+		chunk := req.GetChunk()
+		if chunk == nil {
+			return status.Errorf(codes.InvalidArgument, "chunk cannot be nil")
+		}
+		buffer.Write(chunk)
+	}
+	// загружаем файл в S3
+	_, err = s.PwdKeeper.FileUploadToS3(ctx, buffer.Bytes(), fileInfo.Filename, int64(userID))
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to upload file: %v", err)
+	}
+	return nil
 }
 
 // FileGetList метод для получения списка файлов пользователя.
@@ -200,17 +234,33 @@ func (s *PwdKeeperServer) FileDelete(
 
 // FileDownload метод для скачивания файла из S3.
 func (s *PwdKeeperServer) FileDownload(
-	ctx context.Context, req *pb.FileDownloadRequest) (*pb.FileDownloadResponse, error) {
+	req *pb.FileDownloadRequest, stream pb.GophKeeper_FileDownloadServer) error {
 	log.Info("Handler FileDownload method called")
+	ctx := stream.Context()
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+		return status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
 	log.Info("userID found", slog.Int("userID", userID))
 	// скачиваем файл из S3
+
 	data, err := s.PwdKeeper.FileDownloadFromS3(ctx, int64(userID), req.Filename)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to download file: %v", err)
+		return status.Errorf(codes.Internal, "failed to download file: %v", err)
 	}
-	return &pb.FileDownloadResponse{Data: data}, nil
+	const chunkSize = 1024 * 1024 // 1MB
+	// отправляем файл по частям
+	for i := 0; i < len(data); i += chunkSize {
+		end := i + chunkSize
+		if end > len(data) {
+			end = len(data)
+		}
+		chunk := data[i:end]
+		if err := stream.Send(&pb.FileDownloadResponse{
+			Chunk: chunk,
+		}); err != nil {
+			return status.Errorf(codes.Internal, "failed to send file chunk: %v", err)
+		}
+	}
+	return nil
 }

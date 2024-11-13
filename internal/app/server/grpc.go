@@ -101,7 +101,11 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 		grpc.ChainUnaryInterceptor(
 			logging.UnaryServerInterceptor(InterceptorLogger(log), loggingOpts...),
 			recovery.UnaryServerInterceptor(recoveryOpts...),
-			auth.AuthInterceptor,
+			auth.UnaryAuthInterceptor,
+		),
+		grpc.ChainStreamInterceptor(
+			logging.StreamServerInterceptor(InterceptorLogger(log), loggingOpts...),
+			auth.StreamAuthInterceptor(),
 		),
 	)
 
