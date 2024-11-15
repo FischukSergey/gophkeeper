@@ -2,10 +2,13 @@ package command
 
 import (
 	"context"
+	"errors"
 	"io"
+	"strconv"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/FischukSergey/gophkeeper/internal/client/service"
+	"github.com/manifoldco/promptui"
 )
 
 const cardDeleteCommandName = "cardDelete"
@@ -40,13 +43,26 @@ func (c *CommandCardDelete) Execute() {
 	//получаем список карт
 	cardsList := NewCommandCardGetList(c.cardService, c.token, c.reader, c.writer)
 	cardsList.Execute()
-	fprintf(c.writer, "Введите ID карты для удаления: ")
-
-	var cardID string
-	fscanln(c.reader, &cardID)
-
+	prompt := promptui.Prompt{
+		Label: "Введите ID карты для удаления: ",
+		Validate: func(input string) error {
+			if input == "" {
+				return errors.New("ID карты не может быть пустым")
+			}
+			if _, err := strconv.Atoi(input); err != nil {
+				return errors.New("ID карты должен быть числом")
+			}
+			return nil
+		},
+	}
+	cardID, err := prompt.Run()
+	if err != nil {
+		fprintln(c.writer, "Ошибка при вводе ID карты:", err)
+		return
+	}
+	
 	//удаляем карту
-	err := c.cardService.DeleteCard(context.Background(), cardID, c.token.Token)
+	err = c.cardService.DeleteCard(context.Background(), cardID, c.token.Token)
 	if err != nil {
 		fprintln(c.writer, "Ошибка при удалении карты:", err)
 		return

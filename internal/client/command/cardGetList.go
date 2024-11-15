@@ -12,6 +12,7 @@ import (
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/FischukSergey/gophkeeper/internal/client/service"
+	"github.com/manifoldco/promptui"
 )
 
 const cardGetListCommandName = "GetList"
@@ -95,16 +96,17 @@ func (c *CommandCardGetList) Execute() {
 	}
 
 	//запрашиваем просмотр метаданных
-	fprintf(c.writer, "\nХотите просмотреть метаданные карт? (y/n)")
-	var answer string
-	_, err = fmt.Fscanln(c.reader, &answer)
+	prompt := promptui.Prompt{
+		Label: "Хотите просмотреть метаданные карт? (y/n)",
+	}
+	answer, err := prompt.Run()
 	if err != nil {
 		fmt.Println("Ошибка при вводе ответа:", err)
 	}
 	if answer == "y" || answer == "Y" {
 		for _, card := range cards {
 			if card.Metadata != "" {
-				fprintf(c.writer, "Метаданные карты с ID %d:\n", card.CardID)
+				fprintf(c.writer, "\nМетаданные карты с ID %d:\n", card.CardID)
 				//парсим метаданные
 				metadata := make(map[string]interface{})
 				err := json.Unmarshal([]byte(card.Metadata), &metadata)

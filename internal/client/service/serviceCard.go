@@ -109,3 +109,24 @@ func (s *CardService) DeleteCard(ctx context.Context, cardID string, token strin
 	}
 	return nil
 }
+
+// AddCardMetadata метод для добавления метаданных к карте.
+func (s *CardService) AddCardMetadata(
+	ctx context.Context, cardID int64, metaData map[string]string, token string) error {
+	// добавление токена авторизации в контекст
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	//преобразование map в массив структур Metadata
+	jsonData := make([]*pb.Metadata, 0, len(metaData))
+	for key, value := range metaData {
+		jsonData = append(jsonData, &pb.Metadata{Key: key, Value: value})
+	}
+	// добавление метаданных к карте
+	_, err := s.client.CardAddMetadata(ctx, &pb.CardAddMetadataRequest{
+		CardID:   cardID,
+		Metadata: jsonData,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add card metadata: %w", err)
+	}
+	return nil
+}
