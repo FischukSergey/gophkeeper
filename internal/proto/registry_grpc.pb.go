@@ -498,9 +498,10 @@ var GophKeeper_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	CardService_CardAdd_FullMethodName     = "/server.CardService/CardAdd"
-	CardService_CardGetList_FullMethodName = "/server.CardService/CardGetList"
-	CardService_CardDelete_FullMethodName  = "/server.CardService/CardDelete"
+	CardService_CardAdd_FullMethodName         = "/server.CardService/CardAdd"
+	CardService_CardGetList_FullMethodName     = "/server.CardService/CardGetList"
+	CardService_CardDelete_FullMethodName      = "/server.CardService/CardDelete"
+	CardService_CardAddMetadata_FullMethodName = "/server.CardService/CardAddMetadata"
 )
 
 // CardServiceClient is the client API for CardService service.
@@ -510,6 +511,7 @@ type CardServiceClient interface {
 	CardAdd(ctx context.Context, in *CardAddRequest, opts ...grpc.CallOption) (*CardAddResponse, error)
 	CardGetList(ctx context.Context, in *CardGetListRequest, opts ...grpc.CallOption) (*CardGetListResponse, error)
 	CardDelete(ctx context.Context, in *CardDeleteRequest, opts ...grpc.CallOption) (*CardDeleteResponse, error)
+	CardAddMetadata(ctx context.Context, in *CardAddMetadataRequest, opts ...grpc.CallOption) (*CardAddMetadataResponse, error)
 }
 
 type cardServiceClient struct {
@@ -550,6 +552,16 @@ func (c *cardServiceClient) CardDelete(ctx context.Context, in *CardDeleteReques
 	return out, nil
 }
 
+func (c *cardServiceClient) CardAddMetadata(ctx context.Context, in *CardAddMetadataRequest, opts ...grpc.CallOption) (*CardAddMetadataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CardAddMetadataResponse)
+	err := c.cc.Invoke(ctx, CardService_CardAddMetadata_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CardServiceServer is the server API for CardService service.
 // All implementations must embed UnimplementedCardServiceServer
 // for forward compatibility.
@@ -557,6 +569,7 @@ type CardServiceServer interface {
 	CardAdd(context.Context, *CardAddRequest) (*CardAddResponse, error)
 	CardGetList(context.Context, *CardGetListRequest) (*CardGetListResponse, error)
 	CardDelete(context.Context, *CardDeleteRequest) (*CardDeleteResponse, error)
+	CardAddMetadata(context.Context, *CardAddMetadataRequest) (*CardAddMetadataResponse, error)
 	mustEmbedUnimplementedCardServiceServer()
 }
 
@@ -575,6 +588,9 @@ func (UnimplementedCardServiceServer) CardGetList(context.Context, *CardGetListR
 }
 func (UnimplementedCardServiceServer) CardDelete(context.Context, *CardDeleteRequest) (*CardDeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CardDelete not implemented")
+}
+func (UnimplementedCardServiceServer) CardAddMetadata(context.Context, *CardAddMetadataRequest) (*CardAddMetadataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CardAddMetadata not implemented")
 }
 func (UnimplementedCardServiceServer) mustEmbedUnimplementedCardServiceServer() {}
 func (UnimplementedCardServiceServer) testEmbeddedByValue()                     {}
@@ -651,6 +667,24 @@ func _CardService_CardDelete_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CardService_CardAddMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CardAddMetadataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CardServiceServer).CardAddMetadata(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CardService_CardAddMetadata_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CardServiceServer).CardAddMetadata(ctx, req.(*CardAddMetadataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CardService_ServiceDesc is the grpc.ServiceDesc for CardService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -669,6 +703,10 @@ var CardService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CardDelete",
 			Handler:    _CardService_CardDelete_Handler,
+		},
+		{
+			MethodName: "CardAddMetadata",
+			Handler:    _CardService_CardAddMetadata_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

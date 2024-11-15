@@ -29,13 +29,13 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	commandFileGetList := command.NewCommandFileGetList(authService, token, reader, writer)
 	commandCardAdd := command.NewCommandCardAdd(cardService, token, reader, writer)
 	commandCardGetList := command.NewCommandCardGetList(cardService, token, reader, writer)
+	commandCardDelete := command.NewCommandCardDelete(cardService, token, reader, writer)
 	commandExit := command.NewCommandExit(reader, writer)
 
 	// Определяем основное меню и подменю файлов
 	mainCommands := []command.ICommand{
 		commandLogin,
 		commandRegister,
-		commandExit,
 	}
 	// команды для работы с файлами
 	fileCommands := []command.ICommand{
@@ -48,6 +48,7 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	cardCommands := []command.ICommand{
 		commandCardAdd,
 		commandCardGetList,
+		commandCardDelete,
 	}
 
 	// Создаем мапы для команд
@@ -59,6 +60,8 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	for _, cmd := range mainCommands {
 		mainCommandsMenu[cmd.Name()] = cmd.Execute
 	}
+	// добавляем команду выхода
+	mainCommandsMenu[commandExit.Name()] = commandExit.Execute
 	// добавляем специальную команду для перехода в подменю файлов
 	mainCommandsMenu["\tРАБОТА С ФАЙЛАМИ"] = func() {
 		handleSubmenu(fileCommands, fileCommandsMenu)
@@ -87,6 +90,7 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	}
 	mainCommandNames = append(mainCommandNames, "\tРАБОТА С ФАЙЛАМИ")
 	mainCommandNames = append(mainCommandNames, "\tРАБОТА С КАРТАМИ")
+	mainCommandNames = append(mainCommandNames, commandExit.Name())
 	for {
 		templates := newTemplates()
 		prompt := promptui.Select{

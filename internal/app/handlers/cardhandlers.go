@@ -20,6 +20,7 @@ type ProtoCardService interface {
 	CardAddService(ctx context.Context, card models.Card) error
 	CardGetListService(ctx context.Context, userID int64) ([]models.Card, error)
 	CardDeleteService(ctx context.Context, cardID int64) error
+	CardAddMetadataService(ctx context.Context, userID int64, cardID int64, metadata []models.Metadata) error
 }
 
 type CardServer struct {
@@ -83,6 +84,7 @@ func (h *CardServer) CardGetList(ctx context.Context, req *pb.CardGetListRequest
 			CardHolder:         card.CardHolder,
 			CardExpirationDate: timestamppb.New(card.CardExpirationDate),
 			CardCVV:            card.CardCVV,
+			Metadata:           card.Metadata,
 		}
 	}
 	return &pb.CardGetListResponse{Cards: cardsPb}, nil
@@ -101,4 +103,26 @@ func (h *CardServer) CardDelete(ctx context.Context, req *pb.CardDeleteRequest) 
 		return &pb.CardDeleteResponse{Success: false}, fmt.Errorf("ошибка при удалении карты: %w", err)
 	}
 	return &pb.CardDeleteResponse{Success: true}, nil
+}
+
+//CardAddMetadata хендлер для добавления метаданных к карте.
+func (h *CardServer) CardAddMetadata(ctx context.Context, req *pb.CardAddMetadataRequest) (
+	*pb.CardAddMetadataResponse, error) {
+	log.Info("CardAddMetadata", "req", req)
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
+		return &pb.CardAddMetadataResponse{Success: false}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	}
+	log.Info("userID found", slog.Int("userID", userID))
+	//формируем массив метаданных
+	metadata := make([]models.Metadata, len(req.Metadata))
+	for i, m := range req.Metadata {
+		metadata[i] = models.Metadata{Key: m.Key, Value: m.Value}
+	}
+	err := h.CardService.CardAddMetadataService(ctx, int64(userID), req.CardID, metadata)
+	if err != nil {
+		return &pb.CardAddMetadataResponse{Success: false}, fmt.Errorf("ошибка при добавлении метаданных: %w", err)
+	}
+
+	return &pb.CardAddMetadataResponse{Success: true}, nil
 }

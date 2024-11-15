@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -34,6 +35,7 @@ type CardKeeper interface {
 	CardAdd(ctx context.Context, card models.Card) error
 	CardGetList(ctx context.Context, userID int64) ([]models.Card, error)
 	CardDelete(ctx context.Context, cardID int64) error
+	CardAddMetadata(ctx context.Context, cardID int64, metadata string) error
 }
 
 // GRPCService структура для сервиса.
@@ -219,6 +221,7 @@ func (g *CardService) CardGetListService(ctx context.Context, userID int64) ([]m
 	if err != nil {
 		return nil, fmt.Errorf("failed to get card list: %w", err)
 	}
+	g.log.Info("cards", slog.Any("cards", cards))
 	return cards, nil
 }
 
@@ -228,6 +231,39 @@ func (g *CardService) CardDeleteService(ctx context.Context, cardID int64) error
 	err := g.storage.CardDelete(ctx, cardID)	
 	if err != nil {
 		return fmt.Errorf("failed to delete card: %w", err)
+	}
+	return nil
+}
+
+// CardAddMetadataService метод для добавления метаданных к карте.
+func (g *CardService) CardAddMetadataService(ctx context.Context, userID int64, cardID int64, metadata []models.Metadata) error {
+	g.log.Info("Service CardAddMetadata method called")
+	metadataMap := make(map[string]string)
+	for _, m := range metadata {
+		if m.Key == "" || m.Value == "" {
+			return fmt.Errorf("invalid metadata")
+		}
+		if len(m.Key) > 255 || len(m.Value) > 255 {
+			return fmt.Errorf("metadata key or value is too long")
+		}
+		//валидируем ключ
+		if strings.Contains(m.Key, " ") {
+			return fmt.Errorf("metadata key contains spaces")
+		}
+		//проверяем ключ на уникальность
+		if _, ok := metadataMap[m.Key]; ok {
+			return fmt.Errorf("metadata key already exists, key: %s must be unique", m.Key)
+		}
+		metadataMap[m.Key] = m.Value
+	}
+	//сериализуем данные
+	metadataJSON, err := json.Marshal(metadataMap)
+	if err != nil {
+		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
+	err = g.storage.CardAddMetadata(ctx, cardID, string(metadataJSON))
+	if err != nil {
+		return fmt.Errorf("failed to add metadata: %w", err)
 	}
 	return nil
 }

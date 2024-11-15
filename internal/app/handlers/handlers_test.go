@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"io"
 	"reflect"
 	"testing"
 	"time"
@@ -20,6 +21,33 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// mockFileUploadStream is a mock implementation of pb.GophKeeper_FileUploadServer.
+type mockFileUploadStream struct {
+	pb.GophKeeper_FileUploadServer
+	recvData   []*pb.FileUploadRequest
+	recvIndex  int
+	ctx        context.Context
+}
+
+// Add Context() method
+func (m *mockFileUploadStream) Context() context.Context {
+	return m.ctx
+}
+
+// Recv is a mock implementation of pb.GophKeeper_FileUploadServer.Recv.
+func (m *mockFileUploadStream) Recv() (*pb.FileUploadRequest, error) {
+	if m.recvIndex >= len(m.recvData) {
+		return nil, io.EOF
+	}
+	req := m.recvData[m.recvIndex]
+	m.recvIndex++
+	return req, nil
+}
+// SendAndClose is a mock implementation of pb.GophKeeper_FileUploadServer.SendAndClose.
+func (m *mockFileUploadStream) SendAndClose(resp *pb.FileUploadResponse) error {
+	return nil
+}	
+
 func TestMain(m *testing.M) {
 	// Устанавливаем тестовую конфигурацию JWT
 	initial.Cfg = &config.Config{
@@ -30,6 +58,7 @@ func TestMain(m *testing.M) {
 	}
 	m.Run()
 }
+
 func Test_pwdKeeperServer_Registration(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -360,110 +389,139 @@ func Test_PwdKeeperServer_Ping(t *testing.T) {
 }
 
 func Test_PwdKeeperServer_FileUploadToS3(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockService := mock_handlers.NewMockProtoKeeperSaver(ctrl)
 
 	userID := int(18)
-
-	type args struct {
-		req *pb.FileUploadRequest
-		id  int
-	}
 	type result struct {
-		got    *pb.FileUploadResponse
 		err    error
 		status codes.Code
 	}
 	tests := []struct {
-		name string
-		args args
-		want result
-		mock func()
+		name      string
+		setupMock func(*mock_handlers.MockProtoKeeperSaver)
+		stream    mockFileUploadStream
+		want      result
 	}{
 		{
 			name: "successful file upload",
-			args: args{
-				req: &pb.FileUploadRequest{
-					Filename: "test.txt",
-					Data:     []byte("test data"),
+			setupMock: func(mock *mock_handlers.MockProtoKeeperSaver) {
+				mock.EXPECT().
+					FileUploadToS3(
+						gomock.Any(),
+						gomock.Any(),
+						gomock.Any(),
+						gomock.Any(),
+					).
+					Return("File uploaded successfully", nil)
+			},
+			stream: mockFileUploadStream{
+				recvData: []*pb.FileUploadRequest{
+					{
+						File: &pb.FileUploadRequest_Info{
+							Info: &pb.FileInfo{
+								Filename: "test.txt",
+								Size:     100,
+							},
+						},
+					},
+					{
+						File: &pb.FileUploadRequest_Chunk{
+							Chunk: []byte("test data"),
+						},
+					},
 				},
-				id: userID,
 			},
 			want: result{
-				got:    &pb.FileUploadResponse{Message: "File uploaded successfully"},
 				err:    nil,
 				status: codes.OK,
-			},
-			mock: func() {
-				mockService.EXPECT().
-					FileUploadToS3(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return("File uploaded successfully", nil)
 			},
 		},
 		{
 			name: "user id is not set",
-			args: args{
-				req: &pb.FileUploadRequest{
-					Filename: "test.txt",
-					Data:     []byte("test data"),
+			setupMock: func(mock *mock_handlers.MockProtoKeeperSaver) {
+				mock.EXPECT().
+					FileUploadToS3(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("", nil).
+					AnyTimes()
+			},
+			stream: mockFileUploadStream{
+				recvData: []*pb.FileUploadRequest{
+					{
+						File: &pb.FileUploadRequest_Info{
+							Info: &pb.FileInfo{
+								Filename: "test.txt",
+								Size:     100,
+							},
+						},
+					},
 				},
-				id: 0,
 			},
 			want: result{
-				got:    nil,
 				err:    status.Errorf(codes.Unauthenticated, "user ID not found in context"),
 				status: codes.Unauthenticated,
 			},
-			mock: nil,
 		},
 		{
 			name: "file upload error",
-			args: args{
-				req: &pb.FileUploadRequest{
-					Filename: "",
-					Data:     []byte("test data"),
+			setupMock: func(mock *mock_handlers.MockProtoKeeperSaver) {
+				mock.EXPECT().
+					FileUploadToS3(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("", errors.New("file upload error")).
+					AnyTimes()
+			},
+			stream: mockFileUploadStream{
+				recvData: []*pb.FileUploadRequest{
+					{
+						File: &pb.FileUploadRequest_Info{
+							Info: &pb.FileInfo{
+								Filename: "test1.txt",
+								Size:     0,
+							},
+						},
+					},
+					{
+						File: &pb.FileUploadRequest_Chunk{
+							Chunk: []byte(""),
+						},
+					},
 				},
-				id: userID,
 			},
 			want: result{
-				got:    nil,
-				err:    status.Errorf(codes.Internal, "failed to upload file: %v", "file upload error"),
-				status: codes.Internal,
-			},
-			mock: func() {
-				mockService.EXPECT().
-					FileUploadToS3(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return("", errors.New("file upload error"))
+				err:    status.Errorf(codes.InvalidArgument, "file size cannot be 0"),
+				status: codes.InvalidArgument,
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.mock != nil {
-				tt.mock()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			mock := mock_handlers.NewMockProtoKeeperSaver(ctrl)
+			if tt.setupMock != nil {
+				tt.setupMock(mock)
 			}
 			s := &PwdKeeperServer{
-				PwdKeeper: mockService,
+				PwdKeeper: mock,
 			}
-			var got *pb.FileUploadResponse
+
 			var err error
-			if tt.args.id != 0 {
-				ctx := context.WithValue(context.Background(), auth.CtxKeyUserGrpc, tt.args.id)
-				got, err = s.FileUpload(ctx, tt.args.req)
+
+			if tt.name != "user id is not set" {
+				ctx := context.WithValue(context.Background(), auth.CtxKeyUserGrpc, userID)
+				tt.stream.ctx = ctx
+				err = s.FileUpload(&tt.stream)
 			} else {
-				got, err = s.FileUpload(context.Background(), tt.args.req)
+				tt.stream.ctx = context.Background()
+				err = s.FileUpload(&tt.stream)
 			}
+			
 			if !assert.ErrorIs(t, err, tt.want.err) {
 				t.Errorf("pwdKeeperServer.FileUpload() error = %v, wantErr %v", err, tt.want.err)
 				return
 			}
-			if !assert.Equal(t, got, tt.want.got) {
-				t.Errorf("pwdKeeperServer.FileUpload() = %v, want %v", got, tt.want.got)
-			}
 			if status.Code(err) != tt.want.status {
 				t.Errorf("pwdKeeperServer.FileUpload() error = %v, wantStatus %v", status.Code(err), tt.want.status)
-			}
+			}	
 		})
 	}
 }

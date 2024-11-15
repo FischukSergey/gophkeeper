@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 
@@ -86,7 +87,25 @@ func (s *CardService) GetCardList(ctx context.Context, token string) ([]models.C
 			CardExpirationDate: card.GetCardExpirationDate().AsTime(),
 			CardCVV:            card.GetCardCVV(),
 			CardID:             card.GetCardID(),
+			Metadata:           card.GetMetadata(),
 		})
 	}
+	s.log.Info("Card list received", "cards", cards)
 	return cards, nil
+}
+
+// DeleteCard метод для удаления карты.
+func (s *CardService) DeleteCard(ctx context.Context, cardID string, token string) error {
+	// добавление токена авторизации в контекст
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	// удаление карты
+	cardIDInt, err := strconv.ParseInt(cardID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("failed to parse card ID: %w", err)
+	}
+	_, err = s.client.CardDelete(ctx, &pb.CardDeleteRequest{CardID: cardIDInt})
+	if err != nil {
+		return fmt.Errorf("failed to delete card: %w", err)
+	}
+	return nil
 }

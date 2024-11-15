@@ -57,6 +57,13 @@ type Card struct {
 	CardExpirationDate time.Time
 	CardCVV            string
 	CardBank           string
+	Metadata           string
+}
+
+// Metadata структура для метаданных.
+type Metadata struct {
+	Key   string
+	Value string
 }
 
 // Ошибки для пользователя.

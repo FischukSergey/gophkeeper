@@ -109,7 +109,8 @@ func (s *Storage) CardGetList(ctx context.Context, userID int64) ([]models.Card,
 	card_number, 
 	card_holder, 
 	card_expiration_date, 
-	card_cvv
+	card_cvv,
+	metadata
 	FROM cards WHERE user_id=$1 AND deleted_at IS NULL;`
 	
 	var cards []models.Card
@@ -124,9 +125,13 @@ func (s *Storage) CardGetList(ctx context.Context, userID int64) ([]models.Card,
 	
 	for rows.Next() {
 		var card models.Card
-		err := rows.Scan(&card.CardID, &card.UserID, &card.CardBank, &card.CardNumber, &card.CardHolder, &card.CardExpirationDate, &card.CardCVV)
-		if err != nil {
+		var metadata *string //указатель на строку, чтобы не было ошибки при NULL
+		err := rows.Scan(&card.CardID, &card.UserID, &card.CardBank, &card.CardNumber, &card.CardHolder, &card.CardExpirationDate, &card.CardCVV, &metadata)
+		if err != nil {	
 			return nil, fmt.Errorf("failed to scan card: %w", err)
+		}
+		if metadata != nil {
+			card.Metadata = *metadata
 		}
 		cards = append(cards, card)
 	}
@@ -150,6 +155,20 @@ func (s *Storage) CardDelete(ctx context.Context, cardID int64) error {
 		return fmt.Errorf("card with id %d not found", cardID)
 	}
 	
+	return nil
+}
+
+// CardAddMetadata метод для добавления метаданных к карте.
+func (s *Storage) CardAddMetadata(ctx context.Context, cardID int64, metadata string) error {
+	//готовим запрос на обновление данных карты метаданными
+	if metadata == "" || cardID == 0 {
+		return fmt.Errorf("metadata is empty or cardID is 0")
+	}
+	query := `UPDATE cards SET metadata=metadata||$1, updated_at=now() WHERE card_id=$2 AND deleted_at IS NULL;`
+	_, err := s.DB.Exec(ctx, query, metadata, cardID)
+	if err != nil {
+		return fmt.Errorf("failed to add metadata: %w", err)
+	}
 	return nil
 }
 

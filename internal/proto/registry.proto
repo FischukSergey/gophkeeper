@@ -25,6 +25,7 @@ service CardService {
     rpc CardAdd(CardAddRequest) returns (CardAddResponse) {}
     rpc CardGetList(CardGetListRequest) returns (CardGetListResponse) {}
     rpc CardDelete(CardDeleteRequest) returns (CardDeleteResponse) {}
+    rpc CardAddMetadata(CardAddMetadataRequest) returns (CardAddMetadataResponse) {}
 }
 
 // Ping
@@ -190,5 +191,18 @@ message CardDeleteRequest {
     int64 cardID = 1;
 }
 message CardDeleteResponse {
+    bool success = 1;
+}
+
+message Metadata {
+    string key = 1;
+    string value = 2;
+}
+// CardAddMetadata
+message CardAddMetadataRequest {
+    int64 cardID = 1;
+    repeated Metadata metadata = 2;
+}
+message CardAddMetadataResponse {
     bool success = 1;
 }

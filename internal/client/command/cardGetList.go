@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sort"
@@ -53,8 +54,8 @@ func (c *CommandCardGetList) Execute() {
 		default:
 			fmt.Println("Ошибка при получении списка карт:", err)
 			return
+		}
 	}
-}
 	if len(cards) == 0 {
 		fmt.Println("Нет карт для отображения")
 		waitEnter(c.reader)
@@ -63,13 +64,8 @@ func (c *CommandCardGetList) Execute() {
 
 	// создаем новый tabwriter
 	w := tabwriter.NewWriter(c.writer, 0, 0, 2, ' ', 0)
-	defer func() {
-		if err := w.Flush(); err != nil {
-			fmt.Println("Ошибка при выводе списка карт:", err)
-		}
-	}()
-
-	// выводим заголовки таблицы	
+	
+	// выводим заголовки таблицы
 	_, err = fmt.Fprintln(w, "ID\tБанк\tНомер карты\tВладелец\tДата истечения\tCVV")
 	if err != nil {
 		fmt.Println("Ошибка при выводе списка карт:", err)
@@ -92,5 +88,35 @@ func (c *CommandCardGetList) Execute() {
 		if err != nil {
 			fmt.Println("Ошибка при выводе списка карт:", err)
 		}
+	}
+	err = w.Flush()
+	if err != nil {
+		fmt.Println("Ошибка при выводе списка карт:", err)
+	}
+
+	//запрашиваем просмотр метаданных
+	fprintf(c.writer, "\nХотите просмотреть метаданные карт? (y/n)")
+	var answer string
+	_, err = fmt.Fscanln(c.reader, &answer)
+	if err != nil {
+		fmt.Println("Ошибка при вводе ответа:", err)
+	}
+	if answer == "y" || answer == "Y" {
+		for _, card := range cards {
+			if card.Metadata != "" {
+				fprintf(c.writer, "Метаданные карты с ID %d:\n", card.CardID)
+				//парсим метаданные
+				metadata := make(map[string]interface{})
+				err := json.Unmarshal([]byte(card.Metadata), &metadata)
+				if err != nil {
+					fmt.Println("Ошибка при парсинге метаданных карты:", err)
+				}
+				//построчно выводим метаданные
+				for key, value := range metadata {
+					fprintf(c.writer, "key: %s, \tvalue: %v\n", key, value)
+				}
+			}
+		}
+		waitEnter(c.reader)
 	}
 }
