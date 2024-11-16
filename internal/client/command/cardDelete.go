@@ -11,7 +11,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-const cardDeleteCommandName = "cardDelete"
+const cardDeleteCommandName = "CardDelete"
 
 // CommandCardDelete структура для команды удаления карты.
 type CommandCardDelete struct {

@@ -172,6 +172,16 @@ func (s *Storage) CardAddMetadata(ctx context.Context, cardID int64, metadata st
 	return nil
 }
 
+// NoteAdd метод для добавления заметки.
+func (s *Storage) NoteAdd(ctx context.Context, note models.Note, metadata string) error {
+	query := `INSERT INTO entities (user_id, note_text, metadata, created_at) VALUES($1, $2,$3,now());`
+	_, err := s.DB.Exec(ctx, query, note.UserID, note.NoteText, metadata)
+	if err != nil {
+		return fmt.Errorf("failed to add note: %w", err)
+	}
+	return nil
+}
+
 // Close закрытие подключения к базе данных.
 func (s *Storage) Close() {
 	s.DB.Close()

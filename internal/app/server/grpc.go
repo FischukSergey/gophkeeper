@@ -64,6 +64,7 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 	var _ services.DBKeeper = (*dbstorage.Storage)(nil)
 	var _ services.S3Keeper = (*s3.S3)(nil)
 	var _ services.CardKeeper = (*dbstorage.Storage)(nil)
+	var _ services.NoteKeeper = (*dbstorage.Storage)(nil)
 
 	// инициализация S3
 	s3Storage, err := initial.InitS3()
@@ -75,6 +76,7 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 	// создание сервиса
 	grpcService := services.NewGRPCService(log, storage, s3Storage)
 	cardService := services.NewCardService(log, storage)
+	noteService := services.NewNoteService(log, storage)
 
 	grpcApp := &GrpcServer{
 		log:  log,
@@ -112,6 +114,7 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 	// регистрация сервиса в gRPC сервере
 	handlers.RegisterServerAPI(grpcApp.grpcServer, grpcService)
 	handlers.RegisterCardAPI(grpcApp.grpcServer, cardService)
+	handlers.RegisterNoteAPI(grpcApp.grpcServer, noteService)
 
 	return &App{
 		GrpcServer: grpcApp,

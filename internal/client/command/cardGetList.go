@@ -15,7 +15,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-const cardGetListCommandName = "GetList"
+const cardGetListCommandName = "CardList"
 
 func NewCommandCardGetList(cardService *service.CardService, token *grpcclient.Token, reader io.Reader, writer io.Writer) *CommandCardGetList {
 	return &CommandCardGetList{

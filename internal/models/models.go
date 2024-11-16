@@ -73,6 +73,14 @@ var (
 	ErrFileNotExist = errors.New("file does not exist")
 )
 
+// Note структура для заметки.
+type Note struct {
+	NoteID   int64
+	UserID   int64
+	NoteText string
+	Metadata []Metadata
+}
+
 // Validate валидация логина и пароля.
 func (u *User) Validate() error {
 	err := validation.ValidateStruct(

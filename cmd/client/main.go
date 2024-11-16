@@ -35,7 +35,7 @@ func main() {
 		os.Exit(1)
 	}
 	// создание соединения с сервером
-	conn, client, cardClient, err := grpcclient.NewClient(serverConfig, log)
+	conn, client, cardClient, noteClient, err := grpcclient.NewClient(serverConfig, log)
 	if err != nil {
 		log.Error("failed to create client", logger.Err(err))
 		os.Exit(1)
@@ -49,6 +49,9 @@ func main() {
 	authService := service.NewAuthService(client, log)
 	// создание сервиса карт
 	cardService := service.NewCardService(cardClient, log)
+	// создание сервиса заметок
+	noteService := service.NewNoteService(noteClient, log)
+
 	// проверяем, что сервер хранения паролей работает
 	err = authService.Check(context.Background())
 	if err != nil {
@@ -57,5 +60,5 @@ func main() {
 	}
 	token := &grpcclient.Token{}
 
-	mainmenutui.MainMenuTUI(cardService, authService, token)
+	mainmenutui.MainMenuTUI(cardService, authService, noteService, token)
 }

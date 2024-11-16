@@ -25,6 +25,7 @@ func NewClient(cfg *config.Config, log *slog.Logger) (
 	*grpc.ClientConn,
 	pb.GophKeeperClient,
 	pb.CardServiceClient,
+	pb.NoteServiceClient,
 	error,
 ) {
 	log.Info("server address", "address", cfg.ServerAddress)
@@ -32,11 +33,12 @@ func NewClient(cfg *config.Config, log *slog.Logger) (
 	conn, err := grpc.NewClient(cfg.ServerAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to create grpc client: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to create grpc client: %w", err)
 	}
 	log.Info("connected to server")
 
 	client := pb.NewGophKeeperClient(conn)
 	cardClient := pb.NewCardServiceClient(conn)
-	return conn, client, cardClient, nil
+	noteClient := pb.NewNoteServiceClient(conn)
+	return conn, client, cardClient, noteClient, nil
 }

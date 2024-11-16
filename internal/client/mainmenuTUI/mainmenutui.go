@@ -15,7 +15,12 @@ import (
 var log *slog.Logger
 
 // MainMenuTUI функция для работы с главным меню.
-func MainMenuTUI(cardService *service.CardService, authService *service.AuthService, token *grpcclient.Token) {
+func MainMenuTUI(
+	cardService *service.CardService,
+	authService *service.AuthService,
+	noteService *service.NoteService,
+	token *grpcclient.Token,
+) {
 	log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	reader := os.Stdin
 	writer := os.Stdout
@@ -31,6 +36,7 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	commandCardGetList := command.NewCommandCardGetList(cardService, token, reader, writer)
 	commandCardDelete := command.NewCommandCardDelete(cardService, token, reader, writer)
 	commandCardAddMetadata := command.NewCommandCardAddMetadata(cardService, token, reader, writer)
+	commandNoteAdd := command.NewCommandNoteAdd(noteService, token, reader, writer)
 	commandExit := command.NewCommandExit(reader, writer)
 
 	// Определяем основное меню и подменю файлов
@@ -52,18 +58,21 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 		commandCardAddMetadata,
 		commandCardDelete,
 	}
+	// команды для работы с заметками
+	noteCommands := []command.ICommand{
+		commandNoteAdd,
+	}
 
 	// Создаем мапы для команд
 	mainCommandsMenu := make(map[string]func())
 	fileCommandsMenu := make(map[string]func())
 	cardCommandsMenu := make(map[string]func())
+	noteCommandsMenu := make(map[string]func())
 
 	// Заполняем мапу основного меню
 	for _, cmd := range mainCommands {
 		mainCommandsMenu[cmd.Name()] = cmd.Execute
 	}
-	// добавляем команду выхода
-	mainCommandsMenu[commandExit.Name()] = commandExit.Execute
 	// добавляем специальную команду для перехода в подменю файлов
 	mainCommandsMenu["\tРАБОТА С ФАЙЛАМИ"] = func() {
 		handleSubmenu(fileCommands, fileCommandsMenu)
@@ -72,6 +81,12 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	mainCommandsMenu["\tРАБОТА С КАРТАМИ"] = func() {
 		handleSubmenu(cardCommands, cardCommandsMenu)
 	}
+	// добавляем специальную команду для перехода в подменю заметок
+	mainCommandsMenu["\tРАБОТА С ЗАМЕТКАМИ"] = func() {
+		handleSubmenu(noteCommands, noteCommandsMenu)
+	}
+	// добавляем команду выхода
+	mainCommandsMenu[commandExit.Name()] = commandExit.Execute
 
 	// заполняем мапу подменю файлов
 	for _, cmd := range fileCommands {
@@ -85,6 +100,12 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	}
 	cardCommandsMenu["Назад"] = func() {}
 
+	// заполняем мапу подменю заметок
+	for _, cmd := range noteCommands {
+		noteCommandsMenu[cmd.Name()] = cmd.Execute
+	}
+	noteCommandsMenu["Назад"] = func() {}	
+
 	// формируем список названий команд для главного меню
 	mainCommandNames := make([]string, 0, len(mainCommands)+1)
 	for _, cmd := range mainCommands {
@@ -92,13 +113,16 @@ func MainMenuTUI(cardService *service.CardService, authService *service.AuthServ
 	}
 	mainCommandNames = append(mainCommandNames, "\tРАБОТА С ФАЙЛАМИ")
 	mainCommandNames = append(mainCommandNames, "\tРАБОТА С КАРТАМИ")
+	mainCommandNames = append(mainCommandNames, "\tРАБОТА С ЗАМЕТКАМИ")
 	mainCommandNames = append(mainCommandNames, commandExit.Name())
+
 	for {
 		templates := newTemplates()
 		prompt := promptui.Select{
 			Templates: templates,
 			Label:     "Введите команду:",
 			Items:     mainCommandNames,
+			Size:      10,
 		}
 		_, result, err := prompt.Run()
 		if err != nil {
@@ -123,6 +147,7 @@ func handleSubmenu(commands []command.ICommand, commandsMenu map[string]func()) 
 			Templates: templates,
 			Label:     "Меню работы с файлами:",
 			Items:     commandNames,
+			Size:      10,
 		}
 		_, result, err := prompt.Run()
 		if err != nil {

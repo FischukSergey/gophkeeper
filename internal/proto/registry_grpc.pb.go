@@ -26,10 +26,6 @@ const (
 	GophKeeper_FileDownload_FullMethodName  = "/server.GophKeeper/FileDownload"
 	GophKeeper_FileDelete_FullMethodName    = "/server.GophKeeper/FileDelete"
 	GophKeeper_FileGetList_FullMethodName   = "/server.GophKeeper/FileGetList"
-	GophKeeper_NoteAdd_FullMethodName       = "/server.GophKeeper/NoteAdd"
-	GophKeeper_NoteGetList_FullMethodName   = "/server.GophKeeper/NoteGetList"
-	GophKeeper_NoteUpdate_FullMethodName    = "/server.GophKeeper/NoteUpdate"
-	GophKeeper_NoteDelete_FullMethodName    = "/server.GophKeeper/NoteDelete"
 )
 
 // GophKeeperClient is the client API for GophKeeper service.
@@ -43,10 +39,6 @@ type GophKeeperClient interface {
 	FileDownload(ctx context.Context, in *FileDownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[FileDownloadResponse], error)
 	FileDelete(ctx context.Context, in *FileDeleteRequest, opts ...grpc.CallOption) (*FileDeleteResponse, error)
 	FileGetList(ctx context.Context, in *FileGetListRequest, opts ...grpc.CallOption) (*FileGetListResponse, error)
-	NoteAdd(ctx context.Context, in *NoteAddRequest, opts ...grpc.CallOption) (*NoteAddResponse, error)
-	NoteGetList(ctx context.Context, in *NoteGetListRequest, opts ...grpc.CallOption) (*NoteGetListResponse, error)
-	NoteUpdate(ctx context.Context, in *NoteUpdateRequest, opts ...grpc.CallOption) (*NoteUpdateResponse, error)
-	NoteDelete(ctx context.Context, in *NoteDeleteRequest, opts ...grpc.CallOption) (*NoteDeleteResponse, error)
 }
 
 type gophKeeperClient struct {
@@ -139,46 +131,6 @@ func (c *gophKeeperClient) FileGetList(ctx context.Context, in *FileGetListReque
 	return out, nil
 }
 
-func (c *gophKeeperClient) NoteAdd(ctx context.Context, in *NoteAddRequest, opts ...grpc.CallOption) (*NoteAddResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NoteAddResponse)
-	err := c.cc.Invoke(ctx, GophKeeper_NoteAdd_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gophKeeperClient) NoteGetList(ctx context.Context, in *NoteGetListRequest, opts ...grpc.CallOption) (*NoteGetListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NoteGetListResponse)
-	err := c.cc.Invoke(ctx, GophKeeper_NoteGetList_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gophKeeperClient) NoteUpdate(ctx context.Context, in *NoteUpdateRequest, opts ...grpc.CallOption) (*NoteUpdateResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NoteUpdateResponse)
-	err := c.cc.Invoke(ctx, GophKeeper_NoteUpdate_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *gophKeeperClient) NoteDelete(ctx context.Context, in *NoteDeleteRequest, opts ...grpc.CallOption) (*NoteDeleteResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NoteDeleteResponse)
-	err := c.cc.Invoke(ctx, GophKeeper_NoteDelete_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // GophKeeperServer is the server API for GophKeeper service.
 // All implementations must embed UnimplementedGophKeeperServer
 // for forward compatibility.
@@ -190,10 +142,6 @@ type GophKeeperServer interface {
 	FileDownload(*FileDownloadRequest, grpc.ServerStreamingServer[FileDownloadResponse]) error
 	FileDelete(context.Context, *FileDeleteRequest) (*FileDeleteResponse, error)
 	FileGetList(context.Context, *FileGetListRequest) (*FileGetListResponse, error)
-	NoteAdd(context.Context, *NoteAddRequest) (*NoteAddResponse, error)
-	NoteGetList(context.Context, *NoteGetListRequest) (*NoteGetListResponse, error)
-	NoteUpdate(context.Context, *NoteUpdateRequest) (*NoteUpdateResponse, error)
-	NoteDelete(context.Context, *NoteDeleteRequest) (*NoteDeleteResponse, error)
 	mustEmbedUnimplementedGophKeeperServer()
 }
 
@@ -224,18 +172,6 @@ func (UnimplementedGophKeeperServer) FileDelete(context.Context, *FileDeleteRequ
 }
 func (UnimplementedGophKeeperServer) FileGetList(context.Context, *FileGetListRequest) (*FileGetListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FileGetList not implemented")
-}
-func (UnimplementedGophKeeperServer) NoteAdd(context.Context, *NoteAddRequest) (*NoteAddResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NoteAdd not implemented")
-}
-func (UnimplementedGophKeeperServer) NoteGetList(context.Context, *NoteGetListRequest) (*NoteGetListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NoteGetList not implemented")
-}
-func (UnimplementedGophKeeperServer) NoteUpdate(context.Context, *NoteUpdateRequest) (*NoteUpdateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NoteUpdate not implemented")
-}
-func (UnimplementedGophKeeperServer) NoteDelete(context.Context, *NoteDeleteRequest) (*NoteDeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NoteDelete not implemented")
 }
 func (UnimplementedGophKeeperServer) mustEmbedUnimplementedGophKeeperServer() {}
 func (UnimplementedGophKeeperServer) testEmbeddedByValue()                    {}
@@ -366,78 +302,6 @@ func _GophKeeper_FileGetList_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GophKeeper_NoteAdd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NoteAddRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GophKeeperServer).NoteAdd(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: GophKeeper_NoteAdd_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServer).NoteAdd(ctx, req.(*NoteAddRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GophKeeper_NoteGetList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NoteGetListRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GophKeeperServer).NoteGetList(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: GophKeeper_NoteGetList_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServer).NoteGetList(ctx, req.(*NoteGetListRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GophKeeper_NoteUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NoteUpdateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GophKeeperServer).NoteUpdate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: GophKeeper_NoteUpdate_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServer).NoteUpdate(ctx, req.(*NoteUpdateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GophKeeper_NoteDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NoteDeleteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GophKeeperServer).NoteDelete(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: GophKeeper_NoteDelete_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GophKeeperServer).NoteDelete(ctx, req.(*NoteDeleteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // GophKeeper_ServiceDesc is the grpc.ServiceDesc for GophKeeper service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -465,22 +329,6 @@ var GophKeeper_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "FileGetList",
 			Handler:    _GophKeeper_FileGetList_Handler,
 		},
-		{
-			MethodName: "NoteAdd",
-			Handler:    _GophKeeper_NoteAdd_Handler,
-		},
-		{
-			MethodName: "NoteGetList",
-			Handler:    _GophKeeper_NoteGetList_Handler,
-		},
-		{
-			MethodName: "NoteUpdate",
-			Handler:    _GophKeeper_NoteUpdate_Handler,
-		},
-		{
-			MethodName: "NoteDelete",
-			Handler:    _GophKeeper_NoteDelete_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -494,6 +342,222 @@ var GophKeeper_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
+	Metadata: "internal/proto/registry.proto",
+}
+
+const (
+	NoteService_NoteAdd_FullMethodName     = "/server.NoteService/NoteAdd"
+	NoteService_NoteGetList_FullMethodName = "/server.NoteService/NoteGetList"
+	NoteService_NoteUpdate_FullMethodName  = "/server.NoteService/NoteUpdate"
+	NoteService_NoteDelete_FullMethodName  = "/server.NoteService/NoteDelete"
+)
+
+// NoteServiceClient is the client API for NoteService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type NoteServiceClient interface {
+	NoteAdd(ctx context.Context, in *NoteAddRequest, opts ...grpc.CallOption) (*NoteAddResponse, error)
+	NoteGetList(ctx context.Context, in *NoteGetListRequest, opts ...grpc.CallOption) (*NoteGetListResponse, error)
+	NoteUpdate(ctx context.Context, in *NoteUpdateRequest, opts ...grpc.CallOption) (*NoteUpdateResponse, error)
+	NoteDelete(ctx context.Context, in *NoteDeleteRequest, opts ...grpc.CallOption) (*NoteDeleteResponse, error)
+}
+
+type noteServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewNoteServiceClient(cc grpc.ClientConnInterface) NoteServiceClient {
+	return &noteServiceClient{cc}
+}
+
+func (c *noteServiceClient) NoteAdd(ctx context.Context, in *NoteAddRequest, opts ...grpc.CallOption) (*NoteAddResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NoteAddResponse)
+	err := c.cc.Invoke(ctx, NoteService_NoteAdd_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *noteServiceClient) NoteGetList(ctx context.Context, in *NoteGetListRequest, opts ...grpc.CallOption) (*NoteGetListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NoteGetListResponse)
+	err := c.cc.Invoke(ctx, NoteService_NoteGetList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *noteServiceClient) NoteUpdate(ctx context.Context, in *NoteUpdateRequest, opts ...grpc.CallOption) (*NoteUpdateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NoteUpdateResponse)
+	err := c.cc.Invoke(ctx, NoteService_NoteUpdate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *noteServiceClient) NoteDelete(ctx context.Context, in *NoteDeleteRequest, opts ...grpc.CallOption) (*NoteDeleteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NoteDeleteResponse)
+	err := c.cc.Invoke(ctx, NoteService_NoteDelete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// NoteServiceServer is the server API for NoteService service.
+// All implementations must embed UnimplementedNoteServiceServer
+// for forward compatibility.
+type NoteServiceServer interface {
+	NoteAdd(context.Context, *NoteAddRequest) (*NoteAddResponse, error)
+	NoteGetList(context.Context, *NoteGetListRequest) (*NoteGetListResponse, error)
+	NoteUpdate(context.Context, *NoteUpdateRequest) (*NoteUpdateResponse, error)
+	NoteDelete(context.Context, *NoteDeleteRequest) (*NoteDeleteResponse, error)
+	mustEmbedUnimplementedNoteServiceServer()
+}
+
+// UnimplementedNoteServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedNoteServiceServer struct{}
+
+func (UnimplementedNoteServiceServer) NoteAdd(context.Context, *NoteAddRequest) (*NoteAddResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NoteAdd not implemented")
+}
+func (UnimplementedNoteServiceServer) NoteGetList(context.Context, *NoteGetListRequest) (*NoteGetListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NoteGetList not implemented")
+}
+func (UnimplementedNoteServiceServer) NoteUpdate(context.Context, *NoteUpdateRequest) (*NoteUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NoteUpdate not implemented")
+}
+func (UnimplementedNoteServiceServer) NoteDelete(context.Context, *NoteDeleteRequest) (*NoteDeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NoteDelete not implemented")
+}
+func (UnimplementedNoteServiceServer) mustEmbedUnimplementedNoteServiceServer() {}
+func (UnimplementedNoteServiceServer) testEmbeddedByValue()                     {}
+
+// UnsafeNoteServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to NoteServiceServer will
+// result in compilation errors.
+type UnsafeNoteServiceServer interface {
+	mustEmbedUnimplementedNoteServiceServer()
+}
+
+func RegisterNoteServiceServer(s grpc.ServiceRegistrar, srv NoteServiceServer) {
+	// If the following call pancis, it indicates UnimplementedNoteServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&NoteService_ServiceDesc, srv)
+}
+
+func _NoteService_NoteAdd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NoteAddRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NoteServiceServer).NoteAdd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NoteService_NoteAdd_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NoteServiceServer).NoteAdd(ctx, req.(*NoteAddRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NoteService_NoteGetList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NoteGetListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NoteServiceServer).NoteGetList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NoteService_NoteGetList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NoteServiceServer).NoteGetList(ctx, req.(*NoteGetListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NoteService_NoteUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NoteUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NoteServiceServer).NoteUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NoteService_NoteUpdate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NoteServiceServer).NoteUpdate(ctx, req.(*NoteUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NoteService_NoteDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NoteDeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NoteServiceServer).NoteDelete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NoteService_NoteDelete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NoteServiceServer).NoteDelete(ctx, req.(*NoteDeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// NoteService_ServiceDesc is the grpc.ServiceDesc for NoteService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var NoteService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "server.NoteService",
+	HandlerType: (*NoteServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "NoteAdd",
+			Handler:    _NoteService_NoteAdd_Handler,
+		},
+		{
+			MethodName: "NoteGetList",
+			Handler:    _NoteService_NoteGetList_Handler,
+		},
+		{
+			MethodName: "NoteUpdate",
+			Handler:    _NoteService_NoteUpdate_Handler,
+		},
+		{
+			MethodName: "NoteDelete",
+			Handler:    _NoteService_NoteDelete_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "internal/proto/registry.proto",
 }
 
