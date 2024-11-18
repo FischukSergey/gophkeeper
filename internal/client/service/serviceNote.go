@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
 	"google.golang.org/grpc/metadata"
 )
@@ -41,4 +42,27 @@ func (s *NoteService) NoteAdd(ctx context.Context, note string, metaData map[str
 		return nil
 	}
 	return fmt.Errorf("failed to add note: %w", err)
+}
+
+// NoteGetList метод для получения списка заметок.
+func (s *NoteService) NoteGetList(ctx context.Context, token string) ([]models.Note, error) {
+	s.log.Info("Service NoteGetList method called")
+	// добавление токена авторизации в контекст
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	// получение списка заметок с сервера
+	resp, err := s.client.NoteGetList(ctx, &pb.NoteGetListRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get note list: %w", err)
+	}
+	s.log.Debug("resp", "resp", resp.GetNotes())
+	// преобразование ответа сервера в список заметок
+	notes := make([]models.Note, 0, len(resp.GetNotes()))
+	for _, note := range resp.GetNotes() {
+		metadata := make([]models.Metadata, 0, len(note.GetMetadata()))
+		for _, meta := range note.GetMetadata() {
+			metadata = append(metadata, models.Metadata{Key: meta.GetKey(), Value: meta.GetValue()})
+		}
+		notes = append(notes, models.Note{NoteID: note.GetNoteID(), NoteText: note.GetNoteText(), Metadata: metadata})
+	}
+	return notes, nil
 }

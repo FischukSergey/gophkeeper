@@ -16,6 +16,7 @@ import (
 // ProtoNoteService интерфейс для методов сервера.
 type ProtoNoteService interface {
 	NoteAddService(ctx context.Context, note models.Note) error
+	NoteGetListService(ctx context.Context, userID int64) ([]models.Note, error)
 }
 
 // NoteServer сервер для методов заметки.
@@ -60,4 +61,35 @@ func (h *NoteServer) NoteAdd(ctx context.Context, req *pb.NoteAddRequest) (*pb.N
 		return &pb.NoteAddResponse{Success: false}, fmt.Errorf("ошибка при добавлении заметки: %w", err)
 	}
 	return &pb.NoteAddResponse{Success: true}, nil
+}
+
+// NoteGetList хендлер для получения списка заметок.
+func (h *NoteServer) NoteGetList(ctx context.Context, req *pb.NoteGetListRequest) (
+	*pb.NoteGetListResponse, error,
+) {
+	log.Info("NoteGetList", "req", req)
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
+		return &pb.NoteGetListResponse{Notes: nil}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	}
+	log.Info("userID found", slog.Int("userID", userID))
+	//получаем список заметок
+	notes, err := h.NoteService.NoteGetListService(ctx, int64(userID))	
+	if err != nil {
+		return &pb.NoteGetListResponse{Notes: nil}, fmt.Errorf("ошибка при получении списка заметок: %w", err)
+	}	
+	//формируем ответ
+	notesPb := make([]*pb.Note, len(notes))
+	for i, n := range notes {	
+		metadataPb := make([]*pb.Metadata, len(n.Metadata))
+		for j, m := range n.Metadata {
+			metadataPb[j] = &pb.Metadata{Key: m.Key, Value: m.Value}
+		}
+		notesPb[i] = &pb.Note{
+			NoteID:   n.NoteID,
+			NoteText: n.NoteText,
+			Metadata: metadataPb,
+		}
+	}
+	return &pb.NoteGetListResponse{Notes: notesPb}, nil
 }

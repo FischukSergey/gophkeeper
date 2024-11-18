@@ -62,8 +62,8 @@ type Card struct {
 
 // Metadata структура для метаданных.
 type Metadata struct {
-	Key   string
-	Value string
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 // Ошибки для пользователя.
@@ -75,10 +75,11 @@ var (
 
 // Note структура для заметки.
 type Note struct {
-	NoteID   int64
-	UserID   int64
-	NoteText string
-	Metadata []Metadata
+	NoteID      int64      `json:"note_id"`
+	UserID      int64      `json:"user_id"`
+	NoteText    string     `json:"note_text"`
+	Metadata    []Metadata `json:"metadata,omitempty"`
+	RawMetadata string     `json:"-"`
 }
 
 // Validate валидация логина и пароля.

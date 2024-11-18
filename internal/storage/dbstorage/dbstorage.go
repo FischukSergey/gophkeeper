@@ -173,13 +173,46 @@ func (s *Storage) CardAddMetadata(ctx context.Context, cardID int64, metadata st
 }
 
 // NoteAdd метод для добавления заметки.
-func (s *Storage) NoteAdd(ctx context.Context, note models.Note, metadata string) error {
-	query := `INSERT INTO entities (user_id, note_text, metadata, created_at) VALUES($1, $2,$3,now());`
+func (s *Storage) NoteAdd(ctx context.Context, note models.Note, metadata []byte) error {
+	query := `INSERT INTO entities (user_id, note_text, metadata, created_at) VALUES($1, $2, $3::jsonb, now());`
 	_, err := s.DB.Exec(ctx, query, note.UserID, note.NoteText, metadata)
 	if err != nil {
 		return fmt.Errorf("failed to add note: %w", err)
 	}
 	return nil
+}
+
+// NoteGetList метод для получения списка заметок.
+func (s *Storage) NoteGetList(ctx context.Context, userID int64) ([]models.Note, error) {
+	query := `SELECT entity_id, user_id, note_text, metadata FROM entities WHERE user_id=$1 AND deleted_at IS NULL;`
+	var notes []models.Note
+	rows, err := s.DB.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get note list: %w", err)
+	}
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("error during query execution: %w", rows.Err())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var note models.Note
+		var metadata *string //указатель на строку, чтобы не было ошибки при NULL
+		err := rows.Scan(&note.NoteID, &note.UserID, &note.NoteText, &metadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan note: %w", err)
+		}
+		
+		if metadata != nil {
+			note.RawMetadata = *metadata
+		}
+		notes = append(notes, note)
+	}
+	
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during iteration over rows: %w", err)
+	}
+	return notes, nil
 }
 
 // Close закрытие подключения к базе данных.

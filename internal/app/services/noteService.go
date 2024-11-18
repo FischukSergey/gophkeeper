@@ -12,7 +12,8 @@ import (
 
 // NoteKeeper интерфейс для сервиса заметки.
 type NoteKeeper interface {
-	NoteAdd(ctx context.Context, note models.Note, metadata string) error
+	NoteAdd(ctx context.Context, note models.Note, metadata []byte) error
+	NoteGetList(ctx context.Context, userID int64) ([]models.Note, error)
 }
 
 // NoteService структура для сервиса заметки.
@@ -34,7 +35,6 @@ func (s *NoteService) NoteAddService(ctx context.Context, note models.Note) erro
 		return fmt.Errorf("invalid note data")
 	}
 	metaMap := make(map[string]string)
-	var metadata string
 	//проверяем наличие метаданных
 	if len(note.Metadata) > 0 {
 		//валидируем метаданные
@@ -53,11 +53,41 @@ func (s *NoteService) NoteAddService(ctx context.Context, note models.Note) erro
 	if err != nil {
 		return fmt.Errorf("error during metadata serialization: %w", err)
 	}
-	metadata = string(metaJSON)
 	//добавляем заметку в базу данных
-	err = s.storage.NoteAdd(ctx, note, metadata)
+	err = s.storage.NoteAdd(ctx, note, metaJSON)
 	if err != nil {
 		return fmt.Errorf("error during adding note: %w", err)
 	}
 	return nil
+}
+
+// NoteGetListService функция для получения списка заметок.
+func (s *NoteService) NoteGetListService(ctx context.Context, userID int64) ([]models.Note, error) {
+	s.log.Info("NoteGetListService method called")
+	notes, err := s.storage.NoteGetList(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get notes from storage: %w", err)
+	}
+
+	// Обрабатываем метаданные для каждой заметки
+	for i := range notes {
+		if notes[i].RawMetadata != "" {
+			var rawMetadata map[string]string
+			err = json.Unmarshal([]byte(notes[i].RawMetadata), &rawMetadata)
+			if err != nil {
+				return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+			}
+
+			// Преобразуем map в slice of Metadata
+			var metadataStruct []models.Metadata
+			for k, v := range rawMetadata {
+				metadataStruct = append(metadataStruct, models.Metadata{
+					Key:   k,
+					Value: v,
+				})
+			}
+			notes[i].Metadata = metadataStruct
+		}
+	}
+	return notes, nil
 }
