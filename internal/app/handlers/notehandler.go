@@ -17,6 +17,7 @@ import (
 type ProtoNoteService interface {
 	NoteAddService(ctx context.Context, note models.Note) error
 	NoteGetListService(ctx context.Context, userID int64) ([]models.Note, error)
+	NoteDeleteService(ctx context.Context, userID int64, noteID int64) error
 }
 
 // NoteServer сервер для методов заметки.
@@ -92,4 +93,20 @@ func (h *NoteServer) NoteGetList(ctx context.Context, req *pb.NoteGetListRequest
 		}
 	}
 	return &pb.NoteGetListResponse{Notes: notesPb}, nil
+}
+
+// NoteDelete хендлер для удаления заметки.
+func (h *NoteServer) NoteDelete(ctx context.Context, req *pb.NoteDeleteRequest) (*pb.NoteDeleteResponse, error) {
+	log.Info("NoteDelete", "req", req)
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
+		return &pb.NoteDeleteResponse{Success: false}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	}
+	log.Info("userID found", slog.Int("userID", userID))
+	//удаляем заметку
+	err := h.NoteService.NoteDeleteService(ctx, int64(userID), req.NoteID)
+	if err != nil {
+		return &pb.NoteDeleteResponse{Success: false}, fmt.Errorf("ошибка при удалении заметки: %w", err)
+	}
+	return &pb.NoteDeleteResponse{Success: true}, nil
 }

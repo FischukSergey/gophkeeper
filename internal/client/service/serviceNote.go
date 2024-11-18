@@ -66,3 +66,16 @@ func (s *NoteService) NoteGetList(ctx context.Context, token string) ([]models.N
 	}
 	return notes, nil
 }
+
+// NoteDeleteService метод для удаления заметки.
+func (s *NoteService) NoteDeleteService(ctx context.Context, noteID int64, token string) error {
+	s.log.Info("Service NoteDeleteService method called")
+	// добавление токена авторизации в контекст
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	// удаление заметки на сервере
+	resp, err := s.client.NoteDelete(ctx, &pb.NoteDeleteRequest{NoteID: noteID})
+	if resp.GetSuccess() || err == nil {
+		return nil
+	}
+	return fmt.Errorf("failed to delete note: %w", err)
+}

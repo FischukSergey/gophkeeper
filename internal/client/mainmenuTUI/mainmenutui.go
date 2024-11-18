@@ -38,6 +38,7 @@ func MainMenuTUI(
 	commandCardAddMetadata := command.NewCommandCardAddMetadata(cardService, token, reader, writer)
 	commandNoteAdd := command.NewCommandNoteAdd(noteService, token, reader, writer)
 	commandNoteGetList := command.NewCommandNoteGetList(noteService, token, reader, writer)
+	commandNoteDelete := command.NewCommandNoteDelete(noteService, token, reader, writer)
 	commandExit := command.NewCommandExit(reader, writer)
 
 	// Определяем основное меню и подменю файлов
@@ -63,6 +64,7 @@ func MainMenuTUI(
 	noteCommands := []command.ICommand{
 		commandNoteAdd,
 		commandNoteGetList,
+		commandNoteDelete,
 	}
 
 	// Создаем мапы для команд

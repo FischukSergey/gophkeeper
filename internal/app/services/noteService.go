@@ -14,6 +14,7 @@ import (
 type NoteKeeper interface {
 	NoteAdd(ctx context.Context, note models.Note, metadata []byte) error
 	NoteGetList(ctx context.Context, userID int64) ([]models.Note, error)
+	NoteDelete(ctx context.Context, userID int64, noteID int64) error
 }
 
 // NoteService структура для сервиса заметки.
@@ -90,4 +91,14 @@ func (s *NoteService) NoteGetListService(ctx context.Context, userID int64) ([]m
 		}
 	}
 	return notes, nil
+}
+
+// NoteDeleteService функция для удаления заметки.
+func (s *NoteService) NoteDeleteService(ctx context.Context, userID int64, noteID int64) error {
+	s.log.Info("NoteDeleteService method called")
+	err := s.storage.NoteDelete(ctx, userID, noteID)
+	if err != nil {
+		return fmt.Errorf("failed to delete note: %w", err)
+	}
+	return nil
 }
