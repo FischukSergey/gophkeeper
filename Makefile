@@ -40,3 +40,8 @@ testdb:
 	@echo "Run server with test database"
 	$(envDBTest) $(envConfigPath) go run ./cmd/server/
 .PHONY: testdb
+
+test:
+	@echo "Running unit tests"
+	go test -count=1 ./internal/app/... ./internal/client/... ./internal/lib/...
+.PHONY: test
