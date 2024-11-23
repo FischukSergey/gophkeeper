@@ -48,6 +48,15 @@ func (c *CommandCardDelete) Execute() {
 	//получаем список карт
 	cardsList := NewCommandCardGetList(c.cardService, c.token, c.reader, c.writer)
 	cardsList.Execute()
+	cards, err := c.cardService.GetCardList(context.Background(), c.token.Token)
+	if err != nil {
+		fprintln(c.writer, "Ошибка при получении списка карт:", err)
+		return
+	}
+	if len(cards) == 0 {
+		fprintln(c.writer, "Список карт пуст")
+		return
+	}
 	prompt := promptui.Prompt{
 		Label: "Введите ID карты для удаления: ",
 		Validate: func(input string) error {
@@ -63,6 +72,19 @@ func (c *CommandCardDelete) Execute() {
 	cardID, err := prompt.Run()
 	if err != nil {
 		fprintln(c.writer, "Ошибка при вводе ID карты:", err)
+		return
+	}
+	//проверяем, что есть такая карта перебором списка карт
+	var exist bool
+	for _, card := range cards {
+		if card.CardNumber == cardID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		fprintln(c.writer, "Карта с таким ID не найдена")
+		waitEnter(c.reader)
 		return
 	}
 

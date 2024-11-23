@@ -49,6 +49,16 @@ func (c *CommandCardAddMetadata) Execute() {
 	//получение списка карт
 	cardsList := NewCommandCardGetList(c.cardService, c.token, c.reader, c.writer)
 	cardsList.Execute()
+	cards, err := c.cardService.GetCardList(context.Background(), c.token.Token)
+	if err != nil {
+		fprintln(c.writer, "Ошибка при получении списка карт:", err)
+		return
+	}
+	if len(cards) == 0 {
+		fprintln(c.writer, "Список карт пуст")
+		waitEnter(c.reader)
+		return
+	}
 	//ввод ID карты
 	prompt := promptui.Prompt{
 		Label: "Введите ID карты для добавления метаданных: ",
@@ -67,9 +77,21 @@ func (c *CommandCardAddMetadata) Execute() {
 		fprintln(c.writer, "Ошибка при вводе ID карты:", err)
 		return
 	}
-	// Создаем map для хранения метаданных
+	//проверяем, что есть такая карта перебором списка карт
+	var exist bool
+	for _, card := range cards {
+		if card.CardNumber == cardID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		fprintln(c.writer, "Карта с таким ID не найдена")
+		waitEnter(c.reader)
+		return
+	}
+	//создаем map для хранения метаданных
 	metadata := make(map[string]string)
-
 	for {
 		// Показываем текущие метаданные
 		fprintln(c.writer, "\nТекущие введенные метаданные:")

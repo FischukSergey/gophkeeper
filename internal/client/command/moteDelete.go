@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
+	"github.com/FischukSergey/gophkeeper/internal/models"
 	"github.com/manifoldco/promptui"
 )
 
@@ -23,6 +24,7 @@ type NoteDeleteCommand struct {
 // INoteDeleteService интерфейс для сервиса удаления заметки.
 type INoteDeleteService interface {
 	NoteDeleteService(ctx context.Context, noteID int64, token string) error
+	NoteGetList(ctx context.Context, token string) ([]models.Note, error)
 }
 
 // NewCommandNoteDelete создание новой команды удаления заметки.
@@ -51,12 +53,36 @@ func (c *NoteDeleteCommand) Execute() {
 	if !checkToken(c.token, c.reader) {
 		return
 	}
+	// получение списка заметок
+	notes, err := c.noteDeleteService.NoteGetList(context.Background(), c.token.Token)
+	if err != nil {
+		fprintln(c.writer, "Ошибка при получении списка заметок:", err)
+		return
+	}
+	if len(notes) == 0 {
+		fprintln(c.writer, "Список заметок пуст")
+		waitEnter(c.reader)
+		return
+	}
 	// ввод номера заметки
 	fprint(c.writer, "Введите номер заметки для удаления: "+"\033[35m")
 	var noteID int64
-	_, err := fmt.Fscanln(c.reader, &noteID)
+	_, err = fmt.Fscanln(c.reader, &noteID)
 	if err != nil {
 		fprintln(c.writer, "\033[0m"+"Неверный номер заметки")
+		waitEnter(c.reader)
+		return
+	}
+	//проверяем, что есть такая заметка перебором списка заметок
+	var exist bool
+	for _, note := range notes {
+		if note.NoteID == noteID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		fprintln(c.writer, "Заметка с таким ID не найдена")
 		waitEnter(c.reader)
 		return
 	}
