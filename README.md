@@ -96,3 +96,13 @@ make client
 make client-build
 ``` 
 Исполняемые файлы будут находиться в директории `cmd/client/bin`.
+Для запуска клиента используйте команду с переменной окружения `SERVER_CLIENT_ADDRESS`:
+
+```bash
+SERVER_CLIENT_ADDRESS=localhost:8080 ./cmd/client/bin/gophkeeper-client-<os>-<arch>
+```
+или через флаг `-server_address`:
+
+```bash
+./cmd/client/bin/gophkeeper-client-<os>-<arch> -server_address=localhost:8080
+```
