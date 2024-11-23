@@ -45,8 +45,8 @@ func (s *AuthService) Register(ctx context.Context, login string, password strin
 	if err != nil {
 		return "", fmt.Errorf("failed to register: %w", err)
 	}
-	s.log.Debug("регистрация нового клиента", "login", login, "password", password)
-	s.log.Debug("токен", "token", token)
+	//s.log.Debug("регистрация нового клиента", "login", login, "password", password)
+	//s.log.Debug("токен", "token", token)
 	return token.GetAccessToken().Token, nil
 }
 
@@ -68,8 +68,8 @@ func (s *AuthService) Authorization(ctx context.Context, login, password string)
 	if err != nil {
 		return "", fmt.Errorf("failed to authorization: %w", err)
 	}
-	s.log.Debug("авторизация клиента", "login", login, "password", password)
-	s.log.Debug("токен", "token", token)
+	//s.log.Debug("авторизация клиента", "login", login, "password", password)
+	//s.log.Debug("токен", "token", token)
 	return token.GetAccessToken().Token, nil
 }
 

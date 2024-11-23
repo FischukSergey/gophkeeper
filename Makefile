@@ -50,3 +50,8 @@ test:
 	@echo "Running unit tests"
 	go test -count=1 ./internal/app/... ./internal/client/... ./internal/lib/...
 .PHONY: test
+
+build-client:
+	@echo "Building client"
+	./build.sh
+.PHONY: build-client
