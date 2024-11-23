@@ -12,8 +12,17 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
+	"github.com/FischukSergey/gophkeeper/internal/logger"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
+)
+
+const (
+	chunkSize    = 1024
+	sessionToken = "session_token"
+	percent      = 100
+	percentStep  = 5
+	kb           = 1024
 )
 
 // AuthService сервис авторизации.
@@ -72,7 +81,7 @@ func (s *AuthService) S3FileUpload(
 	filename string,
 ) (string, error) {
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	// проверка наличия файла в S3
 	files, err := s.GetFileList(ctx, token)
 	if err == nil || len(files) > 0 {
@@ -94,7 +103,7 @@ func (s *AuthService) S3FileUpload(
 	//открываем стрим для загрузки файла
 	stream, err := s.client.FileUpload(ctx)
 	if err != nil {
-		s.log.Error("ошибка открытия стрима", "error", err)
+		s.log.Error("ошибка открытия стрима", logger.Err(err))
 		return "", fmt.Errorf("failed to open stream: %w", err)
 	}
 	//сначала отправляем имя файла
@@ -107,10 +116,9 @@ func (s *AuthService) S3FileUpload(
 		},
 	})
 	if err != nil {
-		s.log.Error("ошибка отправки файла", "error", err)
+		s.log.Error("ошибка отправки файла", logger.Err(err))
 		return "", fmt.Errorf("failed to send file info: %w", err)
 	}
-	const chunkSize = 1024
 	totalSize := len(fileData)
 	var lastPercent int
 	_, _ = fmt.Printf("Uploading %s (%d bytes):\n", filename, totalSize)
@@ -128,26 +136,26 @@ func (s *AuthService) S3FileUpload(
 		})
 		if err != nil {
 			fmt.Print("\n")
-			s.log.Error("ошибка загрузки файла", "error", err)
+			s.log.Error("ошибка загрузки файла", logger.Err(err))
 			return "", fmt.Errorf("failed to send chunk: %w", err)
 		}
 		// Показываем процент каждые 5%
-		currentPercent := (i * 100) / totalSize
-		if currentPercent >= lastPercent+5 {
+		currentPercent := (i * percent) / totalSize
+		if currentPercent >= lastPercent+percentStep {
 			fmt.Printf("\r%d%%", currentPercent)
 			lastPercent = currentPercent
 		}
 	}
 	// Закрываем стрим и получаем ответ
 	response, err := stream.CloseAndRecv()
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		fmt.Print("\n")
-		s.log.Error("ошибка закрытия стрима", "error", err)
+		s.log.Error("ошибка закрытия стрима", logger.Err(err))
 		return "", fmt.Errorf("failed to close stream: %w", err)
 	}
 
 	fmt.Printf("\r100%%\nUpload complete: %s\n", filename)
-	
+
 	// Проверяем response только если он не nil
 	if response != nil {
 		s.log.Debug("файл загружен", "filename", filename, "size", totalSize)
@@ -161,7 +169,7 @@ func (s *AuthService) S3FileUpload(
 // GetFileList получение списка файлов.
 func (s *AuthService) GetFileList(ctx context.Context, token string) ([]models.File, error) {
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 
 	// получение списка файлов
 	response, err := s.client.FileGetList(ctx, &pb.FileGetListRequest{})
@@ -190,13 +198,13 @@ func (s *AuthService) GetFileList(ctx context.Context, token string) ([]models.F
 // S3FileDelete удаление файла.
 func (s *AuthService) S3FileDelete(ctx context.Context, token string, filename string) error {
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	// удаление файла
 	_, err := s.client.FileDelete(ctx, &pb.FileDeleteRequest{
 		Filename: filename,
 	})
 	if err != nil {
-		s.log.Error("ошибка удаления файла", "error", err)
+		s.log.Error("ошибка удаления файла", logger.Err(err))
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
 	return nil
@@ -205,7 +213,7 @@ func (s *AuthService) S3FileDelete(ctx context.Context, token string, filename s
 // S3FileDownload загрузка файла с сервера.
 func (s *AuthService) S3FileDownload(ctx context.Context, token string, filename string) ([]byte, error) {
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	//открываем стрим для загрузки файла
 	stream, err := s.client.FileDownload(ctx, &pb.FileDownloadRequest{
 		Filename: filename,
@@ -218,22 +226,21 @@ func (s *AuthService) S3FileDownload(ctx context.Context, token string, filename
 	var lastPercent int
 	for {
 		response, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
 			fmt.Print("\n")
-			s.log.Error("ошибка получения чанка", "error", err)
+			s.log.Error("ошибка получения чанка", logger.Err(err))
 			return nil, fmt.Errorf("failed to receive chunk: %w", err)
 		}
 		fileData = append(fileData, response.GetChunk()...)
 		// Показываем процент каждые 5%.
-		currentPercent := (len(fileData) / 1024) % 100 // примерный процент от каждого мегабайта
-		if currentPercent >= lastPercent + 5 {
+		currentPercent := (len(fileData) / kb) % percent // примерный процент от каждого мегабайта
+		if currentPercent >= lastPercent+percentStep {
 			fmt.Printf("\r%d%%", currentPercent)
 			lastPercent = currentPercent
 		}
-		
 	}
 	fmt.Printf("\r100%%\nDownload complete: %s (%d bytes)\n", filename, len(fileData))
 	s.log.Debug("файл загружен", "filename", filename)

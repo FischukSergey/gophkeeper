@@ -24,12 +24,12 @@ import (
 // mockFileUploadStream is a mock implementation of pb.GophKeeper_FileUploadServer.
 type mockFileUploadStream struct {
 	pb.GophKeeper_FileUploadServer
-	recvData   []*pb.FileUploadRequest
-	recvIndex  int
-	ctx        context.Context
+	recvData  []*pb.FileUploadRequest
+	recvIndex int
+	ctx       context.Context
 }
 
-// Add Context() method
+// Add Context() method.
 func (m *mockFileUploadStream) Context() context.Context {
 	return m.ctx
 }
@@ -43,10 +43,11 @@ func (m *mockFileUploadStream) Recv() (*pb.FileUploadRequest, error) {
 	m.recvIndex++
 	return req, nil
 }
+
 // SendAndClose is a mock implementation of pb.GophKeeper_FileUploadServer.SendAndClose.
 func (m *mockFileUploadStream) SendAndClose(resp *pb.FileUploadResponse) error {
 	return nil
-}	
+}
 
 func TestMain(m *testing.M) {
 	// Устанавливаем тестовую конфигурацию JWT
@@ -389,7 +390,6 @@ func Test_PwdKeeperServer_Ping(t *testing.T) {
 }
 
 func Test_PwdKeeperServer_FileUploadToS3(t *testing.T) {
-
 	userID := int(18)
 	type result struct {
 		err    error
@@ -514,14 +514,14 @@ func Test_PwdKeeperServer_FileUploadToS3(t *testing.T) {
 				tt.stream.ctx = context.Background()
 				err = s.FileUpload(&tt.stream)
 			}
-			
+
 			if !assert.ErrorIs(t, err, tt.want.err) {
 				t.Errorf("pwdKeeperServer.FileUpload() error = %v, wantErr %v", err, tt.want.err)
 				return
 			}
 			if status.Code(err) != tt.want.status {
 				t.Errorf("pwdKeeperServer.FileUpload() error = %v, wantStatus %v", status.Code(err), tt.want.status)
-			}	
+			}
 		})
 	}
 }

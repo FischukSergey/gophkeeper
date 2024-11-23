@@ -22,7 +22,12 @@ type CommandCardDelete struct {
 }
 
 // NewCommandCardDelete создает новый экземпляр команды удаления карты.
-func NewCommandCardDelete(cardService *service.CardService, token *grpcclient.Token, reader io.Reader, writer io.Writer) *CommandCardDelete {
+func NewCommandCardDelete(
+	cardService *service.CardService,
+	token *grpcclient.Token,
+	reader io.Reader,
+	writer io.Writer,
+) *CommandCardDelete {
 	return &CommandCardDelete{cardService: cardService, reader: reader, writer: writer, token: token}
 }
 
@@ -60,7 +65,7 @@ func (c *CommandCardDelete) Execute() {
 		fprintln(c.writer, "Ошибка при вводе ID карты:", err)
 		return
 	}
-	
+
 	//удаляем карту
 	err = c.cardService.DeleteCard(context.Background(), cardID, c.token.Token)
 	if err != nil {

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/FischukSergey/gophkeeper/internal/lib/jwt"
@@ -11,10 +12,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
-// CtxKey для передачи userID в контекст
+
+// CtxKey для передачи userID в контекст.
 type CtxKey string
 
-// WrappedServerStream для передачи измененного контекста
+// WrappedServerStream структура для передачи измененного контекста.
 type WrappedServerStream struct {
 	grpc.ServerStream
 	ctx context.Context
@@ -27,8 +29,13 @@ const (
 	CtxKeyUserGrpc CtxKey = "userID"
 )
 
-// UnaryServerInterceptor для обычных unary вызовов
-func UnaryAuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+// UnaryAuthInterceptor для обычных unary вызовов.
+func UnaryAuthInterceptor(
+	ctx context.Context,
+	req any,
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (any, error) {
 	var userID int
 	var err error
 	switch info.FullMethod {
@@ -58,15 +65,15 @@ func UnaryAuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerIn
 				}
 			}
 		} else {
-				slog.Info(ErrNotFound)
-				return nil, status.Errorf(codes.Unauthenticated, ErrNotFound)
-			}
+			slog.Info(ErrNotFound)
+			return nil, status.Errorf(codes.Unauthenticated, ErrNotFound)
 		}
-		ctxWithUserID := context.WithValue(ctx, CtxKeyUserGrpc, userID)
-		return handler(ctxWithUserID, req)
 	}
+	ctxWithUserID := context.WithValue(ctx, CtxKeyUserGrpc, userID)
+	return handler(ctxWithUserID, req)
+}
 
-// StreamServerInterceptor для stream вызовов
+// StreamAuthInterceptor для stream вызовов.
 func StreamAuthInterceptor() grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		// пропускаем методы регистрации и авторизации
@@ -83,20 +90,20 @@ func StreamAuthInterceptor() grpc.StreamServerInterceptor {
 		var err error
 		values := md.Get("session_token")
 		switch len(values) {
-			case 0:
-				slog.Info(ErrNotFound)
-				return status.Errorf(codes.Unauthenticated, ErrNotFound)
-			default:
-				token := values[0]
-				userID, err = jwt.GetUserID(token)
-				if err != nil {
-					if errors.Is(err, jwt.ErrTokenExpired) {
-						slog.Info(ErrExpired)
-						return status.Errorf(codes.Unauthenticated, ErrExpired)
-					}
-					slog.Info(ErrInvalid)
-					return status.Errorf(codes.Unauthenticated, ErrInvalid)
+		case 0:
+			slog.Info(ErrNotFound)
+			return status.Errorf(codes.Unauthenticated, ErrNotFound)
+		default:
+			token := values[0]
+			userID, err = jwt.GetUserID(token)
+			if err != nil {
+				if errors.Is(err, jwt.ErrTokenExpired) {
+					slog.Info(ErrExpired)
+					return status.Errorf(codes.Unauthenticated, ErrExpired)
 				}
+				slog.Info(ErrInvalid)
+				return status.Errorf(codes.Unauthenticated, ErrInvalid)
+			}
 		}
 
 		// создаем новый контекст с userID
@@ -107,7 +114,7 @@ func StreamAuthInterceptor() grpc.StreamServerInterceptor {
 	}
 }
 
-// NewWrappedServerStream создает новый WrappedServerStream
+// NewWrappedServerStream создает новый WrappedServerStream.
 func NewWrappedServerStream(ctx context.Context, stream grpc.ServerStream) *WrappedServerStream {
 	return &WrappedServerStream{
 		ServerStream: stream,
@@ -115,15 +122,25 @@ func NewWrappedServerStream(ctx context.Context, stream grpc.ServerStream) *Wrap
 	}
 }
 
-// добавляем методы для WrappedServerStream
+// Context метод для получения контекста. Обёртка над ServerStream.Context().
 func (w *WrappedServerStream) Context() context.Context {
 	return w.ctx
 }
 
+// RecvMsg метод для получения сообщения. Обёртка над ServerStream.RecvMsg().
 func (w *WrappedServerStream) RecvMsg(m interface{}) error {
-	return w.ServerStream.RecvMsg(m)
+	err := w.ServerStream.RecvMsg(m)
+	if err != nil {
+		return fmt.Errorf("failed to receive message: %w", err)
+	}
+	return nil
 }
 
+// SendMsg метод для отправки сообщения. Обёртка над ServerStream.SendMsg().
 func (w *WrappedServerStream) SendMsg(m interface{}) error {
-	return w.ServerStream.SendMsg(m)
+	err := w.ServerStream.SendMsg(m)
+	if err != nil {
+		return fmt.Errorf("failed to send message: %w", err)
+	}
+	return nil
 }

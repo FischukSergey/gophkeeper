@@ -36,12 +36,12 @@ func RegisterNoteAPI(
 
 // NoteAdd хендлер для добавления заметки.
 func (h *NoteServer) NoteAdd(ctx context.Context, req *pb.NoteAddRequest) (*pb.NoteAddResponse, error) {
-	log.Info("NoteAdd", "req", req)
+	log.Info("NoteAdd", request, req)
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
 		return &pb.NoteAddResponse{Success: false}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 	//формируем массив метаданных
 	var metadata []models.Metadata
 	if req.Note.Metadata != nil {
@@ -68,20 +68,20 @@ func (h *NoteServer) NoteAdd(ctx context.Context, req *pb.NoteAddRequest) (*pb.N
 func (h *NoteServer) NoteGetList(ctx context.Context, req *pb.NoteGetListRequest) (
 	*pb.NoteGetListResponse, error,
 ) {
-	log.Info("NoteGetList", "req", req)
+	log.Info("NoteGetList", request, req)
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
 		return &pb.NoteGetListResponse{Notes: nil}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 	//получаем список заметок
-	notes, err := h.NoteService.NoteGetListService(ctx, int64(userID))	
+	notes, err := h.NoteService.NoteGetListService(ctx, int64(userID))
 	if err != nil {
 		return &pb.NoteGetListResponse{Notes: nil}, fmt.Errorf("ошибка при получении списка заметок: %w", err)
-	}	
+	}
 	//формируем ответ
 	notesPb := make([]*pb.Note, len(notes))
-	for i, n := range notes {	
+	for i, n := range notes {
 		metadataPb := make([]*pb.Metadata, len(n.Metadata))
 		for j, m := range n.Metadata {
 			metadataPb[j] = &pb.Metadata{Key: m.Key, Value: m.Value}
@@ -97,12 +97,12 @@ func (h *NoteServer) NoteGetList(ctx context.Context, req *pb.NoteGetListRequest
 
 // NoteDelete хендлер для удаления заметки.
 func (h *NoteServer) NoteDelete(ctx context.Context, req *pb.NoteDeleteRequest) (*pb.NoteDeleteResponse, error) {
-	log.Info("NoteDelete", "req", req)
+	log.Info("NoteDelete", request, req)
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
 		return &pb.NoteDeleteResponse{Success: false}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 	//удаляем заметку
 	err := h.NoteService.NoteDeleteService(ctx, int64(userID), req.NoteID)
 	if err != nil {

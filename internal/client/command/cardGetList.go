@@ -17,7 +17,12 @@ import (
 
 const cardGetListCommandName = "CardList"
 
-func NewCommandCardGetList(cardService *service.CardService, token *grpcclient.Token, reader io.Reader, writer io.Writer) *CommandCardGetList {
+func NewCommandCardGetList(
+	cardService *service.CardService,
+	token *grpcclient.Token,
+	reader io.Reader,
+	writer io.Writer,
+) *CommandCardGetList {
 	return &CommandCardGetList{
 		cardService: cardService,
 		token:       token,
@@ -65,7 +70,7 @@ func (c *CommandCardGetList) Execute() {
 
 	// создаем новый tabwriter
 	w := tabwriter.NewWriter(c.writer, 0, 0, 2, ' ', 0)
-	
+
 	// выводим заголовки таблицы
 	_, err = fmt.Fprintln(w, "ID\tБанк\tНомер карты\tВладелец\tДата истечения\tCVV")
 	if err != nil {

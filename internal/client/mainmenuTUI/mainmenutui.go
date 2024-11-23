@@ -108,7 +108,7 @@ func MainMenuTUI(
 	for _, cmd := range noteCommands {
 		noteCommandsMenu[cmd.Name()] = cmd.Execute
 	}
-	noteCommandsMenu["Назад"] = func() {}	
+	noteCommandsMenu["Назад"] = func() {}
 
 	// формируем список названий команд для главного меню
 	mainCommandNames := make([]string, 0, len(mainCommands)+1)

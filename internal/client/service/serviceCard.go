@@ -52,7 +52,7 @@ func (s *CardService) CardAdd(ctx context.Context, card models.Card, token strin
 		return fmt.Errorf("неверная дата")
 	}
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	//добавляем карту на сервер
 	_, err := s.client.CardAdd(ctx, &pb.CardAddRequest{
 		Card: &pb.Card{
@@ -72,7 +72,7 @@ func (s *CardService) CardAdd(ctx context.Context, card models.Card, token strin
 // GetCardList метод для получения списка карт.
 func (s *CardService) GetCardList(ctx context.Context, token string) ([]models.Card, error) {
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	// получение списка карт
 	response, err := s.client.CardGetList(ctx, &pb.CardGetListRequest{})
 	if err != nil {
@@ -97,7 +97,7 @@ func (s *CardService) GetCardList(ctx context.Context, token string) ([]models.C
 // DeleteCard метод для удаления карты.
 func (s *CardService) DeleteCard(ctx context.Context, cardID string, token string) error {
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	// удаление карты
 	cardIDInt, err := strconv.ParseInt(cardID, 10, 64)
 	if err != nil {
@@ -114,12 +114,13 @@ func (s *CardService) DeleteCard(ctx context.Context, cardID string, token strin
 func (s *CardService) AddCardMetadata(
 	ctx context.Context, cardID int64, metaData map[string]string, token string) error {
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	//преобразование map в массив структур Metadata
 	jsonData := make([]*pb.Metadata, 0, len(metaData))
 	for key, value := range metaData {
 		jsonData = append(jsonData, &pb.Metadata{Key: key, Value: value})
 	}
+	s.log.Info("Metadata to add", "metadata", jsonData)
 	// добавление метаданных к карте
 	_, err := s.client.CardAddMetadata(ctx, &pb.CardAddMetadataRequest{
 		CardID:   cardID,

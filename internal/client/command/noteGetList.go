@@ -26,20 +26,22 @@ type INoteGetListService interface {
 // NewCommandNoteGetList создает команду для получения списка заметок.
 func NewCommandNoteGetList(
 	noteGetListService INoteGetListService, // сервис для получения списка заметок
-	token *grpcclient.Token, 
-	reader io.Reader, 
+	token *grpcclient.Token,
+	reader io.Reader,
 	writer io.Writer) *NoteGetListCommand {
-		return &NoteGetListCommand{
-			noteGetListService: noteGetListService,
-			token:              token,
-			reader:             reader,
-			writer:             writer,
-		}
+	return &NoteGetListCommand{
+		noteGetListService: noteGetListService,
+		token:              token,
+		reader:             reader,
+		writer:             writer,
+	}
 }
+
 // Name возвращает имя команды.
 func (c *NoteGetListCommand) Name() string {
 	return nameCommandGetList
 }
+
 // Execute выполняет команду.
 func (c *NoteGetListCommand) Execute() {
 	if !checkToken(c.token, c.reader) {

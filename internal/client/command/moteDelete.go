@@ -62,8 +62,8 @@ func (c *NoteDeleteCommand) Execute() {
 	}
 	// подтверждение удаления заметки
 	continuePrompt := promptui.Prompt{
-		Label:     "Вы уверены, что хотите удалить заметку? (y/n)",
-		Default:   "y",
+		Label:   "Вы уверены, что хотите удалить заметку? (y/n)",
+		Default: "y",
 		Validate: func(input string) error {
 			if input != "y" && input != "n" {
 				return errors.New("пожалуйста, введите 'y' или 'n'")

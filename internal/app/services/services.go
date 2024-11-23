@@ -228,7 +228,7 @@ func (g *CardService) CardGetListService(ctx context.Context, userID int64) ([]m
 // CardDeleteService метод для удаления карты.
 func (g *CardService) CardDeleteService(ctx context.Context, cardID int64) error {
 	g.log.Info("Service CardDelete method called")
-	err := g.storage.CardDelete(ctx, cardID)	
+	err := g.storage.CardDelete(ctx, cardID)
 	if err != nil {
 		return fmt.Errorf("failed to delete card: %w", err)
 	}
@@ -236,7 +236,12 @@ func (g *CardService) CardDeleteService(ctx context.Context, cardID int64) error
 }
 
 // CardAddMetadataService метод для добавления метаданных к карте.
-func (g *CardService) CardAddMetadataService(ctx context.Context, userID int64, cardID int64, metadata []models.Metadata) error {
+func (g *CardService) CardAddMetadataService(
+	ctx context.Context,
+	userID int64,
+	cardID int64,
+	metadata []models.Metadata,
+) error {
 	g.log.Info("Service CardAddMetadata method called")
 	metadataMap := make(map[string]string)
 	for _, m := range metadata {
@@ -261,6 +266,7 @@ func (g *CardService) CardAddMetadataService(ctx context.Context, userID int64, 
 	if err != nil {
 		return fmt.Errorf("failed to marshal metadata: %w", err)
 	}
+	g.log.Info("metadataJSON", slog.String("metadataJSON", string(metadataJSON)))
 	err = g.storage.CardAddMetadata(ctx, cardID, string(metadataJSON))
 	if err != nil {
 		return fmt.Errorf("failed to add metadata: %w", err)

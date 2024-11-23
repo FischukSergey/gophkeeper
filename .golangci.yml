@@ -17,7 +17,8 @@ run:
     - "internal/proto"
 
   # Which files to skip: they will be analyzed, but issues from them won't be reported.
-  skip-files: []
+  issues.exclude-files:
+    - "_test\\.go$"
 
   # Invariable parameters #
 
@@ -344,7 +345,7 @@ linters:
     - godot
     - gofmt
     - goimports
-    - mnd
+    # - mnd
     - goprintffuncname
     - gosec
     - gosimple
@@ -390,10 +391,17 @@ issues:
     - linters:
       - wrapcheck
       - errcheck
+      - reassign
+      - gosec
+      - containedctx
       path: _test\.go$
     - linters:
       - dupl
       path: "internal/app/handlers/.*\\.go"
+    - path: "internal/config/config.go"
+      text: "fieldalignment: struct with \\d+ pointer bytes could be \\d+"
+    - path: "internal/app/interceptors/auth/auth.go"
+      text: "context.Context field"
   fix: false
   max-issues-per-linter: 0
   max-same-issues: 0
@@ -415,6 +423,9 @@ issues:
 
   # Show only new issues created in git patch with set file path.
   # new-from-patch:
+
+  issues.exclude-files:
+    - "_test\\.go$"
 
 severity:
   # Invariable parameters #

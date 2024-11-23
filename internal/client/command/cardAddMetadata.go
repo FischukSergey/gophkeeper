@@ -15,7 +15,7 @@ const (
 	cardAddMetadataCommandName = "AddMetadata"
 )
 
-// NewCommandCardAddMetadata создает новый экземпляр команды добавления метаданных к карте
+// NewCommandCardAddMetadata создает новый экземпляр команды добавления метаданных к карте.
 func NewCommandCardAddMetadata(
 	cardService *service.CardService,
 	token *grpcclient.Token,
@@ -25,7 +25,7 @@ func NewCommandCardAddMetadata(
 	return &CommandCardAddMetadata{cardService, token, reader, writer}
 }
 
-// CommandCardAddMetadata структура команды добавления метаданных к карте
+// CommandCardAddMetadata структура команды добавления метаданных к карте.
 type CommandCardAddMetadata struct {
 	cardService *service.CardService
 	token       *grpcclient.Token
@@ -33,12 +33,12 @@ type CommandCardAddMetadata struct {
 	writer      io.Writer
 }
 
-// Name возвращает имя команды
+// Name возвращает имя команды.
 func (c *CommandCardAddMetadata) Name() string {
 	return cardAddMetadataCommandName
 }
 
-// Execute выполняет команду добавления метаданных к карте
+// Execute выполняет команду добавления метаданных к карте.
 func (c *CommandCardAddMetadata) Execute() {
 	//проверка наличия токена
 	if !checkToken(c.token, c.reader) {
@@ -66,10 +66,10 @@ func (c *CommandCardAddMetadata) Execute() {
 	if err != nil {
 		fprintln(c.writer, "Ошибка при вводе ID карты:", err)
 		return
-	}	
+	}
 	// Создаем map для хранения метаданных
 	metadata := make(map[string]string)
-	
+
 	for {
 		// Показываем текущие метаданные
 		fprintln(c.writer, "\nТекущие введенные метаданные:")
@@ -83,8 +83,8 @@ func (c *CommandCardAddMetadata) Execute() {
 
 		// Спрашиваем, хочет ли пользователь добавить еще пару
 		continuePrompt := promptui.Prompt{
-			Label:     "Добавить новую пару key-value? (y/n)",
-			Default:   "y",
+			Label:   "Добавить новую пару key-value? (y/n)",
+			Default: "y",
 			Validate: func(input string) error {
 				if input != "y" && input != "n" {
 					return errors.New("пожалуйста, введите 'y' или 'n'")

@@ -9,13 +9,12 @@ import (
 
 // Config структура конфигурации приложения.
 type Config struct {
-	S3        S3Config       `yaml:"s3"`
-	GRPC      GRPCConfig     `yaml:"grpc"`
-	JWT       JWTConfig      `yaml:"jwt"`
-	Log       Log            `yaml:"log"`
-	Postgres  PostgresConfig `yaml:"postgres"`
-	SecretKey string         `yaml:"secret_key"`
-	TokenTTL  time.Duration  `yaml:"token_ttl" env-required:"true"`
+	S3       S3Config       `yaml:"s3"`
+	JWT      JWTConfig      `yaml:"jwt"`
+	GRPC     GRPCConfig     `yaml:"grpc"`
+	Postgres PostgresConfig `yaml:"postgres"`
+	Log      Log            `yaml:"log"`
+	TokenTTL time.Duration  `yaml:"token_ttl" env-required:"true"`
 }
 
 // GRPCConfig структура конфигурации grpc.
@@ -64,6 +63,5 @@ func MustLoad(path string) *Config {
 	if err := cleanenv.ReadConfig(path, &cfg); err != nil {
 		panic("failed to read config: " + err.Error())
 	}
-
 	return &cfg
 }

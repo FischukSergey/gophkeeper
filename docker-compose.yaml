@@ -1,0 +1,49 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: build/app.Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - CONFIG_PATH=./config/config.yaml
+      - DB_NAME=gophkeeper
+      - DB_SSLMODE=disable
+    networks:
+      - gophkeeper-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=gophkeeper
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gophkeeper-network
+
+  migration:
+    image: migrate/migrate
+    volumes:
+      - ./migrations:/migrations
+    command: ["-path", "/migrations", "-database",  "postgres://postgres:postgres@db:5432/gophkeeper?sslmode=disable", "up"]
+    depends_on:
+      - db
+    networks:
+      - gophkeeper-network
+
+volumes:
+  postgres_data:
+
+networks:
+  gophkeeper-network:
+    driver: bridge

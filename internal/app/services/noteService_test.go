@@ -26,7 +26,7 @@ func (m *MockNoteKeeper) NoteGetList(ctx context.Context, userID int64) ([]model
 	if userID == 1 {
 		return []models.Note{
 			{NoteText: "test", Metadata: []models.Metadata{{Key: "test", Value: "test"}}},
-		}, nil	
+		}, nil
 	}
 	return nil, args.Error(1)
 }
@@ -82,7 +82,7 @@ func TestNoteService_NoteAdd(t *testing.T) {
 				Metadata: []models.Metadata{
 					{Key: "test", Value: "test"},
 					{Key: "test", Value: "test"},
-				},	
+				},
 			},
 			wantErr: errors.New("duplicate metadata key"),
 		},
@@ -92,12 +92,12 @@ func TestNoteService_NoteAdd(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockNoteKeeper := new(MockNoteKeeper)
 			noteService := NewNoteService(logger, mockNoteKeeper)
-			
+
 			if tt.wantErr == nil {
 				mockNoteKeeper.On("NoteAdd", mock.Anything, tt.note, mock.AnythingOfType("[]uint8")).
 					Return(tt.wantErr)
 			}
-			
+
 			err := noteService.NoteAddService(ctx, tt.note)
 
 			if tt.wantErr != nil {
@@ -114,13 +114,13 @@ func TestNoteService_NoteGetList(t *testing.T) {
 	logger := slog.Default()
 	ctx := context.Background()
 	tests := []struct {
-		name    string
-		userID int64
+		name      string
+		userID    int64
 		wantNotes []models.Note
-		wantErr error
+		wantErr   error
 	}{
 		{
-			name: "successful get list",
+			name:   "successful get list",
 			userID: 1,
 			wantNotes: []models.Note{
 				{NoteText: "test", Metadata: []models.Metadata{{Key: "test", Value: "test"}}},
@@ -128,10 +128,10 @@ func TestNoteService_NoteGetList(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "empty list",
-			userID: 2,
+			name:      "empty list",
+			userID:    2,
 			wantNotes: nil,
-			wantErr: nil,
+			wantErr:   nil,
 		},
 	}
 	for _, tt := range tests {
@@ -154,21 +154,21 @@ func TestNoteService_NoteGetList(t *testing.T) {
 			mockNoteKeeper.AssertExpectations(t)
 		})
 	}
-}	
+}
 func TestNoteService_NoteDelete(t *testing.T) {
 	logger := slog.Default()
 	ctx := context.Background()
 
 	tests := []struct {
 		name    string
-		userID int64
-		noteID int64
+		userID  int64
+		noteID  int64
 		wantErr error
 	}{
 		{
-			name: "successful delete",
-			userID: 1,
-			noteID: 1,
+			name:    "successful delete",
+			userID:  1,
+			noteID:  1,
 			wantErr: nil,
 		},
 	}
@@ -178,7 +178,7 @@ func TestNoteService_NoteDelete(t *testing.T) {
 			noteService := NewNoteService(logger, mockNoteKeeper)
 
 			if tt.wantErr == nil {
-				mockNoteKeeper.On("NoteDelete", ctx, tt.userID, tt.noteID).Return(tt.wantErr)	
+				mockNoteKeeper.On("NoteDelete", ctx, tt.userID, tt.noteID).Return(tt.wantErr)
 			}
 
 			err := noteService.NoteDeleteService(ctx, tt.userID, tt.noteID)

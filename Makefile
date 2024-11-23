@@ -41,6 +41,11 @@ testdb:
 	$(envDBTest) $(envConfigPath) go run ./cmd/server/
 .PHONY: testdb
 
+test-functional:
+	@echo "Running functional tests"
+	go test -v -count=1 ./tests/...
+.PHONY: test-functional
+
 test:
 	@echo "Running unit tests"
 	go test -count=1 ./internal/app/... ./internal/client/... ./internal/lib/...

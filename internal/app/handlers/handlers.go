@@ -17,6 +17,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	userFound = "userID found"
+	request   = "request"
+	user      = "userID"
+)
+
 var log = slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 // PwdKeeperServer структура для сервера.
@@ -125,18 +131,6 @@ func (s *PwdKeeperServer) Authorization(
 	return &pb.AuthorizationResponse{AccessToken: accessToken}, nil
 }
 
-// NoteGetList метод для получения списка записей пользователя.
-func (s *PwdKeeperServer) NoteGetList(
-	ctx context.Context, req *pb.NoteGetListRequest) (*pb.NoteGetListResponse, error) {
-	// log.Info("Handler NoteGetList method called")
-	// userID := req.UserID
-	// notes, err := s.pwdKeeper.GetList(ctx, userID)
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.Internal, "failed to get list: %v", err)
-	// }
-	return &pb.NoteGetListResponse{}, nil
-}
-
 // FileUpload метод для загрузки файла в S3.
 func (s *PwdKeeperServer) FileUpload(
 	stream pb.GophKeeper_FileUploadServer) error {
@@ -146,7 +140,7 @@ func (s *PwdKeeperServer) FileUpload(
 	if !ok {
 		return status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 
 	// получаем информацию о файле
 	req, err := stream.Recv()
@@ -166,7 +160,7 @@ func (s *PwdKeeperServer) FileUpload(
 	// получаем файл по частям
 	for {
 		req, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -194,7 +188,7 @@ func (s *PwdKeeperServer) FileGetList(
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 	files, err := s.PwdKeeper.FileGetListFromS3(ctx, int64(userID))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get file list: %v", err)
@@ -221,7 +215,7 @@ func (s *PwdKeeperServer) FileDelete(
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 	err := s.PwdKeeper.FileDeleteFromS3(ctx, int64(userID), req.Filename)
 	if err != nil {
 		if errors.Is(err, models.ErrFileNotExist) {
@@ -241,7 +235,7 @@ func (s *PwdKeeperServer) FileDownload(
 	if !ok {
 		return status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 	// скачиваем файл из S3
 
 	data, err := s.PwdKeeper.FileDownloadFromS3(ctx, int64(userID), req.Filename)

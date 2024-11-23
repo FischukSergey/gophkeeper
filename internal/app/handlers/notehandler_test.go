@@ -37,7 +37,7 @@ func TestProtoNoteService_NoteAdd(t *testing.T) {
 			name: "successful note creation",
 			request: &pb.NoteAddRequest{
 				Note: &pb.Note{
-					NoteText:   "Test Note",
+					NoteText: "Test Note",
 					Metadata: []*pb.Metadata{
 						{Key: "key1", Value: "value1"},
 					},
@@ -58,7 +58,7 @@ func TestProtoNoteService_NoteAdd(t *testing.T) {
 			name: "unauthorized request",
 			request: &pb.NoteAddRequest{
 				Note: &pb.Note{
-					NoteText:   "Test Note",
+					NoteText: "Test Note",
 					Metadata: []*pb.Metadata{
 						{Key: "key1", Value: "value1"},
 					},
@@ -195,7 +195,7 @@ func TestProtoNoteService_NoteGetList(t *testing.T) {
 		userID    int
 	}{
 		{
-			name: "successful note update",
+			name:    "successful note update",
 			request: &pb.NoteGetListRequest{},
 			setupMock: func(mock *mock.MockProtoNoteService) {
 				mock.EXPECT().
@@ -209,7 +209,7 @@ func TestProtoNoteService_NoteGetList(t *testing.T) {
 			userID: 18,
 		},
 		{
-			name: "unauthorized request",
+			name:    "unauthorized request",
 			request: &pb.NoteGetListRequest{},
 			setupMock: func(mock *mock.MockProtoNoteService) {
 				// Мок не нужен, так как ошибка произойдет раньше

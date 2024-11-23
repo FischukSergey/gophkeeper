@@ -13,7 +13,10 @@ import (
 	"github.com/FischukSergey/gophkeeper/internal/models"
 )
 
-const nameCommandFileGetList = "FileList"
+const (
+	nameCommandFileGetList = "FileList"
+	kb                     = 1024
+)
 
 // IFileGetListService интерфейс для получения списка файлов.
 type IFileGetListService interface {
@@ -86,7 +89,7 @@ func (c *CommandFileGetList) Execute() {
 	for _, file := range files {
 		_, err = fmt.Fprintf(w, "%s\t%d kb\t%s\n",
 			file.Filename,
-			file.Size/1024,
+			file.Size/kb,
 			file.CreatedAt.Format(time.DateTime),
 		)
 		if err != nil {

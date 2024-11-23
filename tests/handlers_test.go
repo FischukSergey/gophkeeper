@@ -17,6 +17,8 @@ import (
 )
 
 var authService *service.AuthService
+var cardService *service.CardService
+var noteService *service.NoteService
 
 // TestMain инициализация клиента.
 func TestMain(m *testing.M) {
@@ -43,9 +45,9 @@ func TestMain(m *testing.M) {
 	// создание сервиса аутентификации
 	authService = service.NewAuthService(grpcClient, logger)
 	// создание сервиса карт
-	_ = service.NewCardService(serviceClient, logger)
+	cardService = service.NewCardService(serviceClient, logger)
 	// создание сервиса заметок
-	_ = service.NewNoteService(noteServiceClient, logger)
+	noteService = service.NewNoteService(noteServiceClient, logger)
 	// проверяем, что сервер хранения паролей работает
 	err = authService.Check(context.Background())
 	if err != nil {

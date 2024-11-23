@@ -10,9 +10,10 @@ import (
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/manifoldco/promptui"
 )
+
 const nameCommandNoteAdd = "NoteAdd"
 
-// CommandNoteAdd структура команды добавления заметки.	
+// CommandNoteAdd структура команды добавления заметки.
 type CommandNoteAdd struct {
 	noteAddService INoteAddService
 	token          *grpcclient.Token
@@ -97,8 +98,8 @@ func addMetadata(writer io.Writer, metadata *map[string]string) {
 		}
 		// Спрашиваем, хочет ли пользователь добавить еще пару
 		continuePrompt := promptui.Prompt{
-			Label:     "Добавить новую пару key-value? (y/n)",
-			Default:   "y",
+			Label:   "Добавить новую пару key-value? (y/n)",
+			Default: "y",
 			Validate: func(input string) error {
 				if input != "y" && input != "n" {
 					return errors.New("пожалуйста, введите 'y' или 'n'")

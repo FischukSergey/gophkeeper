@@ -451,14 +451,14 @@ func TestCardGetList(t *testing.T) {
 	service := NewCardService(logger, mockCard)
 	ctx := context.Background()
 	tests := []struct {
-		name        string
-		userID      int64
+		name          string
+		userID        int64
 		expectedCards []models.Card
 		expectedErr   error
 	}{
 		{
-			name:        "successful get list",
-			userID:      1,
+			name:   "successful get list",
+			userID: 1,
 			expectedCards: []models.Card{
 				{
 					CardNumber:         "5272697132101976",
@@ -528,7 +528,7 @@ func TestCardAddMetadata(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "invalid metadata value",
+			name:   "invalid metadata value",
 			userID: 1,
 			cardID: 1,
 			metadata: []models.Metadata{
@@ -537,16 +537,16 @@ func TestCardAddMetadata(t *testing.T) {
 			wantErr: errors.New("invalid metadata"),
 		},
 		{
-			name: "invalid metadata key",
+			name:   "invalid metadata key",
 			userID: 1,
 			cardID: 1,
 			metadata: []models.Metadata{
-				{Key: "test test", Value: "test"},
+				{Key: "test test1", Value: "test2"},
 			},
 			wantErr: errors.New("invalid metadata key"),
 		},
 		{
-			name: "metadata key already exists",
+			name:   "metadata key already exists",
 			userID: 1,
 			cardID: 1,
 			metadata: []models.Metadata{
@@ -558,11 +558,9 @@ func TestCardAddMetadata(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			mockCard.On("CardAddMetadata", ctx, tt.cardID, mock.AnythingOfType("string")).Return(tt.wantErr)
 
 			err := service.CardAddMetadataService(ctx, tt.userID, tt.cardID, tt.metadata)
-
 			if tt.wantErr != nil {
 				assert.Error(t, err)
 			} else {

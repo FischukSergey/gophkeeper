@@ -40,24 +40,24 @@ type Token struct {
 
 // File структура для файла.
 type File struct {
+	CreatedAt time.Time
+	DeletedAt time.Time
 	FileID    string
 	UserID    string
 	Filename  string
-	CreatedAt time.Time
-	DeletedAt time.Time
 	Size      int64
 }
 
 // Card структура для карты.
 type Card struct {
-	CardID             int64
+	CardExpirationDate time.Time
 	UserID             string
 	CardNumber         string
 	CardHolder         string
-	CardExpirationDate time.Time
 	CardCVV            string
 	CardBank           string
 	Metadata           string
+	CardID             int64
 }
 
 // Metadata структура для метаданных.
@@ -75,11 +75,11 @@ var (
 
 // Note структура для заметки.
 type Note struct {
+	NoteText    string     `json:"note_text"`
+	RawMetadata string     `json:"-"`
+	Metadata    []Metadata `json:"metadata,omitempty"`
 	NoteID      int64      `json:"note_id"`
 	UserID      int64      `json:"user_id"`
-	NoteText    string     `json:"note_text"`
-	Metadata    []Metadata `json:"metadata,omitempty"`
-	RawMetadata string     `json:"-"`
 }
 
 // Validate валидация логина и пароля.

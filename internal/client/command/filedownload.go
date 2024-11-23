@@ -108,7 +108,7 @@ func (c *CommandFileDownload) Execute() {
 	}
 	// сохранение файла
 	filename = filepath + "/" + filename
-	err = os.WriteFile(filename, bytes, 0644)
+	err = os.WriteFile(filename, bytes, os.FileMode(0600))
 	if err != nil {
 		fmt.Printf(errOutputMessage, err)
 		return

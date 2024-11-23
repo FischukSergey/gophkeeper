@@ -9,3 +9,6 @@
 *.pdf
 #ignore golangci-lint cache
 golangci-lint/
+# Ignore environment variables
+.env
+*.env

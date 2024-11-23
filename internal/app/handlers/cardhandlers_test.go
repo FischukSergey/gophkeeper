@@ -78,7 +78,7 @@ func TestProtoCardService_AddCard(t *testing.T) {
 				tt.setupMock(mockService)
 			}
 			s := &CardServer{CardService: mockService}
-			
+
 			ctx := context.Background()
 			if tt.userID != 0 {
 				ctx = context.WithValue(ctx, auth.CtxKeyUserGrpc, tt.userID)
@@ -108,8 +108,8 @@ func TestProtoCardService_CardGetList(t *testing.T) {
 		{
 			CardNumber:         "5272697132101976",
 			CardHolder:         "Test Card",
-			CardCVV:           "123",
-			CardBank:          "Test Bank",
+			CardCVV:            "123",
+			CardBank:           "Test Bank",
 			CardExpirationDate: time.Unix(1716211200, 0),
 		},
 	}
@@ -157,7 +157,7 @@ func TestProtoCardService_CardGetList(t *testing.T) {
 				tt.setupMock(mockService)
 			}
 			s := &CardServer{CardService: mockService}
-			
+
 			ctx := context.Background()
 			if tt.userID != 0 {
 				ctx = context.WithValue(ctx, auth.CtxKeyUserGrpc, tt.userID)

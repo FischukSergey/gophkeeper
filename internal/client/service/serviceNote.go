@@ -25,7 +25,7 @@ func NewNoteService(client pb.NoteServiceClient, log *slog.Logger) *NoteService 
 func (s *NoteService) NoteAdd(ctx context.Context, note string, metaData map[string]string, token string) error {
 	s.log.Info("Service NoteAdd method called")
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	//преобразование map в массив структур Metadata
 	jsonData := make([]*pb.Metadata, 0, len(metaData))
 	for key, value := range metaData {
@@ -48,7 +48,7 @@ func (s *NoteService) NoteAdd(ctx context.Context, note string, metaData map[str
 func (s *NoteService) NoteGetList(ctx context.Context, token string) ([]models.Note, error) {
 	s.log.Info("Service NoteGetList method called")
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	// получение списка заметок с сервера
 	resp, err := s.client.NoteGetList(ctx, &pb.NoteGetListRequest{})
 	if err != nil {
@@ -71,7 +71,7 @@ func (s *NoteService) NoteGetList(ctx context.Context, token string) ([]models.N
 func (s *NoteService) NoteDeleteService(ctx context.Context, noteID int64, token string) error {
 	s.log.Info("Service NoteDeleteService method called")
 	// добавление токена авторизации в контекст
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("session_token", token))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(sessionToken, token))
 	// удаление заметки на сервере
 	resp, err := s.client.NoteDelete(ctx, &pb.NoteDeleteRequest{NoteID: noteID})
 	if resp.GetSuccess() || err == nil {

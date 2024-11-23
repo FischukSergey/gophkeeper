@@ -38,12 +38,12 @@ func RegisterCardAPI(
 
 // CardAdd хендлер для добавления карты.
 func (h *CardServer) CardAdd(ctx context.Context, req *pb.CardAddRequest) (*pb.CardAddResponse, error) {
-	log.Info("CardAdd", "req", req)
+	log.Info("CardAdd", request, req)
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 
 	//формируем карту
 	card := models.Card{
@@ -63,12 +63,12 @@ func (h *CardServer) CardAdd(ctx context.Context, req *pb.CardAddRequest) (*pb.C
 
 // CardGetList хендлер для получения списка карт пользователя.
 func (h *CardServer) CardGetList(ctx context.Context, req *pb.CardGetListRequest) (*pb.CardGetListResponse, error) {
-	log.Info("CardGetList", "req", req)
+	log.Info("CardGetList", request, req)
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 
 	cards, err := h.CardService.CardGetListService(ctx, int64(userID))
 	if err != nil {
@@ -92,12 +92,12 @@ func (h *CardServer) CardGetList(ctx context.Context, req *pb.CardGetListRequest
 
 // CardDelete хендлер для удаления карты.
 func (h *CardServer) CardDelete(ctx context.Context, req *pb.CardDeleteRequest) (*pb.CardDeleteResponse, error) {
-	log.Info("CardDelete", "req", req)
+	log.Info("CardDelete", request, req)
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
 		return &pb.CardDeleteResponse{Success: false}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 	err := h.CardService.CardDeleteService(ctx, req.CardID)
 	if err != nil {
 		return &pb.CardDeleteResponse{Success: false}, fmt.Errorf("ошибка при удалении карты: %w", err)
@@ -105,20 +105,21 @@ func (h *CardServer) CardDelete(ctx context.Context, req *pb.CardDeleteRequest) 
 	return &pb.CardDeleteResponse{Success: true}, nil
 }
 
-//CardAddMetadata хендлер для добавления метаданных к карте.
+// CardAddMetadata хендлер для добавления метаданных к карте.
 func (h *CardServer) CardAddMetadata(ctx context.Context, req *pb.CardAddMetadataRequest) (
 	*pb.CardAddMetadataResponse, error) {
-	log.Info("CardAddMetadata", "req", req)
+	log.Info("CardAddMetadata", request, req)
 	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
 	if !ok {
 		return &pb.CardAddMetadataResponse{Success: false}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
 	}
-	log.Info("userID found", slog.Int("userID", userID))
+	log.Info(userFound, slog.Int(user, userID))
 	//формируем массив метаданных
 	metadata := make([]models.Metadata, len(req.Metadata))
 	for i, m := range req.Metadata {
 		metadata[i] = models.Metadata{Key: m.Key, Value: m.Value}
 	}
+	log.Info("metadata", "metadata", metadata)
 	err := h.CardService.CardAddMetadataService(ctx, int64(userID), req.CardID, metadata)
 	if err != nil {
 		return &pb.CardAddMetadataResponse{Success: false}, fmt.Errorf("ошибка при добавлении метаданных: %w", err)

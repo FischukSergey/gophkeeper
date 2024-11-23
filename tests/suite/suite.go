@@ -8,10 +8,18 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const (
+	dbUser     = "test"
+	dbPassword = "test"
+	dbHost     = "localhost"
+	dbPort     = "5433"
+	dbName     = "test"
+)
+
 // InitTestStorage инициализация тестового хранилища.
 func InitTestStorage() (*dbstorage.Storage, error) {
 	dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
-		"test", "test", "localhost", "5433", "test")
+		dbUser, dbPassword, dbHost, dbPort, dbName)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

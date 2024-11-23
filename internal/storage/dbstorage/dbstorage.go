@@ -112,7 +112,7 @@ func (s *Storage) CardGetList(ctx context.Context, userID int64) ([]models.Card,
 	card_cvv,
 	metadata
 	FROM cards WHERE user_id=$1 AND deleted_at IS NULL;`
-	
+
 	var cards []models.Card
 	rows, err := s.DB.Query(ctx, query, userID)
 	if err != nil {
@@ -122,12 +122,21 @@ func (s *Storage) CardGetList(ctx context.Context, userID int64) ([]models.Card,
 		return nil, fmt.Errorf("error during query execution: %w", rows.Err())
 	}
 	defer rows.Close()
-	
+
 	for rows.Next() {
 		var card models.Card
 		var metadata *string //указатель на строку, чтобы не было ошибки при NULL
-		err := rows.Scan(&card.CardID, &card.UserID, &card.CardBank, &card.CardNumber, &card.CardHolder, &card.CardExpirationDate, &card.CardCVV, &metadata)
-		if err != nil {	
+		err := rows.Scan(
+			&card.CardID,
+			&card.UserID,
+			&card.CardBank,
+			&card.CardNumber,
+			&card.CardHolder,
+			&card.CardExpirationDate,
+			&card.CardCVV,
+			&metadata,
+		)
+		if err != nil {
 			return nil, fmt.Errorf("failed to scan card: %w", err)
 		}
 		if metadata != nil {
@@ -148,13 +157,13 @@ func (s *Storage) CardDelete(ctx context.Context, cardID int64) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete card: %w", err)
 	}
-	
+
 	// Проверяем, была ли обновлена хотя бы одна запись
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
 		return fmt.Errorf("card with id %d not found", cardID)
 	}
-	
+
 	return nil
 }
 
@@ -164,10 +173,19 @@ func (s *Storage) CardAddMetadata(ctx context.Context, cardID int64, metadata st
 	if metadata == "" || cardID == 0 {
 		return fmt.Errorf("metadata is empty or cardID is 0")
 	}
-	query := `UPDATE cards SET metadata=metadata||$1, updated_at=now() WHERE card_id=$2 AND deleted_at IS NULL;`
-	_, err := s.DB.Exec(ctx, query, metadata, cardID)
+	//используем COALESCE для обработки NULL значений в metadata
+	query := `UPDATE cards 
+              SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb, 
+                  updated_at = now() 
+              WHERE card_id = $2 AND deleted_at IS NULL 
+              RETURNING metadata;`
+	var updatedMetadata string
+	err := s.DB.QueryRow(ctx, query, metadata, cardID).Scan(&updatedMetadata)
 	if err != nil {
 		return fmt.Errorf("failed to add metadata: %w", err)
+	}
+	if updatedMetadata == "" {
+		return fmt.Errorf("card with id %d not found or already deleted", cardID)
 	}
 	return nil
 }
@@ -202,13 +220,13 @@ func (s *Storage) NoteGetList(ctx context.Context, userID int64) ([]models.Note,
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan note: %w", err)
 		}
-		
+
 		if metadata != nil {
 			note.RawMetadata = *metadata
 		}
 		notes = append(notes, note)
 	}
-	
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error during iteration over rows: %w", err)
 	}

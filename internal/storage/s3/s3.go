@@ -60,7 +60,7 @@ func (s *S3) S3UploadFile(ctx context.Context, fileData []byte, filename string,
 // S3GetFileList получает список файлов из S3.
 func (s *S3) S3GetFileList(ctx context.Context, bucketID string, bucket string) ([]models.File, error) {
 	svc := s3.New(s.S3Session)
-	
+
 	result, err := svc.ListObjectsV2WithContext(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(bucketID),
