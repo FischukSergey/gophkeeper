@@ -29,6 +29,8 @@ const (
 var (
 	FlagConfigPath string         // путь к файлу конфигурации
 	FlagDBPassword string         // пароль для подключения к базе данных
+	FlagDBHost     string         // хост для подключения к базе данных
+	FlagDBPort     string         // порт для подключения к базе данных
 	FlagDBTest     bool           // флаг для тестовой базы данных
 	Cfg            *config.Config // конфигурация
 )
@@ -37,6 +39,8 @@ var (
 func InitConfig() {
 	flag.StringVar(&FlagConfigPath, "config", "", "path to config file")
 	flag.StringVar(&FlagDBPassword, "db_password", "", "database password")
+	flag.StringVar(&FlagDBHost, "db_host", "", "database host")
+	flag.StringVar(&FlagDBPort, "db_port", "", "database port")
 	flag.BoolVar(&FlagDBTest, "db_test", false, "use test database")
 	flag.Parse()
 
@@ -50,6 +54,12 @@ func InitConfig() {
 	if envDBTest, ok := os.LookupEnv("DB_TEST"); ok && envDBTest == "true" {
 		FlagDBTest = true
 	}
+	if envDBHost := os.Getenv("DB_HOST"); envDBHost != "" {
+		FlagDBHost = envDBHost
+	}
+	if envDBPort := os.Getenv("DB_PORT"); envDBPort != "" {
+		FlagDBPort = envDBPort
+	}
 
 	Cfg = config.MustLoad(FlagConfigPath) // загрузка конфигурации	.yaml
 }
@@ -61,9 +71,20 @@ func InitStorage() (*dbstorage.Storage, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error parsing database DSN: %w", err)
 	}
-
+	var host string
+	if FlagDBHost != "" {
+		host = FlagDBHost
+	} else {
+		host = dbConfig.Host
+	}
+	var port string
+	if FlagDBPort != "" {
+		port = FlagDBPort
+	} else {
+		port = strconv.Itoa(int(dbConfig.Port))
+	}
 	dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
-		dbConfig.User, FlagDBPassword, dbConfig.Host, strconv.Itoa(int(dbConfig.Port)), dbConfig.Database)
+		dbConfig.User, FlagDBPassword, host, port, dbConfig.Database)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

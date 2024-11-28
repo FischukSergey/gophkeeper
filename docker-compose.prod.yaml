@@ -1,0 +1,41 @@
+services:
+  app:
+    image: cr.selcloud.ru/${PROJECT_ID}/gophkeeper-app:latest
+    container_name: gophkeeper_app
+    ports:
+      - "${APP_PORT}:8080"  # внешний порт берем из .env
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+
+    restart: unless-stopped
+    networks:
+      - gophkeeper_network
+
+  db:
+    image: cr.selcloud.ru/${PROJECT_ID}/gophkeeper-db:latest
+    container_name: gophkeeper_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"  # опционально, для доступа к БД извне
+    restart: unless-stopped
+    networks:
+      - gophkeeper_network
+
+volumes:
+  postgres_data:
+    name: gophkeeper_postgres_data
+
+networks:
+  gophkeeper_network:
+    name: gophkeeper_network

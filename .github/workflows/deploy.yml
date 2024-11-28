@@ -2,6 +2,8 @@ name: Deploy to Selectel
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 env:
   REGISTRY: cr.selcloud.ru
@@ -31,9 +33,15 @@ jobs:
       - name: Login to Selectel Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}  #регистр контейнеров
-          username: ${{ secrets.SELECTEL_USERNAME }}  #имя пользователя в облаке
-          password: ${{ secrets.SELECTEL_PASSWORD }}  #пароль пользователя в облаке
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.SELECTEL_USERNAME }}
+          password: ${{ secrets.SELECTEL_PASSWORD }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build and push App image
         uses: docker/build-push-action@v5
@@ -41,6 +49,7 @@ jobs:
           context: ./build/app
           file: ./build/app.Dockerfile
           push: true
+          platforms: linux/amd64
           tags: |
             ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:${{ github.sha }}
@@ -51,6 +60,7 @@ jobs:
           context: ./build/db
           file: ./build/docker-compose.db.yaml
           push: true
+          platforms: linux/amd64
           tags: |
             ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:${{ github.sha }}
@@ -59,15 +69,27 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      
+      - name: Copy docker-compose file to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SELECTEL_HOST }}
+          username: ${{ secrets.SELECTEL_SSH_USER }}
+          key: ${{ secrets.SELECTEL_SSH_KEY }}
+          source: "docker-compose.prod.yaml,.env"
+          target: "/root/app"
+
       - name: Deploy to Selectel Cloud
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SELECTEL_HOST }}  #ip адрес облака
-          username: ${{ secrets.SELECTEL_SSH_USER }}  #имя пользователя для подключения по ssh
-          key: ${{ secrets.SELECTEL_SSH_KEY }}  #ключ пользователя для подключения по ssh
+          host: ${{ secrets.SELECTEL_HOST }}
+          username: ${{ secrets.SELECTEL_SSH_USER }}
+          key: ${{ secrets.SELECTEL_SSH_KEY }}
           script: |
-            docker login ${{ env.REGISTRY }} -u ${{ secrets.SELECTEL_USERNAME }} -p ${{ secrets.SELECTEL_PASSWORD }}  #логинимся в облаке
-            docker pull ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:latest  #скачиваем последнюю версию приложения
-            docker pull ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:latest  #скачиваем последнюю версию базы данных
-            docker-compose -f docker-compose.prod.yaml down  #останавливаем контейнеры
-            docker-compose -f docker-compose.prod.yaml up -d  #запускаем контейнеры
+            cd /root/app
+            docker login ${{ env.REGISTRY }} -u ${{ secrets.SELECTEL_USERNAME }} -p ${{ secrets.SELECTEL_PASSWORD }}
+            docker pull ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:latest
+            docker pull ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:latest
+            docker-compose -f docker-compose.prod.yaml down
+            docker-compose -f docker-compose.prod.yaml up -d

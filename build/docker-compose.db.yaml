@@ -14,6 +14,8 @@ services:
     depends_on:
       - db
     restart: always
+    networks:
+      - gophkeeper-network
     
 
   db:
@@ -27,7 +29,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
+    networks:
+      - gophkeeper-network
 
+migrations:
+  image: ${REGISTRY}/${SELECTEL_PROJECT_ID}/${DB_IMAGE_NAME}:latest
+  command: ["migrate", "-path", "/migrations", "-database",  "postgres://postgres:postgres@db:5432/gophkeeper?sslmode=disable", "up"]
+  depends_on:
+    - db
+  networks:
+    - gophkeeper-network
 
 volumes:
   postgres_data:
+networks:
+  gophkeeper-network:
+    driver: bridge

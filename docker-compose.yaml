@@ -8,13 +8,10 @@ services:
     depends_on:
       - db
     environment:
+      - DB_PASSWORD=postgres
+      - CONFIG_PATH=./config/local.yml
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - CONFIG_PATH=./config/config.yaml
-      - DB_NAME=gophkeeper
-      - DB_SSLMODE=disable
     networks:
       - gophkeeper-network
 

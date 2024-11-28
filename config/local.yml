@@ -1,6 +1,6 @@
 # grpc server settings
 grpc:
-  port: localhost:8080
+  port: 0.0.0.0:8080
   timeout: 10h
 
 # storage settings
