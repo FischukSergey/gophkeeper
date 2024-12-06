@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -20,20 +21,20 @@ func main() {
 	flag.Parse()
 
 	if storagePath == "" {
-		panic("storagePath is required")
+		log.Fatal("storagePath is required")
 	}
 	if migrationsPath == "" {
-		panic("migrationsPath is required")
+		log.Fatal("migrationsPath is required")
 	}
 
 	m, err := migrate.New("file://"+migrationsPath, storagePath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer func(m *migrate.Migrate) {
 		err, _ := m.Close()
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}(m)
 	if err := m.Up(); err != nil {
@@ -41,7 +42,7 @@ func main() {
 			fmt.Println("migration up failed:", err)
 			return
 		}
-		panic(err)
+		log.Fatal(err)
 	}
 	fmt.Println("migration up succeeded")
 }

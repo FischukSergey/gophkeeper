@@ -1,9 +1,11 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"testing"
 	"time"
@@ -52,7 +54,7 @@ type MockS3Keeper struct {
 
 func (m *MockS3Keeper) S3UploadFile(
 	ctx context.Context,
-	fileData []byte,
+	fileData io.Reader,
 	filename string,
 	bucket string,
 ) (string, error) {
@@ -315,7 +317,7 @@ func TestFileUploadToS3(t *testing.T) {
 				mock.AnythingOfType("string"),
 			).Return(tt.expectedURL, tt.s3Error)
 
-			url, err := service.FileUploadToS3(ctx, tt.fileData, tt.filename, tt.userID)
+			url, err := service.FileUploadToS3(ctx, bytes.NewReader(tt.fileData), tt.filename, tt.userID)
 
 			if tt.wantErr {
 				assert.Error(t, err)

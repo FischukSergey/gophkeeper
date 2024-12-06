@@ -15,8 +15,14 @@ import (
 var log *slog.Logger
 
 func init() {
+	// удаление файла лога, если он существует
+	if _, err := os.Stat("client.log"); err == nil {
+		if err := os.Remove("client.log"); err != nil {
+			slog.Error("failed to remove log file", logger.Err(err))
+		}
+	}
 	// Создаем файл для логов
-	logFile, err := os.OpenFile("client.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	logFile, err := os.OpenFile("client.log", os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		slog.Error("failed to open log file", logger.Err(err))
 		os.Exit(1)

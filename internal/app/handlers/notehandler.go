@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
+	"github.com/FischukSergey/gophkeeper/internal/app/converters"
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
@@ -37,9 +37,9 @@ func RegisterNoteAPI(
 // NoteAdd хендлер для добавления заметки.
 func (h *NoteServer) NoteAdd(ctx context.Context, req *pb.NoteAddRequest) (*pb.NoteAddResponse, error) {
 	log.Info("NoteAdd", request, req)
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return &pb.NoteAddResponse{Success: false}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	userID, err := h.validateUserID(ctx)
+	if err != nil {
+		return nil, err
 	}
 	log.Info(userFound, slog.Int(user, userID))
 	//формируем массив метаданных
@@ -51,15 +51,11 @@ func (h *NoteServer) NoteAdd(ctx context.Context, req *pb.NoteAddRequest) (*pb.N
 		}
 	}
 	//формируем заметку
-	note := models.Note{
-		UserID:   int64(userID),
-		NoteText: req.Note.NoteText,
-		Metadata: metadata,
-	}
+	note := converters.ToModelNote(req.Note, int64(userID), metadata)
 	//добавляем заметку
-	err := h.NoteService.NoteAddService(ctx, note)
+	err = h.NoteService.NoteAddService(ctx, note)
 	if err != nil {
-		return &pb.NoteAddResponse{Success: false}, fmt.Errorf("ошибка при добавлении заметки: %w", err)
+		return nil, status.Errorf(codes.Internal, "ошибка при добавлении заметки: %v", err)
 	}
 	return &pb.NoteAddResponse{Success: true}, nil
 }
@@ -69,15 +65,15 @@ func (h *NoteServer) NoteGetList(ctx context.Context, req *pb.NoteGetListRequest
 	*pb.NoteGetListResponse, error,
 ) {
 	log.Info("NoteGetList", request, req)
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return &pb.NoteGetListResponse{Notes: nil}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	userID, err := h.validateUserID(ctx)
+	if err != nil {
+		return nil, err
 	}
 	log.Info(userFound, slog.Int(user, userID))
 	//получаем список заметок
 	notes, err := h.NoteService.NoteGetListService(ctx, int64(userID))
 	if err != nil {
-		return &pb.NoteGetListResponse{Notes: nil}, fmt.Errorf("ошибка при получении списка заметок: %w", err)
+		return nil, status.Errorf(codes.Internal, "ошибка при получении списка заметок: %v", err)
 	}
 	//формируем ответ
 	notesPb := make([]*pb.Note, len(notes))
@@ -86,11 +82,7 @@ func (h *NoteServer) NoteGetList(ctx context.Context, req *pb.NoteGetListRequest
 		for j, m := range n.Metadata {
 			metadataPb[j] = &pb.Metadata{Key: m.Key, Value: m.Value}
 		}
-		notesPb[i] = &pb.Note{
-			NoteID:   n.NoteID,
-			NoteText: n.NoteText,
-			Metadata: metadataPb,
-		}
+		notesPb[i] = converters.ToProtoNote(n, metadataPb)
 	}
 	return &pb.NoteGetListResponse{Notes: notesPb}, nil
 }
@@ -98,15 +90,27 @@ func (h *NoteServer) NoteGetList(ctx context.Context, req *pb.NoteGetListRequest
 // NoteDelete хендлер для удаления заметки.
 func (h *NoteServer) NoteDelete(ctx context.Context, req *pb.NoteDeleteRequest) (*pb.NoteDeleteResponse, error) {
 	log.Info("NoteDelete", request, req)
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return &pb.NoteDeleteResponse{Success: false}, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	userID, err := h.validateUserID(ctx)
+	if err != nil {
+		return nil, err
 	}
 	log.Info(userFound, slog.Int(user, userID))
 	//удаляем заметку
-	err := h.NoteService.NoteDeleteService(ctx, int64(userID), req.NoteID)
+	err = h.NoteService.NoteDeleteService(ctx, int64(userID), req.NoteID)
 	if err != nil {
-		return &pb.NoteDeleteResponse{Success: false}, fmt.Errorf("ошибка при удалении заметки: %w", err)
+		return nil, status.Errorf(codes.Internal, "ошибка при удалении заметки: %v", err)
 	}
 	return &pb.NoteDeleteResponse{Success: true}, nil
+}
+
+// validateUserID проверяет корректность ID пользователя из контекста
+func (h *NoteServer) validateUserID(ctx context.Context) (int, error) {
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
+		return 0, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	}
+	if userID <= 0 {
+		return 0, status.Errorf(codes.InvalidArgument, "invalid user ID")
+	}
+	return userID, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"strings"
 	"time"
@@ -24,7 +25,7 @@ type DBKeeper interface {
 
 // S3Keeper интерфейс для сервиса S3.
 type S3Keeper interface {
-	S3UploadFile(ctx context.Context, fileData []byte, filename string, bucket string) (string, error)
+	S3UploadFile(ctx context.Context, fileData io.Reader, filename string, bucket string) (string, error)
 	S3GetFileList(ctx context.Context, bucketID string, bucket string) ([]models.File, error)
 	S3DeleteFile(ctx context.Context, bucketID string, bucket string) error
 	S3DownloadFile(ctx context.Context, bucketID string, bucket string) ([]byte, error)
@@ -139,7 +140,7 @@ func (g *GRPCService) Authorization(ctx context.Context, login, password string)
 // FileUploadToS3 метод для загрузки файла в S3.
 func (g *GRPCService) FileUploadToS3(
 	ctx context.Context,
-	fileData []byte,
+	fileData io.Reader,
 	filename string,
 	userID int64,
 ) (string, error) {

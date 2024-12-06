@@ -1,7 +1,6 @@
 package s3
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -22,7 +21,7 @@ type S3 struct {
 }
 
 // S3UploadFile загружает файл в S3 bucket и возвращает URL загруженного файла.
-func (s *S3) S3UploadFile(ctx context.Context, fileData []byte, filename string, bucket string) (string, error) {
+func (s *S3) S3UploadFile(ctx context.Context, fileData io.Reader, filename string, bucket string) (string, error) {
 	svc := s3.New(s.S3Session)
 	// Проверяем существование бакета
 	_, err := svc.HeadBucketWithContext(ctx, &s3.HeadBucketInput{
@@ -43,7 +42,7 @@ func (s *S3) S3UploadFile(ctx context.Context, fileData []byte, filename string,
 	uploadInput := &s3manager.UploadInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(filename),
-		Body:   bytes.NewReader(fileData),
+		Body:   fileData,
 		ACL:    aws.String("public-read"),
 	}
 

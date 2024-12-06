@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
 	"log/slog"
 	"os"
 
+	"github.com/FischukSergey/gophkeeper/internal/app/converters"
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
@@ -36,7 +36,7 @@ type ProtoKeeperSaver interface {
 	Ping(ctx context.Context) error
 	RegisterUser(ctx context.Context, login, password string) (models.Token, error)
 	Authorization(ctx context.Context, login, password string) (models.Token, error)
-	FileUploadToS3(ctx context.Context, fileData []byte, filename string, userID int64) (string, error)
+	FileUploadToS3(ctx context.Context, fileData io.Reader, filename string, userID int64) (string, error)
 	FileGetListFromS3(ctx context.Context, userID int64) ([]models.File, error)
 	FileDeleteFromS3(ctx context.Context, userID int64, filename string) error
 	FileDownloadFromS3(ctx context.Context, userID int64, filename string) ([]byte, error)
@@ -63,8 +63,8 @@ func (s *PwdKeeperServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.Pi
 func (s *PwdKeeperServer) Registration(
 	ctx context.Context, req *pb.RegistrationRequest) (*pb.RegistrationResponse, error) {
 	log.Info("Handler Registration method called")
-	login := req.Username
-	password := req.Password
+	login := req.GetUsername()
+	password := req.GetPassword()
 
 	// проводим валидацию данных
 	if login == "" || password == "" {
@@ -99,8 +99,8 @@ func (s *PwdKeeperServer) Registration(
 func (s *PwdKeeperServer) Authorization(
 	ctx context.Context, req *pb.AuthorizationRequest) (*pb.AuthorizationResponse, error) {
 	log.Info("Handler Authorization method called")
-	login := req.Username
-	password := req.Password
+	login := req.GetUsername()
+	password := req.GetPassword()
 
 	//проводим валидацию данных
 	if login == "" || password == "" {
@@ -136,13 +136,13 @@ func (s *PwdKeeperServer) FileUpload(
 	stream pb.GophKeeper_FileUploadServer) error {
 	log.Info("Handler FileUpload method called")
 	ctx := stream.Context()
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	userID, err := s.validateUserID(ctx)
+	if err != nil {
+		return err
 	}
 	log.Info(userFound, slog.Int(user, userID))
 
-	// получаем информацию о файле
+	// Получаем первый чанк с информацией о файле
 	req, err := stream.Recv()
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to receive file info: %v", err)
@@ -155,38 +155,57 @@ func (s *PwdKeeperServer) FileUpload(
 	if fileInfo.Size == 0 {
 		return status.Errorf(codes.InvalidArgument, "file size cannot be 0")
 	}
-	// создаем буфер для хранения файла
-	var buffer bytes.Buffer
-	// получаем файл по частям
-	for {
-		req, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			break
+
+	// Создаем pipe для потоковой передачи данных
+	pr, pw := io.Pipe()
+	errCh := make(chan error, 1)
+
+	// Запускаем горутину для записи данных в pipe
+	go func() {
+		defer pw.Close()
+		for {
+			req, err := stream.Recv()
+			if errors.Is(err, io.EOF) {
+				return
+			}
+			if err != nil {
+				errCh <- status.Errorf(codes.Internal, "failed to receive file chunk: %v", err)
+				return
+			}
+			chunk := req.GetChunk()
+			if chunk == nil {
+				errCh <- status.Errorf(codes.InvalidArgument, "chunk cannot be nil")
+				return
+			}
+			if _, err := pw.Write(chunk); err != nil {
+				errCh <- err
+				return
+			}
 		}
-		if err != nil {
-			return status.Errorf(codes.Internal, "failed to receive file chunk: %v", err)
-		}
-		chunk := req.GetChunk()
-		if chunk == nil {
-			return status.Errorf(codes.InvalidArgument, "chunk cannot be nil")
-		}
-		buffer.Write(chunk)
-	}
-	// загружаем файл в S3
-	_, err = s.PwdKeeper.FileUploadToS3(ctx, buffer.Bytes(), fileInfo.Filename, int64(userID))
+	}()
+
+	// Загружаем файл в S3 потоково
+	_, err = s.PwdKeeper.FileUploadToS3(ctx, io.Reader(pr), fileInfo.Filename, int64(userID))
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to upload file: %v", err)
 	}
-	return nil
+
+	// Проверяем ошибки из горутины
+	select {
+	case err := <-errCh:
+		return err
+	default:
+		return nil
+	}
 }
 
 // FileGetList метод для получения списка файлов пользователя.
 func (s *PwdKeeperServer) FileGetList(
 	ctx context.Context, req *pb.FileGetListRequest) (*pb.FileGetListResponse, error) {
 	log.Info("Handler FileGetList method called")
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	userID, err := s.validateUserID(ctx)
+	if err != nil {
+		return nil, err
 	}
 	log.Info(userFound, slog.Int(user, userID))
 	files, err := s.PwdKeeper.FileGetListFromS3(ctx, int64(userID))
@@ -196,13 +215,7 @@ func (s *PwdKeeperServer) FileGetList(
 	// формируем ответ
 	filesPb := make([]*pb.File, len(files))
 	for i, file := range files {
-		filesPb[i] = &pb.File{
-			FileID:    file.FileID,
-			UserID:    file.UserID,
-			Filename:  file.Filename,
-			Size:      file.Size,
-			CreatedAt: timestamppb.New(file.CreatedAt),
-		}
+		filesPb[i] = converters.ToProtoFile(file)
 	}
 	return &pb.FileGetListResponse{Files: filesPb}, nil
 }
@@ -211,12 +224,12 @@ func (s *PwdKeeperServer) FileGetList(
 func (s *PwdKeeperServer) FileDelete(
 	ctx context.Context, req *pb.FileDeleteRequest) (*pb.FileDeleteResponse, error) {
 	log.Info("Handler FileDelete method called")
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	userID, err := s.validateUserID(ctx)
+	if err != nil {
+		return nil, err
 	}
 	log.Info(userFound, slog.Int(user, userID))
-	err := s.PwdKeeper.FileDeleteFromS3(ctx, int64(userID), req.Filename)
+	err = s.PwdKeeper.FileDeleteFromS3(ctx, int64(userID), req.Filename)
 	if err != nil {
 		if errors.Is(err, models.ErrFileNotExist) {
 			return nil, status.Errorf(codes.NotFound, "file does not exist: %v", err)
@@ -231,9 +244,9 @@ func (s *PwdKeeperServer) FileDownload(
 	req *pb.FileDownloadRequest, stream pb.GophKeeper_FileDownloadServer) error {
 	log.Info("Handler FileDownload method called")
 	ctx := stream.Context()
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	userID, err := s.validateUserID(ctx)
+	if err != nil {
+		return err
 	}
 	log.Info(userFound, slog.Int(user, userID))
 	// скачиваем файл из S3
@@ -257,4 +270,16 @@ func (s *PwdKeeperServer) FileDownload(
 		}
 	}
 	return nil
+}
+
+// validateUserID проверяет корректность ID пользователя из контекста
+func (h *PwdKeeperServer) validateUserID(ctx context.Context) (int, error) {
+	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
+	if !ok {
+		return 0, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	}
+	if userID <= 0 {
+		return 0, status.Errorf(codes.InvalidArgument, "invalid user ID")
+	}
+	return userID, nil
 }

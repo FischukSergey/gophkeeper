@@ -6,6 +6,7 @@ package mock
 
 import (
 	context "context"
+	io "io"
 	reflect "reflect"
 
 	models "github.com/FischukSergey/gophkeeper/internal/models"
@@ -95,7 +96,7 @@ func (mr *MockProtoKeeperSaverMockRecorder) FileGetListFromS3(ctx, userID interf
 }
 
 // FileUploadToS3 mocks base method.
-func (m *MockProtoKeeperSaver) FileUploadToS3(ctx context.Context, fileData []byte, filename string, userID int64) (string, error) {
+func (m *MockProtoKeeperSaver) FileUploadToS3(ctx context.Context, fileData io.Reader, filename string, userID int64) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FileUploadToS3", ctx, fileData, filename, userID)
 	ret0, _ := ret[0].(string)

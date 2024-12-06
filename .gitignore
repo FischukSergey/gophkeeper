@@ -14,3 +14,4 @@ golangci-lint/
 # Ignore environment variables
 .env
 *.env
+cmd/server/initial/GophKeeper.code-workspace
