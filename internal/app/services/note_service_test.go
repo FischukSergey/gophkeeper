@@ -84,7 +84,7 @@ func TestNoteService_NoteAdd(t *testing.T) {
 					{Key: "test", Value: "test"},
 				},
 			},
-			wantErr: errors.New("duplicate metadata key"),
+			wantErr: errors.New("metadata key already exists"),
 		},
 	}
 

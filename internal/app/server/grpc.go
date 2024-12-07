@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	stLog "log"
 	"log/slog"
 	"net"
 	"os"
@@ -52,12 +53,12 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 		log.Info("Production database connected")
 	}
 	if err != nil {
-		panic("Error initializing storage: " + err.Error())
+		stLog.Fatalf("Error initializing storage: " + err.Error())
 	}
 	log.Info("Database connection successful")
 	err = storage.GetPingDB(context.Background())
 	if err != nil {
-		panic("Error pinging database: " + err.Error())
+		stLog.Fatalf("Error pinging database: " + err.Error())
 	}
 
 	// проверка на имплементацию интерфейса и методов хранилища на этапе компиляции
@@ -69,7 +70,7 @@ func NewGrpcServer(log *slog.Logger, port string) *App {
 	// инициализация S3
 	s3Storage, err := initial.InitS3()
 	if err != nil {
-		panic("Error initializing s3: " + err.Error())
+		stLog.Fatalf("Error initializing s3: " + err.Error())
 	}
 	log.Info("S3 connected")
 
@@ -128,7 +129,7 @@ func (app *App) MustRun() {
 	go func() {
 		if err := app.GrpcServer.Run(); err != nil {
 			app.GrpcServer.log.Error("Error starting gRPC server", logger.Err(err))
-			panic(err)
+			stLog.Fatalf("Error starting gRPC server: " + err.Error())
 		}
 	}()
 	// graceful shutdown

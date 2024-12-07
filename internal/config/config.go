@@ -65,3 +65,8 @@ func MustLoad(path string) *Config {
 	}
 	return &cfg
 }
+
+// GetS3Bucket функция для получения s3 bucket.
+func (c *Config) GetS3Bucket() string {
+	return c.S3.Bucket
+}

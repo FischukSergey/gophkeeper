@@ -35,59 +35,59 @@ func (m *MockProtoCardService) EXPECT() *MockProtoCardServiceMockRecorder {
 	return m.recorder
 }
 
-// CardAddMetadataService mocks base method.
-func (m *MockProtoCardService) CardAddMetadataService(ctx context.Context, userID, cardID int64, metadata []models.Metadata) error {
+// CardAddMetadata mocks base method.
+func (m *MockProtoCardService) CardAddMetadata(ctx context.Context, userID, cardID int64, metadata []models.Metadata) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CardAddMetadataService", ctx, userID, cardID, metadata)
+	ret := m.ctrl.Call(m, "CardAddMetadata", ctx, userID, cardID, metadata)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CardAddMetadataService indicates an expected call of CardAddMetadataService.
-func (mr *MockProtoCardServiceMockRecorder) CardAddMetadataService(ctx, userID, cardID, metadata interface{}) *gomock.Call {
+func (mr *MockProtoCardServiceMockRecorder) CardAddMetadata(ctx, userID, cardID, metadata interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardAddMetadataService", reflect.TypeOf((*MockProtoCardService)(nil).CardAddMetadataService), ctx, userID, cardID, metadata)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardAddMetadata", reflect.TypeOf((*MockProtoCardService)(nil).CardAddMetadata), ctx, userID, cardID, metadata)
 }
 
-// CardAddService mocks base method.
-func (m *MockProtoCardService) CardAddService(ctx context.Context, card models.Card) error {
+// CardAdd mocks base method.
+func (m *MockProtoCardService) CardAdd(ctx context.Context, card models.Card) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CardAddService", ctx, card)
+	ret := m.ctrl.Call(m, "CardAdd", ctx, card)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CardAddService indicates an expected call of CardAddService.
-func (mr *MockProtoCardServiceMockRecorder) CardAddService(ctx, card interface{}) *gomock.Call {
+func (mr *MockProtoCardServiceMockRecorder) CardAdd(ctx, card interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardAddService", reflect.TypeOf((*MockProtoCardService)(nil).CardAddService), ctx, card)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardAdd", reflect.TypeOf((*MockProtoCardService)(nil).CardAdd), ctx, card)
 }
 
-// CardDeleteService mocks base method.
-func (m *MockProtoCardService) CardDeleteService(ctx context.Context, cardID int64) error {
+// CardDelete mocks base method.
+func (m *MockProtoCardService) CardDelete(ctx context.Context, cardID int64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CardDeleteService", ctx, cardID)
+	ret := m.ctrl.Call(m, "CardDelete", ctx, cardID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CardDeleteService indicates an expected call of CardDeleteService.
-func (mr *MockProtoCardServiceMockRecorder) CardDeleteService(ctx, cardID interface{}) *gomock.Call {
+func (mr *MockProtoCardServiceMockRecorder) CardDelete(ctx, cardID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardDeleteService", reflect.TypeOf((*MockProtoCardService)(nil).CardDeleteService), ctx, cardID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardDelete", reflect.TypeOf((*MockProtoCardService)(nil).CardDelete), ctx, cardID)
 }
 
-// CardGetListService mocks base method.
-func (m *MockProtoCardService) CardGetListService(ctx context.Context, userID int64) ([]models.Card, error) {
+// CardGetList mocks base method.
+func (m *MockProtoCardService) CardGetList(ctx context.Context, userID int64) ([]models.Card, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CardGetListService", ctx, userID)
+	ret := m.ctrl.Call(m, "CardGetList", ctx, userID)
 	ret0, _ := ret[0].([]models.Card)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CardGetListService indicates an expected call of CardGetListService.
-func (mr *MockProtoCardServiceMockRecorder) CardGetListService(ctx, userID interface{}) *gomock.Call {
+func (mr *MockProtoCardServiceMockRecorder) CardGetList(ctx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardGetListService", reflect.TypeOf((*MockProtoCardService)(nil).CardGetListService), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardGetList", reflect.TypeOf((*MockProtoCardService)(nil).CardGetList), ctx, userID)
 }

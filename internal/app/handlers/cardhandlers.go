@@ -16,10 +16,10 @@ import (
 
 // ProtoCardService интерфейс для методов сервера.
 type ProtoCardService interface {
-	CardAddService(ctx context.Context, card models.Card) error
-	CardGetListService(ctx context.Context, userID int64) ([]models.Card, error)
-	CardDeleteService(ctx context.Context, cardID int64) error
-	CardAddMetadataService(ctx context.Context, userID int64, cardID int64, metadata []models.Metadata) error
+	CardAdd(ctx context.Context, card models.Card) error
+	CardGetList(ctx context.Context, userID int64) ([]models.Card, error)
+	CardDelete(ctx context.Context, cardID int64) error
+	CardAddMetadata(ctx context.Context, userID int64, cardID int64, metadata []models.Metadata) error
 }
 
 type CardServer struct {
@@ -47,7 +47,7 @@ func (h *CardServer) CardAdd(ctx context.Context, req *pb.CardAddRequest) (*pb.C
 	//формируем карту
 	card := converters.ToModelCard(req.Card, strconv.Itoa(userID))
 	//добавляем карту
-	err := h.CardService.CardAddService(ctx, card)	
+	err := h.CardService.CardAdd(ctx, card)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "ошибка при добавлении карты: %v", err)
 	}
@@ -63,7 +63,7 @@ func (h *CardServer) CardGetList(ctx context.Context, req *pb.CardGetListRequest
 	}
 	log.Info(userFound, slog.Int(user, userID))
 
-	cards, err := h.CardService.CardGetListService(ctx, int64(userID))
+	cards, err := h.CardService.CardGetList(ctx, int64(userID))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "ошибка при получении списка карт: %v", err)
 	}
@@ -83,7 +83,7 @@ func (h *CardServer) CardDelete(ctx context.Context, req *pb.CardDeleteRequest) 
 		return nil, err
 	}
 	log.Info(userFound, slog.Int(user, userID))
-	err = h.CardService.CardDeleteService(ctx, req.CardID)
+	err = h.CardService.CardDelete(ctx, req.CardID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "ошибка при удалении карты: %v", err)
 	}
@@ -105,7 +105,7 @@ func (h *CardServer) CardAddMetadata(ctx context.Context, req *pb.CardAddMetadat
 		metadata[i] = models.Metadata{Key: m.Key, Value: m.Value}
 	}
 	log.Info("metadata", "metadata", metadata)
-	err = h.CardService.CardAddMetadataService(ctx, int64(userID), req.CardID, metadata)
+	err = h.CardService.CardAddMetadata(ctx, int64(userID), req.CardID, metadata)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "ошибка при добавлении метаданных: %v", err)
 	}

@@ -273,7 +273,7 @@ func TestAuthorization(t *testing.T) {
 func TestFileUploadToS3(t *testing.T) {
 	tests := []struct {
 		name        string
-		fileData    []byte
+		fileData    io.Reader
 		filename    string
 		userID      int64
 		expectedURL string
@@ -282,7 +282,7 @@ func TestFileUploadToS3(t *testing.T) {
 	}{
 		{
 			name:        "successful upload",
-			fileData:    []byte("test data"),
+			fileData:    bytes.NewReader([]byte("test data")),
 			filename:    "test.txt",
 			userID:      1,
 			expectedURL: "https://s3.ru-1.storage.selcloud.ru/gophkeeper-bucket/1/test.txt",
@@ -291,7 +291,7 @@ func TestFileUploadToS3(t *testing.T) {
 		},
 		{
 			name:        "failed upload",
-			fileData:    []byte("test data"),
+			fileData:    bytes.NewReader([]byte("test data")),
 			filename:    "test.txt",
 			userID:      1,
 			expectedURL: "",
@@ -317,7 +317,7 @@ func TestFileUploadToS3(t *testing.T) {
 				mock.AnythingOfType("string"),
 			).Return(tt.expectedURL, tt.s3Error)
 
-			url, err := service.FileUploadToS3(ctx, bytes.NewReader(tt.fileData), tt.filename, tt.userID)
+			url, err := service.FileUploadToS3(ctx, tt.fileData, tt.filename, tt.userID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -436,7 +436,7 @@ func TestCardAdd(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCard.On("CardAdd", ctx, mock.AnythingOfType("models.Card")).Return(tt.wantErr)
 
-			err := service.CardAddService(ctx, tt.card)
+			err := service.CardAdd(ctx, tt.card)
 
 			if tt.wantErr != nil {
 				assert.Error(t, err)
@@ -478,7 +478,7 @@ func TestCardGetList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCard.On("CardGetList", ctx, tt.userID).Return(tt.expectedCards, tt.expectedErr)
 
-			cards, err := service.CardGetListService(ctx, tt.userID)
+			cards, err := service.CardGetList(ctx, tt.userID)
 
 			if tt.expectedErr != nil {
 				assert.Error(t, err)
@@ -501,7 +501,7 @@ func TestCardDelete(t *testing.T) {
 		cardID := int64(1)
 		mockCard.On("CardDelete", ctx, cardID).Return(nil)
 
-		err := service.CardDeleteService(ctx, cardID)
+		err := service.CardDelete(ctx, cardID)
 
 		assert.NoError(t, err)
 		mockCard.AssertExpectations(t)
@@ -562,7 +562,7 @@ func TestCardAddMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCard.On("CardAddMetadata", ctx, tt.cardID, mock.AnythingOfType("string")).Return(tt.wantErr)
 
-			err := service.CardAddMetadataService(ctx, tt.userID, tt.cardID, tt.metadata)
+			err := service.CardAddMetadata(ctx, tt.userID, tt.cardID, tt.metadata)
 			if tt.wantErr != nil {
 				assert.Error(t, err)
 			} else {

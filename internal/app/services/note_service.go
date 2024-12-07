@@ -35,29 +35,23 @@ func (s *NoteService) NoteAddService(ctx context.Context, note models.Note) erro
 	if note.NoteText == "" {
 		return fmt.Errorf("invalid note data")
 	}
-	metaMap := make(map[string]string)
 	//проверяем наличие метаданных
 	if len(note.Metadata) > 0 {
 		//валидируем метаданные
-		for _, m := range note.Metadata {
-			if m.Key == "" || m.Value == "" {
-				return fmt.Errorf("invalid metadata")
-			}
-			if _, ok := metaMap[m.Key]; ok {
-				return fmt.Errorf("duplicate metadata key: %s", m.Key)
-			}
-			metaMap[m.Key] = m.Value
+		err := ValidateMetadata(note.Metadata)
+		if err != nil {
+			return err
 		}
 	}
 	//сериализуем метаданные
-	metaJSON, err := json.Marshal(metaMap)
+	metaJSON, err := SerializeMetadata(note.Metadata)
 	if err != nil {
-		return fmt.Errorf("error during metadata serialization: %w", err)
+		return err
 	}
 	//добавляем заметку в базу данных
-	err = s.storage.NoteAdd(ctx, note, metaJSON)
+	err = s.storage.NoteAdd(ctx, note, []byte(metaJSON))
 	if err != nil {
-		return fmt.Errorf("error during adding note: %w", err)
+		return err
 	}
 	return nil
 }
@@ -71,21 +65,12 @@ func (s *NoteService) NoteGetListService(ctx context.Context, userID int64) ([]m
 	}
 
 	// Обрабатываем метаданные для каждой заметки
-	for i := range notes {
-		if notes[i].RawMetadata != "" {
-			var rawMetadata map[string]string
-			err = json.Unmarshal([]byte(notes[i].RawMetadata), &rawMetadata)
-			if err != nil {
-				return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
-			}
-
-			// Преобразуем map в slice of Metadata
+	for i, note := range notes {
+		if note.RawMetadata != "" {
+			// десериализуем RawMetadata в []models.Metadata
 			var metadataStruct []models.Metadata
-			for k, v := range rawMetadata {
-				metadataStruct = append(metadataStruct, models.Metadata{
-					Key:   k,
-					Value: v,
-				})
+			if err := json.Unmarshal([]byte(note.RawMetadata), &metadataStruct); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
 			}
 			notes[i].Metadata = metadataStruct
 		}

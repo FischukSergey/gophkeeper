@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -92,18 +91,11 @@ func (g *GRPCService) RegisterUser(ctx context.Context, login, password string) 
 		Login: login,
 	}
 	// генерируем токен
-	token, err := jwt.GenerateToken(user)
+	token, err := g.GenerateToken(ctx, user)
 	if err != nil {
-		return models.Token{}, fmt.Errorf("failed to generate token: %w", err)
+		return models.Token{}, err
 	}
-
-	tokenInfo := models.Token{
-		UserID:    userID,
-		Token:     token,
-		CreatedAt: time.Now(),
-		ExpiredAt: time.Now().Add(initial.Cfg.JWT.ExpiresKey),
-	}
-	return tokenInfo, nil
+	return token, nil
 }
 
 // Authorization метод для авторизации пользователя.
@@ -123,18 +115,11 @@ func (g *GRPCService) Authorization(ctx context.Context, login, password string)
 	}
 
 	// генерируем токен
-	token, err := jwt.GenerateToken(user)
+	token, err := g.GenerateToken(ctx, user)
 	if err != nil {
-		return models.Token{}, fmt.Errorf("failed to generate token: %w", err)
+		return models.Token{}, err
 	}
-
-	tokenInfo := models.Token{
-		UserID:    user.ID,
-		Token:     token,
-		CreatedAt: time.Now(),
-		ExpiredAt: time.Now().Add(initial.Cfg.JWT.ExpiresKey),
-	}
-	return tokenInfo, nil
+	return token, nil
 }
 
 // FileUploadToS3 метод для загрузки файла в S3.
@@ -145,7 +130,7 @@ func (g *GRPCService) FileUploadToS3(
 	userID int64,
 ) (string, error) {
 	g.log.Info("Service FileUploadToS3 method called")
-	bucket := initial.Cfg.S3.Bucket
+	bucket := initial.Cfg.GetS3Bucket()
 	bucketID := fmt.Sprintf("%d/%s", userID, filename)
 	g.log.Info("bucketID", slog.String("bucketID", bucketID))
 	g.log.Info("bucket", slog.String("bucket", bucket))
@@ -161,7 +146,7 @@ func (g *GRPCService) FileUploadToS3(
 // FileGetListFromS3 метод для получения списка файлов пользователя из S3.
 func (g *GRPCService) FileGetListFromS3(ctx context.Context, userID int64) ([]models.File, error) {
 	g.log.Info("Service FileGetListFromS3 method called")
-	bucket := initial.Cfg.S3.Bucket
+	bucket := initial.Cfg.GetS3Bucket()
 	bucketID := fmt.Sprintf("%d", userID)
 	files, err := g.s3.S3GetFileList(ctx, bucketID, bucket)
 	if err != nil {
@@ -173,7 +158,7 @@ func (g *GRPCService) FileGetListFromS3(ctx context.Context, userID int64) ([]mo
 // FileDeleteFromS3 метод для удаления файла из S3.
 func (g *GRPCService) FileDeleteFromS3(ctx context.Context, userID int64, filename string) error {
 	g.log.Info("Service FileDeleteFromS3 method called")
-	bucket := initial.Cfg.S3.Bucket
+	bucket := initial.Cfg.GetS3Bucket()
 	bucketID := fmt.Sprintf("%d/%s", userID, filename)
 	err := g.s3.S3DeleteFile(ctx, bucketID, bucket)
 	if err != nil {
@@ -185,7 +170,7 @@ func (g *GRPCService) FileDeleteFromS3(ctx context.Context, userID int64, filena
 // FileDownloadFromS3 метод для скачивания файла из S3.
 func (g *GRPCService) FileDownloadFromS3(ctx context.Context, userID int64, filename string) ([]byte, error) {
 	g.log.Info("Service FileDownloadFromS3 method called")
-	bucket := initial.Cfg.S3.Bucket
+	bucket := initial.Cfg.GetS3Bucket()
 	bucketID := fmt.Sprintf("%d/%s", userID, filename)
 	data, err := g.s3.S3DownloadFile(ctx, bucketID, bucket)
 	if err != nil {
@@ -194,8 +179,23 @@ func (g *GRPCService) FileDownloadFromS3(ctx context.Context, userID int64, file
 	return data, nil
 }
 
-// CardAddService метод для добавления карты.
-func (g *CardService) CardAddService(ctx context.Context, card models.Card) error {
+// GenerateToken метод для генерации токена.
+func (g *GRPCService) GenerateToken(ctx context.Context, user models.User) (models.Token, error) {
+	g.log.Info("Service GenerateToken method called")
+	token, err := jwt.GenerateToken(user)
+	if err != nil {
+		return models.Token{}, fmt.Errorf("failed to generate token: %w", err)
+	}
+	return models.Token{
+		UserID:    user.ID,
+		Token:     token,
+		CreatedAt: time.Now(),
+		ExpiredAt: time.Now().Add(initial.Cfg.JWT.ExpiresKey),
+	}, nil
+}
+
+// CardAdd метод для добавления карты.
+func (g *CardService) CardAdd(ctx context.Context, card models.Card) error {
 	g.log.Info("Service CardAdd method called")
 	//валидируем данные
 	if card.CardNumber == "" || card.CardHolder == "" || card.CardCVV == "" {
@@ -215,8 +215,8 @@ func (g *CardService) CardAddService(ctx context.Context, card models.Card) erro
 	return nil
 }
 
-// CardGetListService метод для получения списка карт.
-func (g *CardService) CardGetListService(ctx context.Context, userID int64) ([]models.Card, error) {
+// CardGetList метод для получения списка карт.
+func (g *CardService) CardGetList(ctx context.Context, userID int64) ([]models.Card, error) {
 	g.log.Info("Service CardGetList method called")
 	cards, err := g.storage.CardGetList(ctx, userID)
 	if err != nil {
@@ -226,8 +226,8 @@ func (g *CardService) CardGetListService(ctx context.Context, userID int64) ([]m
 	return cards, nil
 }
 
-// CardDeleteService метод для удаления карты.
-func (g *CardService) CardDeleteService(ctx context.Context, cardID int64) error {
+// CardDelete метод для удаления карты.
+func (g *CardService) CardDelete(ctx context.Context, cardID int64) error {
 	g.log.Info("Service CardDelete method called")
 	err := g.storage.CardDelete(ctx, cardID)
 	if err != nil {
@@ -236,39 +236,26 @@ func (g *CardService) CardDeleteService(ctx context.Context, cardID int64) error
 	return nil
 }
 
-// CardAddMetadataService метод для добавления метаданных к карте.
-func (g *CardService) CardAddMetadataService(
+// CardAddMetadata метод для добавления метаданных к карте.
+func (g *CardService) CardAddMetadata(
 	ctx context.Context,
 	userID int64,
 	cardID int64,
 	metadata []models.Metadata,
 ) error {
 	g.log.Info("Service CardAddMetadata method called")
-	metadataMap := make(map[string]string)
-	for _, m := range metadata {
-		if m.Key == "" || m.Value == "" {
-			return fmt.Errorf("invalid metadata")
-		}
-		if len(m.Key) > 255 || len(m.Value) > 255 {
-			return fmt.Errorf("metadata key or value is too long")
-		}
-		//валидируем ключ
-		if strings.Contains(m.Key, " ") {
-			return fmt.Errorf("metadata key contains spaces")
-		}
-		//проверяем ключ на уникальность
-		if _, ok := metadataMap[m.Key]; ok {
-			return fmt.Errorf("metadata key already exists, key: %s must be unique", m.Key)
-		}
-		metadataMap[m.Key] = m.Value
+	//валидируем метаданные
+	err := ValidateMetadata(metadata)
+	if err != nil {
+		return err
 	}
 	//сериализуем данные
-	metadataJSON, err := json.Marshal(metadataMap)
+	metadataJSON, err := SerializeMetadata(metadata)
 	if err != nil {
-		return fmt.Errorf("failed to marshal metadata: %w", err)
+		return err
 	}
-	g.log.Info("metadataJSON", slog.String("metadataJSON", string(metadataJSON)))
-	err = g.storage.CardAddMetadata(ctx, cardID, string(metadataJSON))
+	g.log.Info("metadataJSON", slog.String("metadataJSON", metadataJSON))
+	err = g.storage.CardAddMetadata(ctx, cardID, metadataJSON)
 	if err != nil {
 		return fmt.Errorf("failed to add metadata: %w", err)
 	}

@@ -49,7 +49,7 @@ func TestProtoCardService_AddCard(t *testing.T) {
 			args: testCard,
 			setupMock: func(mock *mock.MockProtoCardService) {
 				mock.EXPECT().
-					CardAddService(gomock.Any(), gomock.Any()).
+					CardAdd(gomock.Any(), gomock.Any()).
 					Return(nil)
 			},
 			want: result{
@@ -129,7 +129,7 @@ func TestProtoCardService_CardGetList(t *testing.T) {
 			name: "successful get cards list",
 			setupMock: func(mock *mock.MockProtoCardService) {
 				mock.EXPECT().
-					CardGetListService(gomock.Any(), gomock.Any()).
+					CardGetList(gomock.Any(), gomock.Any()).
 					Return(testCards, nil)
 			},
 			want: result{
@@ -204,7 +204,7 @@ func TestProtoCardService_CardAddMetadata(t *testing.T) {
 			},
 			setupMock: func(mock *mock.MockProtoCardService) {
 				mock.EXPECT().
-					CardAddMetadataService(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					CardAddMetadata(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil).
 					AnyTimes()
 			},
@@ -282,7 +282,7 @@ func TestProtoCardService_DeleteCard(t *testing.T) {
 			},
 			setupMock: func(mock *mock.MockProtoCardService) {
 				mock.EXPECT().
-					CardDeleteService(gomock.Any(), gomock.Any()).
+					CardDelete(gomock.Any(), gomock.Any()).
 					Return(nil).
 					AnyTimes()
 			},
