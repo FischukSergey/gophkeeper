@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
@@ -13,14 +12,9 @@ import (
 
 const nameCommandRegister = "Registration"
 
-// IRegisterService интерфейс для сервиса регистрации.
-type IRegisterService interface {
-	Register(ctx context.Context, login string, password string) (string, error)
-}
-
 // commandRegister структура для команды регистрации.
 type commandRegister struct {
-	registerService IRegisterService
+	registerService IAuthService
 	token           *grpcclient.Token
 	reader          io.Reader
 	writer          io.Writer
@@ -33,55 +27,19 @@ func (c *commandRegister) Name() string {
 
 // Execute выполняет команду регистрации.
 func (c *commandRegister) Execute() {
-	//ввод логина
-	loginPrompt := promptui.Prompt{
-		Label: "Введите логин",
-	}
-	login, err := loginPrompt.Run()
+	//получение логина
+	login, err := c.promptLogin()
 	if err != nil {
-		fmt.Println("Ошибка при вводе логина:", err)
 		return
 	}
-	//валидация логина
-	err = modelsclient.ValidateLogin(login)
+	//получение пароля
+	password, err := c.promptPassword()
 	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	//ввод пароля
-	passwordPrompt := promptui.Prompt{
-		Label: "Введите пароль",
-		Mask:  '*',
-	}
-	password, err := passwordPrompt.Run()
-	if err != nil {
-		fmt.Println("Ошибка при вводе пароля:", err)
-		return
-	}
-	//валидация пароля
-	err = modelsclient.ValidatePassword(password)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	//повторный ввод пароля
-	passwordConfirmPrompt := promptui.Prompt{
-		Label: "Введите пароль повторно",
-		Mask:  '*',
-	}
-	passwordConfirm, err := passwordConfirmPrompt.Run()
-	if err != nil {
-		fmt.Println("Ошибка при вводе пароля:", err)
-		return
-	}
-	if password != passwordConfirm {
-		fmt.Println("Пароли не совпадают")
 		return
 	}
 	//вызываем регистрацию
-	token, err := c.registerService.Register(context.Background(), strings.TrimSpace(login), strings.TrimSpace(password))
+	token, err := c.registerUser(login, password)
 	if err != nil {
-		fmt.Println("Ошибка при регистрации:", err)
 		return
 	}
 	c.token.Token = token
@@ -91,7 +49,7 @@ func (c *commandRegister) Execute() {
 
 // NewCommandRegister создание команды регистрации.
 func NewCommandRegister(
-	registerService IRegisterService,
+	registerService IAuthService,
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer,
@@ -102,4 +60,59 @@ func NewCommandRegister(
 		reader:          reader,
 		writer:          writer,
 	}
+}
+
+// promptLogin ввод логина.
+func (c *commandRegister) promptLogin() (string, error) {
+	loginPrompt := promptui.Prompt{
+		Label: "Введите логин",
+	}
+	login, err := loginPrompt.Run()
+	if err != nil {
+		return "", fmt.Errorf("ошибка при вводе логина: %w", err)
+	}
+	err = modelsclient.ValidateLogin(login)
+	if err != nil {
+		return "", err
+	}
+	return login, nil
+}
+
+// promptPassword ввод пароля.
+func (c *commandRegister) promptPassword() (string, error) {
+	passwordPrompt := promptui.Prompt{
+		Label: "Введите пароль",
+		Mask:  '*',
+	}
+	password, err := passwordPrompt.Run()
+	if err != nil {
+		return "", fmt.Errorf("ошибка при вводе пароля: %w", err)
+	}
+	//валидация пароля
+	err = modelsclient.ValidatePassword(password)
+	if err != nil {
+		return "", err
+	}
+	//повторный ввод пароля
+	passwordConfirmPrompt := promptui.Prompt{
+		Label: "Введите пароль повторно",
+		Mask:  '*',
+	}
+	passwordConfirm, err := passwordConfirmPrompt.Run()
+	if err != nil {
+		return "", fmt.Errorf("ошибка при вводе пароля: %w", err)
+	}
+	if password != passwordConfirm {
+		return "", fmt.Errorf("пароли не совпадают")
+	}
+	return password, nil
+}
+
+// registerUser регистрация пользователя.
+func (c *commandRegister) registerUser(login string, password string) (string, error) {
+	token, err := c.registerService.Register(context.Background(), login, password)
+	if err != nil {
+		return "", fmt.Errorf("ошибка при регистрации: %w", err)
+	}
+	return token, nil
 }

@@ -98,7 +98,7 @@ func TestNoteService_NoteAdd(t *testing.T) {
 					Return(tt.wantErr)
 			}
 
-			err := noteService.NoteAddService(ctx, tt.note)
+			err := noteService.NoteAdd(ctx, tt.note)
 
 			if tt.wantErr != nil {
 				assert.Error(t, err)
@@ -143,7 +143,7 @@ func TestNoteService_NoteGetList(t *testing.T) {
 				mockNoteKeeper.On("NoteGetList", ctx, tt.userID).Return(tt.wantNotes, tt.wantErr)
 			}
 
-			notes, err := noteService.NoteGetListService(ctx, tt.userID)
+			notes, err := noteService.NoteGetList(ctx, tt.userID)
 			if tt.wantErr != nil {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr.Error())
@@ -181,7 +181,7 @@ func TestNoteService_NoteDelete(t *testing.T) {
 				mockNoteKeeper.On("NoteDelete", ctx, tt.userID, tt.noteID).Return(tt.wantErr)
 			}
 
-			err := noteService.NoteDeleteService(ctx, tt.userID, tt.noteID)
+			err := noteService.NoteDelete(ctx, tt.userID, tt.noteID)
 			if tt.wantErr != nil {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr.Error())

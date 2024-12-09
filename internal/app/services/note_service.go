@@ -28,9 +28,9 @@ func NewNoteService(log *slog.Logger, storage NoteKeeper) *NoteService {
 	return &NoteService{log: log, storage: storage}
 }
 
-// NoteAddService функция для добавления заметки.
-func (s *NoteService) NoteAddService(ctx context.Context, note models.Note) error {
-	s.log.Info("NoteAddService method called")
+// NoteAdd функция для добавления заметки.
+func (s *NoteService) NoteAdd(ctx context.Context, note models.Note) error {
+	s.log.Info("NoteAdd method called")
 	//валидируем данные
 	if note.NoteText == "" {
 		return fmt.Errorf("invalid note data")
@@ -57,30 +57,38 @@ func (s *NoteService) NoteAddService(ctx context.Context, note models.Note) erro
 }
 
 // NoteGetListService функция для получения списка заметок.
-func (s *NoteService) NoteGetListService(ctx context.Context, userID int64) ([]models.Note, error) {
-	s.log.Info("NoteGetListService method called")
+func (s *NoteService) NoteGetList(ctx context.Context, userID int64) ([]models.Note, error) {
+	s.log.Info("NoteGetList method called")
 	notes, err := s.storage.NoteGetList(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get notes from storage: %w", err)
 	}
 
 	// Обрабатываем метаданные для каждой заметки
-	for i, note := range notes {
-		if note.RawMetadata != "" {
-			// десериализуем RawMetadata в []models.Metadata
-			var metadataStruct []models.Metadata
-			if err := json.Unmarshal([]byte(note.RawMetadata), &metadataStruct); err != nil {
+	for i := range notes {
+		if notes[i].RawMetadata != "" {
+			var rawMetadata map[string]string
+			err = json.Unmarshal([]byte(notes[i].RawMetadata), &rawMetadata)
+			if err != nil {
 				return nil, fmt.Errorf("failed to unmarshal metadata: %w", err)
+			}
+
+			// Преобразуем map в slice of Metadata
+			var metadataStruct []models.Metadata
+			for k, v := range rawMetadata {
+				metadataStruct = append(metadataStruct, models.Metadata{
+					Key:   k,
+					Value: v,
+				})
 			}
 			notes[i].Metadata = metadataStruct
 		}
 	}
 	return notes, nil
 }
-
 // NoteDeleteService функция для удаления заметки.
-func (s *NoteService) NoteDeleteService(ctx context.Context, userID int64, noteID int64) error {
-	s.log.Info("NoteDeleteService method called")
+func (s *NoteService) NoteDelete(ctx context.Context, userID int64, noteID int64) error {
+	s.log.Info("NoteDelete method called")
 	err := s.storage.NoteDelete(ctx, userID, noteID)
 	if err != nil {
 		return fmt.Errorf("failed to delete note: %w", err)

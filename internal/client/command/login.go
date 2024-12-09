@@ -12,11 +12,6 @@ import (
 
 const nameCommandLogin = "Login"
 
-// IAuthService интерфейс для сервиса авторизации.
-type IAuthService interface {
-	Authorization(ctx context.Context, login, password string) (string, error)
-}
-
 // CommandLogin структура для команды авторизации.
 type CommandLogin struct {
 	authService IAuthService
@@ -46,39 +41,20 @@ func (c *CommandLogin) Name() string {
 
 // Execute выполнение команды авторизации.
 func (c *CommandLogin) Execute() {
-	//ввод логина
-	loginPrompt := promptui.Prompt{
-		Label: "Введите логин",
-	}
-	login, err := loginPrompt.Run()
+	//получение логина
+	login, err := c.getLogin()
 	if err != nil {
 		fmt.Println("Ошибка при вводе логина:", err)
 		return
 	}
-	//валидация логина
-	err = modelsclient.ValidateLogin(login)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	//ввод пароля
-	passwordPrompt := promptui.Prompt{
-		Label: "Введите пароль",
-		Mask:  '*',
-	}
-	password, err := passwordPrompt.Run()
+	//получение пароля
+	password, err := c.getPassword()
 	if err != nil {
 		fmt.Println("Ошибка при вводе пароля:", err)
 		return
 	}
-	//валидация пароля
-	err = modelsclient.ValidatePassword(password)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 	//авторизация
-	token, err := c.authService.Authorization(context.Background(), login, password)
+	token, err := c.authorization(login, password)
 	if err != nil {
 		fmt.Println("Ошибка при авторизации:", err)
 		return
@@ -88,4 +64,53 @@ func (c *CommandLogin) Execute() {
 
 	// Ожидание нажатия клавиши
 	waitEnter(c.reader)
+}
+
+// getLogin получение логина.
+func (c *CommandLogin) getLogin() (string, error) {
+	loginPrompt := promptui.Prompt{
+		Label: "Введите логин",
+	}
+	login, err := loginPrompt.Run()
+	if err != nil {
+		fmt.Println("Ошибка при вводе логина:", err)
+		return "", err
+	}
+	//валидация логина
+	err = modelsclient.ValidateLogin(login)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	return login, nil
+}
+
+// getPassword получение пароля.
+func (c *CommandLogin) getPassword() (string, error) {
+	passwordPrompt := promptui.Prompt{
+		Label: "Введите пароль",
+		Mask:  '*',
+	}
+	password, err := passwordPrompt.Run()
+	if err != nil {
+		fmt.Println("Ошибка при вводе пароля:", err)
+		return "", err
+	}
+	//валидация пароля
+	err = modelsclient.ValidatePassword(password)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	return password, nil
+}
+
+// authorization выполнение авторизации.
+func (c *CommandLogin) authorization(login, password string) (string, error) {
+	token, err := c.authService.Authorization(context.Background(), login, password)
+	if err != nil {
+		fmt.Println("Ошибка при авторизации:", err)
+		return "", err
+	}
+	return token, nil
 }

@@ -15,21 +15,15 @@ const commandNoteDelete = "Delete"
 
 // NoteDeleteCommand структура для удаления заметки.
 type NoteDeleteCommand struct {
-	noteDeleteService INoteDeleteService
+	noteDeleteService INoteService
 	token             *grpcclient.Token
 	reader            io.Reader
 	writer            io.Writer
 }
 
-// INoteDeleteService интерфейс для сервиса удаления заметки.
-type INoteDeleteService interface {
-	NoteDeleteService(ctx context.Context, noteID int64, token string) error
-	NoteGetList(ctx context.Context, token string) ([]models.Note, error)
-}
-
 // NewCommandNoteDelete создание новой команды удаления заметки.
 func NewCommandNoteDelete(
-	noteDeleteService INoteDeleteService,
+	noteDeleteService INoteService,
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer,
@@ -54,23 +48,13 @@ func (c *NoteDeleteCommand) Execute() {
 		return
 	}
 	// получение списка заметок
-	notes, err := c.noteDeleteService.NoteGetList(context.Background(), c.token.Token)
+	notes, err := c.fetchNotes()
 	if err != nil {
-		fprintln(c.writer, "Ошибка при получении списка заметок:", err)
-		return
-	}
-	if len(notes) == 0 {
-		fprintln(c.writer, "Список заметок пуст")
-		waitEnter(c.reader)
 		return
 	}
 	// ввод номера заметки
-	fprint(c.writer, "Введите номер заметки для удаления: "+"\033[35m")
-	var noteID int64
-	_, err = fmt.Fscanln(c.reader, &noteID)
+	noteID, err := c.inputNoteID()
 	if err != nil {
-		fprintln(c.writer, "\033[0m"+"Неверный номер заметки")
-		waitEnter(c.reader)
 		return
 	}
 	//проверяем, что есть такая заметка перебором списка заметок
@@ -87,6 +71,53 @@ func (c *NoteDeleteCommand) Execute() {
 		return
 	}
 	// подтверждение удаления заметки
+	confirm, err := c.confirmDelete()
+	if err != nil {
+		return
+	}
+	if !confirm {
+		return
+	}
+	// удаление заметки
+	err = c.deleteNote(noteID)
+	if err != nil {
+		return
+	}
+	// вывод сообщения об удалении заметки
+	fprintln(c.writer, "\033[0m"+"Заметка удалена")
+	waitEnter(c.reader)
+}
+
+// fetchNotes получение списка заметок.
+func (c *NoteDeleteCommand) fetchNotes() ([]models.Note, error) {
+	notes, err := c.noteDeleteService.NoteGetList(context.Background(), c.token.Token)
+	if err != nil {
+		return nil, err
+	}
+	if len(notes) == 0 {
+		fprintln(c.writer, "Список заметок пуст")
+		waitEnter(c.reader)
+		return nil, errors.New("список заметок пуст")
+	}
+	return notes, nil
+}
+
+// inputNoteID ввод номера заметки.
+func (c *NoteDeleteCommand) inputNoteID() (int64, error) {
+	// ввод номера заметки
+	fprint(c.writer, "Введите номер заметки для удаления:")
+	var noteID int64
+	_, err := fmt.Fscanln(c.reader, &noteID)
+	if err != nil {
+		fprintln(c.writer, "\033[0m"+"Неверный номер заметки")
+		waitEnter(c.reader)
+		return 0, err
+	}
+	return noteID, nil
+}
+
+// confirmDelete подтверждение удаления заметки.
+func (c *NoteDeleteCommand) confirmDelete() (bool, error) {
 	continuePrompt := promptui.Prompt{
 		Label:   "Вы уверены, что хотите удалить заметку? (y/n)",
 		Default: "y",
@@ -99,16 +130,16 @@ func (c *NoteDeleteCommand) Execute() {
 	}
 	confirm, err := continuePrompt.Run()
 	if err != nil || confirm == "n" {
-		return
+		return false, err
 	}
-	// удаление заметки
-	err = c.noteDeleteService.NoteDeleteService(context.Background(), noteID, c.token.Token)
+	return true, nil
+}
+
+// deleteNote удаление заметки.
+func (c *NoteDeleteCommand) deleteNote(noteID int64) error {
+	err := c.noteDeleteService.NoteDelete(context.Background(), noteID, c.token.Token)
 	if err != nil {
-		fprintln(c.writer, "\033[0m"+"Ошибка при удалении заметки:", err)
-		waitEnter(c.reader)
-		return
+		return err
 	}
-	// вывод сообщения об удалении заметки
-	fprintln(c.writer, "\033[0m"+"Заметка удалена")
-	waitEnter(c.reader)
+	return nil
 }

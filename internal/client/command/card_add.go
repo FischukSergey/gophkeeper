@@ -16,19 +16,15 @@ const nameCommandCardAdd = "CardAdd"
 const errorAuth = "Ошибка авторизации. Пожалуйста, войдите в систему заново"
 
 type CommandCardAdd struct {
-	cardAddService ICardAddService
+	cardAddService ICardService
 	token          *grpcclient.Token
 	reader         io.Reader
 	writer         io.Writer
 }
 
-// ICardAddService интерфейс для добавления карты.
-type ICardAddService interface {
-	CardAdd(ctx context.Context, card models.Card, token string) error
-}
-
+// NewCommandCardAdd создание новой команды добавления карты.
 func NewCommandCardAdd(
-	cardAddService ICardAddService,
+	cardAddService ICardService,
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer,

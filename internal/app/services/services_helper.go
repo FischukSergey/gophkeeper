@@ -36,7 +36,15 @@ func SerializeMetadata(metadata []models.Metadata) (string, error) {
 	if len(metadata) == 0 {
 		return "", nil
 	}
-	metadataJSON, err := json.Marshal(metadata)
+	
+	// Преобразуем массив в map
+	metadataMap := make(map[string]string)
+	for _, m := range metadata {
+		metadataMap[m.Key] = m.Value
+	}
+	
+	// Сериализуем map в JSON
+	metadataJSON, err := json.Marshal(metadataMap)
 	if err != nil {
 		return "", fmt.Errorf("failed to serialize metadata: %w", err)
 	}

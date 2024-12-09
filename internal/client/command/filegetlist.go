@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
+	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 )
 
@@ -18,14 +19,9 @@ const (
 	kb                     = 1024
 )
 
-// IFileGetListService интерфейс для получения списка файлов.
-type IFileGetListService interface {
-	GetFileList(ctx context.Context, token string) ([]models.File, error)
-}
-
 // CommandFileGetList структура для команды получения списка файлов.
 type CommandFileGetList struct {
-	fileGetListService IFileGetListService
+	fileGetListService IAuthService
 	token              *grpcclient.Token
 	reader             io.Reader
 	writer             io.Writer
@@ -33,7 +29,7 @@ type CommandFileGetList struct {
 
 // NewCommandFileGetList создание новой команды получения списка файлов.
 func NewCommandFileGetList(
-	fileGetListService IFileGetListService,
+	fileGetListService IAuthService,
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer,
@@ -58,51 +54,73 @@ func (c *CommandFileGetList) Execute() {
 		return // Выходим из функции если токен невалидный
 	}
 	// получение списка файлов
-	files, err := c.fileGetListService.GetFileList(context.Background(), c.token.Token)
+	files, err := c.getFileList()
 	if err != nil {
-		// проверка ошибки
-		if strings.Contains(err.Error(), "токен не найден") {
-			fmt.Println(errorAuth)
-		} else {
-			fmt.Println("Ошибка при получении списка файлов:", err)
-		}
+		c.handleError(err)
 		return
 	}
+	// вывод списка файлов
+	c.displayFileList(files)
 
-	// создаем новый tabwriter
+	// ожидание нажатия клавиши
+waitEnter(c.reader)
+}
+
+// getFileList получение списка файлов.
+func (c *CommandFileGetList) getFileList() ([]models.File, error) {
+	return c.fileGetListService.GetFileList(context.Background(), c.token.Token)
+}
+
+// handleError обрабатывает ошибки
+func (c *CommandFileGetList) handleError(err error) {
+	if strings.Contains(err.Error(), modelsclient.ErrTokenNotFound) {
+		fmt.Println(errorAuth)
+	} else {
+		fmt.Println("Ошибка при получении списка файлов:", err)
+	}
+}
+
+// displayFileList выводит список файлов.
+func (c *CommandFileGetList) displayFileList(files []models.File) {
 	w := tabwriter.NewWriter(c.writer, 0, 0, 2, ' ', 0)
 
-	// выводим заголовки таблицы
-	_, err = fmt.Fprintln(w, "Имя файла\tРазмер\tДата создания")
-	if err != nil {
-		fmt.Printf(errOutputMessage, err)
-	}
-	_, err = fmt.Fprintln(w, "----------\t------\t-------------")
-	if err != nil {
-		fmt.Printf(errOutputMessage, err)
-	}
-
-	// выводим данные
+	// сортировка файлов по имени
 	sort.Slice(files, func(i, j int) bool {
 		return strings.ToLower(files[i].Filename) < strings.ToLower(files[j].Filename)
 	})
+
+	// вывод заголовков
+	c.displayHeader(w)
+	// вывод файлов
 	for _, file := range files {
-		_, err = fmt.Fprintf(w, "%s\t%d kb\t%s\n",
-			file.Filename,
-			file.Size/kb,
-			file.CreatedAt.Format(time.DateTime),
-		)
-		if err != nil {
+		c.displayFile(w, file)
+	}
+
+	// вывод данных
+	w.Flush()
+}
+
+// displayHeader выводит заголовки таблицы.
+func (c *CommandFileGetList) displayHeader(w *tabwriter.Writer) {
+	headers := []string{
+		"Имя файла\tРазмер\tДата создания",
+		"----------\t------\t-------------",
+	}
+	for _, header := range headers {
+		if _, err := fmt.Fprintln(w, header); err != nil {
 			fmt.Printf(errOutputMessage, err)
 		}
 	}
+}
 
-	// применяем форматирование таблицы
-	err = w.Flush()
+// displayFile выводит информацию о файле.
+func (c *CommandFileGetList) displayFile(w *tabwriter.Writer, file models.File) {
+	_, err := fmt.Fprintf(w, "%s\t%d kb\t%s\n",
+		file.Filename,
+		file.Size/kb,
+		file.CreatedAt.Format(time.DateTime),
+	)
 	if err != nil {
 		fmt.Printf(errOutputMessage, err)
 	}
-
-	// ожидание нажатия клавиши
-	waitEnter(c.reader)
 }

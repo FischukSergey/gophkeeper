@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
-	"github.com/FischukSergey/gophkeeper/internal/client/service"
 	"github.com/manifoldco/promptui"
 )
 
@@ -17,7 +16,7 @@ const (
 
 // NewCommandCardAddMetadata создает новый экземпляр команды добавления метаданных к карте.
 func NewCommandCardAddMetadata(
-	cardService *service.CardService,
+	cardService ICardService,
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer,
@@ -27,7 +26,7 @@ func NewCommandCardAddMetadata(
 
 // CommandCardAddMetadata структура команды добавления метаданных к карте.
 type CommandCardAddMetadata struct {
-	cardService *service.CardService
+	cardService ICardService
 	token       *grpcclient.Token
 	reader      io.Reader
 	writer      io.Writer
@@ -77,10 +76,15 @@ func (c *CommandCardAddMetadata) Execute() {
 		fprintln(c.writer, "Ошибка при вводе ID карты:", err)
 		return
 	}
+	cardIDInt, err := strconv.Atoi(cardID)
+	if err != nil {
+		fprintln(c.writer, "Ошибка при преобразовании ID карты:", err)
+		return
+	}
 	//проверяем, что есть такая карта перебором списка карт
 	var exist bool
 	for _, card := range cards {
-		if card.CardNumber == cardID {
+		if card.CardID == int64(cardIDInt) {
 			exist = true
 			break
 		}
@@ -161,11 +165,6 @@ func (c *CommandCardAddMetadata) Execute() {
 		metadata[key] = value //добавление пары ключ-значение в map
 	}
 	//добавление метаданных к карте
-	cardIDInt, err := strconv.Atoi(cardID)
-	if err != nil {
-		fprintln(c.writer, "Ошибка при преобразовании ID карты:", err)
-		return
-	}
 	err = c.cardService.AddCardMetadata(context.Background(), int64(cardIDInt), metadata, c.token.Token)
 	if err != nil {
 		fprintln(c.writer, "Ошибка при добавлении метаданных:", err)

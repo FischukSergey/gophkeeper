@@ -14,19 +14,17 @@ import (
 
 const nameCommandFileDownload = "FileDownload"
 
-type IFileDownloadService interface {
-	S3FileDownload(ctx context.Context, token string, filename string) ([]byte, error)
-}
-
+// CommandFileDownload структура для команды загрузки файла.
 type CommandFileDownload struct {
-	fileDownloadService IFileDownloadService
+	fileDownloadService IAuthService
 	token               *grpcclient.Token
 	reader              io.Reader
 	writer              io.Writer
 }
 
+// NewCommandFileDownload создание новой команды загрузки файла.
 func NewCommandFileDownload(
-	fileDownloadService IFileDownloadService,
+	fileDownloadService IAuthService,
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer,

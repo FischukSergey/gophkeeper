@@ -6,26 +6,20 @@ import (
 	"strconv"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
-	"github.com/FischukSergey/gophkeeper/internal/models"
 )
 
 const nameCommandGetList = "Getlist"
 
 type NoteGetListCommand struct {
-	noteGetListService INoteGetListService
+	noteGetListService INoteService
 	token              *grpcclient.Token
 	reader             io.Reader
 	writer             io.Writer
 }
 
-// INoteGetListService интерфейс для сервиса получения списка заметок.
-type INoteGetListService interface {
-	NoteGetList(ctx context.Context, token string) ([]models.Note, error)
-}
-
 // NewCommandNoteGetList создает команду для получения списка заметок.
 func NewCommandNoteGetList(
-	noteGetListService INoteGetListService, // сервис для получения списка заметок
+	noteGetListService INoteService, // сервис для получения списка заметок
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer) *NoteGetListCommand {

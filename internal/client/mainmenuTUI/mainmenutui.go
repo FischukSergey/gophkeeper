@@ -7,7 +7,6 @@ import (
 
 	"github.com/FischukSergey/gophkeeper/internal/client/command"
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
-	"github.com/FischukSergey/gophkeeper/internal/client/service"
 	"github.com/FischukSergey/gophkeeper/internal/logger"
 	"github.com/manifoldco/promptui"
 )
@@ -16,9 +15,9 @@ var log *slog.Logger
 
 // MainMenuTUI функция для работы с главным меню.
 func MainMenuTUI(
-	cardService *service.CardService,
-	authService *service.AuthService,
-	noteService *service.NoteService,
+	cardService command.ICardService,
+	authService command.IAuthService,
+	noteService command.INoteService,
 	token *grpcclient.Token,
 ) {
 	log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
@@ -149,7 +148,7 @@ func handleSubmenu(commands []command.ICommand, commandsMenu map[string]func()) 
 		templates := newTemplates()
 		prompt := promptui.Select{
 			Templates: templates,
-			Label:     "Меню работы с файлами:",
+			Label:     "Выберите команду:",
 			Items:     commandNames,
 			Size:      10,
 		}

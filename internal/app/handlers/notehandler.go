@@ -15,9 +15,9 @@ import (
 
 // ProtoNoteService интерфейс для методов сервера.
 type ProtoNoteService interface {
-	NoteAddService(ctx context.Context, note models.Note) error
-	NoteGetListService(ctx context.Context, userID int64) ([]models.Note, error)
-	NoteDeleteService(ctx context.Context, userID int64, noteID int64) error
+	NoteAdd(ctx context.Context, note models.Note) error
+	NoteGetList(ctx context.Context, userID int64) ([]models.Note, error)
+	NoteDelete(ctx context.Context, userID int64, noteID int64) error
 }
 
 // NoteServer сервер для методов заметки.
@@ -53,7 +53,7 @@ func (h *NoteServer) NoteAdd(ctx context.Context, req *pb.NoteAddRequest) (*pb.N
 	//формируем заметку
 	note := converters.ToModelNote(req.Note, int64(userID), metadata)
 	//добавляем заметку
-	err = h.NoteService.NoteAddService(ctx, note)
+	err = h.NoteService.NoteAdd(ctx, note)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "ошибка при добавлении заметки: %v", err)
 	}
@@ -71,7 +71,7 @@ func (h *NoteServer) NoteGetList(ctx context.Context, req *pb.NoteGetListRequest
 	}
 	log.Info(userFound, slog.Int(user, userID))
 	//получаем список заметок
-	notes, err := h.NoteService.NoteGetListService(ctx, int64(userID))
+	notes, err := h.NoteService.NoteGetList(ctx, int64(userID))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "ошибка при получении списка заметок: %v", err)
 	}
@@ -96,7 +96,7 @@ func (h *NoteServer) NoteDelete(ctx context.Context, req *pb.NoteDeleteRequest) 
 	}
 	log.Info(userFound, slog.Int(user, userID))
 	//удаляем заметку
-	err = h.NoteService.NoteDeleteService(ctx, int64(userID), req.NoteID)
+	err = h.NoteService.NoteDelete(ctx, int64(userID), req.NoteID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "ошибка при удалении заметки: %v", err)
 	}

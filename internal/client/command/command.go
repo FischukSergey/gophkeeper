@@ -1,11 +1,14 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
+	"github.com/FischukSergey/gophkeeper/internal/models"
 )
 
 const (
@@ -19,6 +22,32 @@ const (
 type ICommand interface {
 	Execute()
 	Name() string
+}
+
+// IAuthService интерфейс для сервиса авторизации.
+type IAuthService interface {
+	Register(ctx context.Context, login, password string) (string, error)
+	Authorization(ctx context.Context, login, password string) (string, error)
+	Check(ctx context.Context) error
+	S3FileUpload(ctx context.Context, token string, fileData []byte, filename string) (string, error)
+	S3FileDownload(ctx context.Context, token string, filename string) ([]byte, error)
+	S3FileDelete(ctx context.Context, token string, filename string) error
+	GetFileList(ctx context.Context, token string) ([]models.File, error)
+}
+
+// INoteService интерфейс для сервиса заметок.
+type INoteService interface {
+	NoteAdd(ctx context.Context, note string, metadata map[string]string, token string) error
+	NoteDelete(ctx context.Context, noteID int64, token string) error
+	NoteGetList(ctx context.Context, token string) ([]models.Note, error)
+}
+
+// ICardService интерфейс для сервиса карт.
+type ICardService interface {
+	CardAdd(ctx context.Context, card models.Card, token string) error
+	AddCardMetadata(ctx context.Context, cardID int64, metadata map[string]string, token string) error
+	DeleteCard(ctx context.Context, cardID string, token string) error
+	GetCardList(ctx context.Context, token string) ([]models.Card, error)
 }
 
 // waitEnter ожидание нажатия клавиши.
@@ -57,18 +86,16 @@ func validatePath(path string) error {
 		return fmt.Errorf("путь '%s' не является директорией", path)
 	}
 
-	// Проверяем права на запись.
-	tmpFile := path + "/.tmp_test"
-	f, err := os.Create(tmpFile)
+	// Проверяем права на запись используя os.CreateTemp
+	f, err := os.CreateTemp(path, "gophkeeper-test-*")
 	if err != nil {
 		return fmt.Errorf("нет прав на запись в директорию '%s': %w", path, err)
 	}
-	err = f.Close()
-	if err != nil {
+	tmpName := f.Name()
+	if err = f.Close(); err != nil {
 		return fmt.Errorf("ошибка при закрытии временного файла: %w", err)
 	}
-	err = os.Remove(tmpFile)
-	if err != nil {
+	if err = os.Remove(tmpName); err != nil {
 		return fmt.Errorf("ошибка при удалении временного файла: %w", err)
 	}
 	return nil
@@ -76,10 +103,13 @@ func validatePath(path string) error {
 
 // checkFileExists проверка существования файла.
 func checkFileExists(path, filename string) error {
-	filepath := path + "/" + filename
+	filepath := filepath.Join(path, filename)
 	_, err := os.Stat(filepath)
-	if err != nil {
+	if os.IsNotExist(err) {
 		return fmt.Errorf("файл '%s' не существует", filepath)
+	}
+	if err != nil {
+		return fmt.Errorf("ошибка при проверке файла: %w", err)
 	}
 	return nil
 }

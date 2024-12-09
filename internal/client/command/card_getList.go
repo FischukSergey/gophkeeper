@@ -11,14 +11,14 @@ import (
 
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
-	"github.com/FischukSergey/gophkeeper/internal/client/service"
 	"github.com/manifoldco/promptui"
 )
 
 const cardGetListCommandName = "CardList"
 
+// NewCommandCardGetList создание новой команды получения списка карт.
 func NewCommandCardGetList(
-	cardService *service.CardService,
+	cardService ICardService,
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer,
@@ -31,8 +31,9 @@ func NewCommandCardGetList(
 	}
 }
 
+// CommandCardGetList структура для команды получения списка карт.
 type CommandCardGetList struct {
-	cardService *service.CardService
+	cardService ICardService
 	token       *grpcclient.Token
 	reader      io.Reader
 	writer      io.Writer

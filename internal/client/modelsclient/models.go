@@ -14,6 +14,9 @@ const (
 	minPasswordLength = 7
 	maxPasswordLength = 72
 )
+const (
+	ErrTokenNotFound = "токен не найден"
+)
 
 // User структура для пользователя.
 type User struct {

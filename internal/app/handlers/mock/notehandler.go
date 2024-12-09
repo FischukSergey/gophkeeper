@@ -35,45 +35,45 @@ func (m *MockProtoNoteService) EXPECT() *MockProtoNoteServiceMockRecorder {
 	return m.recorder
 }
 
-// NoteAddService mocks base method.
-func (m *MockProtoNoteService) NoteAddService(ctx context.Context, note models.Note) error {
+// NoteAdd mocks base method.
+func (m *MockProtoNoteService) NoteAdd(ctx context.Context, note models.Note) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NoteAddService", ctx, note)
+	ret := m.ctrl.Call(m, "NoteAdd", ctx, note)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// NoteAddService indicates an expected call of NoteAddService.
-func (mr *MockProtoNoteServiceMockRecorder) NoteAddService(ctx, note interface{}) *gomock.Call {
+// NoteAdd indicates an expected call of NoteAdd.
+func (mr *MockProtoNoteServiceMockRecorder) NoteAdd(ctx, note interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoteAddService", reflect.TypeOf((*MockProtoNoteService)(nil).NoteAddService), ctx, note)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoteAdd", reflect.TypeOf((*MockProtoNoteService)(nil).NoteAdd), ctx, note)
 }
 
-// NoteDeleteService mocks base method.
-func (m *MockProtoNoteService) NoteDeleteService(ctx context.Context, userID, noteID int64) error {
+// NoteDelete mocks base method.
+func (m *MockProtoNoteService) NoteDelete(ctx context.Context, userID, noteID int64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NoteDeleteService", ctx, userID, noteID)
+	ret := m.ctrl.Call(m, "NoteDelete", ctx, userID, noteID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// NoteDeleteService indicates an expected call of NoteDeleteService.
-func (mr *MockProtoNoteServiceMockRecorder) NoteDeleteService(ctx, userID, noteID interface{}) *gomock.Call {
+// NoteDelete indicates an expected call of NoteDelete.
+func (mr *MockProtoNoteServiceMockRecorder) NoteDelete(ctx, userID, noteID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoteDeleteService", reflect.TypeOf((*MockProtoNoteService)(nil).NoteDeleteService), ctx, userID, noteID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoteDelete", reflect.TypeOf((*MockProtoNoteService)(nil).NoteDelete), ctx, userID, noteID)
 }
 
-// NoteGetListService mocks base method.
-func (m *MockProtoNoteService) NoteGetListService(ctx context.Context, userID int64) ([]models.Note, error) {
+// NoteGetList mocks base method.
+func (m *MockProtoNoteService) NoteGetList(ctx context.Context, userID int64) ([]models.Note, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NoteGetListService", ctx, userID)
+	ret := m.ctrl.Call(m, "NoteGetList", ctx, userID)
 	ret0, _ := ret[0].([]models.Note)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// NoteGetListService indicates an expected call of NoteGetListService.
-func (mr *MockProtoNoteServiceMockRecorder) NoteGetListService(ctx, userID interface{}) *gomock.Call {
+// NoteGetList indicates an expected call of NoteGetList.
+func (mr *MockProtoNoteServiceMockRecorder) NoteGetList(ctx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoteGetListService", reflect.TypeOf((*MockProtoNoteService)(nil).NoteGetListService), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoteGetList", reflect.TypeOf((*MockProtoNoteService)(nil).NoteGetList), ctx, userID)
 }

@@ -45,7 +45,7 @@ func TestProtoNoteService_NoteAdd(t *testing.T) {
 			},
 			setupMock: func(mock *mock.MockProtoNoteService) {
 				mock.EXPECT().
-					NoteAddService(gomock.Any(), gomock.Any()).
+					NoteAdd(gomock.Any(), gomock.Any()).
 					Return(nil)
 			},
 			want: result{
@@ -124,7 +124,7 @@ func TestProtoNoteService_NoteDelete(t *testing.T) {
 			},
 			setupMock: func(mock *mock.MockProtoNoteService) {
 				mock.EXPECT().
-					NoteDeleteService(gomock.Any(), gomock.Any(), gomock.Any()).
+					NoteDelete(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil)
 			},
 			want: result{
@@ -199,7 +199,7 @@ func TestProtoNoteService_NoteGetList(t *testing.T) {
 			request: &pb.NoteGetListRequest{},
 			setupMock: func(mock *mock.MockProtoNoteService) {
 				mock.EXPECT().
-					NoteGetListService(gomock.Any(), gomock.Any()).
+					NoteGetList(gomock.Any(), gomock.Any()).
 					Return(notes, nil)
 			},
 			want: result{

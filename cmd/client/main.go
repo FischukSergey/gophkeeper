@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/FischukSergey/gophkeeper/internal/client/command"
 	"github.com/FischukSergey/gophkeeper/internal/client/config"
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	mainmenutui "github.com/FischukSergey/gophkeeper/internal/client/mainmenuTUI"
@@ -13,6 +14,11 @@ import (
 )
 
 var log *slog.Logger
+var (
+	noteService command.INoteService
+	cardService command.ICardService
+	authService command.IAuthService
+)
 
 func init() {
 	// удаление файла лога, если он существует
@@ -56,7 +62,7 @@ func main() {
 	// создание сервиса карт
 	cardService := service.NewCardService(cardClient, log)
 	// создание сервиса заметок
-	noteService := service.NewNoteService(noteClient, log)
+	noteService = service.NewNoteService(noteClient, log)
 
 	// проверяем, что сервер хранения паролей работает
 	err = authService.Check(context.Background())

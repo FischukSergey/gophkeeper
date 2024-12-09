@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
-	"github.com/FischukSergey/gophkeeper/internal/client/service"
 	"github.com/manifoldco/promptui"
 )
 
@@ -15,7 +14,7 @@ const cardDeleteCommandName = "CardDelete"
 
 // CommandCardDelete структура для команды удаления карты.
 type CommandCardDelete struct {
-	cardService *service.CardService
+	cardService ICardService
 	token       *grpcclient.Token
 	reader      io.Reader
 	writer      io.Writer
@@ -23,7 +22,7 @@ type CommandCardDelete struct {
 
 // NewCommandCardDelete создает новый экземпляр команды удаления карты.
 func NewCommandCardDelete(
-	cardService *service.CardService,
+	cardService ICardService,
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer,
@@ -74,10 +73,15 @@ func (c *CommandCardDelete) Execute() {
 		fprintln(c.writer, "Ошибка при вводе ID карты:", err)
 		return
 	}
+	cardIDInt, err := strconv.Atoi(cardID)
+	if err != nil {
+		fprintln(c.writer, "Ошибка при преобразовании ID карты:", err)
+		return
+	}
 	//проверяем, что есть такая карта перебором списка карт
 	var exist bool
 	for _, card := range cards {
-		if card.CardNumber == cardID {
+		if card.CardID == int64(cardIDInt) {
 			exist = true
 			break
 		}

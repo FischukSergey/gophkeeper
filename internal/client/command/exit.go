@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 )
@@ -31,7 +32,7 @@ func (c *commandExit) Execute() {
 		fmt.Printf(errOutputMessage, err)
 		return
 	}
-	if response != "y" && response != "Y" {
+	if strings.ToLower(response) != "y" {
 		return
 	}
 	os.Exit(0)

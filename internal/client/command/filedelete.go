@@ -15,20 +15,15 @@ const nameCommandFileDelete = "FileDelete"
 
 // CommandFileDelete структура для команды удаления файла.
 type CommandFileDelete struct {
-	fileDeleteService IFileDeleteService
+	fileDeleteService IAuthService
 	token             *grpcclient.Token
 	reader            io.Reader
 	writer            io.Writer
 }
 
-// IFileDeleteService интерфейс для удаления файла.
-type IFileDeleteService interface {
-	S3FileDelete(ctx context.Context, token string, filename string) error
-}
-
 // NewCommandFileDelete функция для создания команды удаления файла.
 func NewCommandFileDelete(
-	fileDeleteService IFileDeleteService,
+	fileDeleteService IAuthService,
 	token *grpcclient.Token,
 	reader io.Reader,
 	writer io.Writer,
