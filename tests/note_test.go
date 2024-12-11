@@ -102,7 +102,7 @@ func TestNoteDelete(t *testing.T) {
 	require.NotNil(t, note)
 	require.NotEmpty(t, note)
 	//удаляем заметку
-	err = noteService.NoteDeleteService(context.Background(), note[0].NoteID, token)
+	err = noteService.NoteDelete(context.Background(), note[0].NoteID, token)
 	require.NoError(t, err)
 	//получаем заметку
 	note, err = noteService.NoteGetList(context.Background(), token)

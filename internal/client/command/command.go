@@ -12,10 +12,13 @@ import (
 )
 
 const (
-	errOutputMessage = "Ошибка вывода сообщения: %s\n"
-	errReadMessage   = "Ошибка чтения ответа: %s\n"
-	errInputMessage  = "Ошибка ввода: %s\n"
-	messageContinue  = "\nНажмите Enter для продолжения..."
+	errOutputMessage   = "Ошибка вывода сообщения: %s\n"
+	errReadMessage     = "Ошибка чтения ответа: %s\n"
+	errInputMessage    = "Ошибка ввода: %s\n"
+	errLoginMessage    = "Ошибка при вводе логина: "
+	errPasswordMessage = "Ошибка при вводе пароля: "
+	errGetCardsMessage = "Ошибка получения списка карт: "
+	messageContinue    = "\nНажмите Enter для продолжения..."
 )
 
 // ICommand интерфейс для команд.
@@ -46,7 +49,7 @@ type INoteService interface {
 type ICardService interface {
 	CardAdd(ctx context.Context, card models.Card, token string) error
 	AddCardMetadata(ctx context.Context, cardID int64, metadata map[string]string, token string) error
-	DeleteCard(ctx context.Context, cardID string, token string) error
+	DeleteCard(ctx context.Context, cardID int64, token string) error
 	GetCardList(ctx context.Context, token string) ([]models.Card, error)
 }
 

@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// ToProtoCard преобразует модель Card в структуру pb.Card
+// ToProtoCard преобразует модель Card в структуру pb.Card.
 func ToProtoCard(card models.Card) *pb.Card {
 	return &pb.Card{
 		CardID:             card.CardID,
@@ -20,7 +20,7 @@ func ToProtoCard(card models.Card) *pb.Card {
 	}
 }
 
-// ToModelCard преобразует структуру pb.Card в модель Card
+// ToModelCard преобразует структуру pb.Card в модель Card.
 func ToModelCard(protoCard *pb.Card, userID string) models.Card {
 	return models.Card{
 		UserID:             userID,

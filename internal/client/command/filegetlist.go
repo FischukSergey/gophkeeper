@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -57,26 +58,34 @@ func (c *CommandFileGetList) Execute() {
 	files, err := c.getFileList()
 	if err != nil {
 		c.handleError(err)
+		waitEnter(c.reader)
 		return
 	}
 	// вывод списка файлов
 	c.displayFileList(files)
 
 	// ожидание нажатия клавиши
-waitEnter(c.reader)
+	waitEnter(c.reader)
 }
 
 // getFileList получение списка файлов.
 func (c *CommandFileGetList) getFileList() ([]models.File, error) {
-	return c.fileGetListService.GetFileList(context.Background(), c.token.Token)
+	files, err := c.fileGetListService.GetFileList(context.Background(), c.token.Token)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при получении списка файлов: %w", err)
+	}
+	if len(files) == 0 {
+		return nil, errors.New("список файлов пуст")
+	}
+	return files, nil
 }
 
-// handleError обрабатывает ошибки
+// handleError обрабатывает ошибки.
 func (c *CommandFileGetList) handleError(err error) {
 	if strings.Contains(err.Error(), modelsclient.ErrTokenNotFound) {
 		fmt.Println(errorAuth)
 	} else {
-		fmt.Println("Ошибка при получении списка файлов:", err)
+		fmt.Println(err)
 	}
 }
 
@@ -97,7 +106,10 @@ func (c *CommandFileGetList) displayFileList(files []models.File) {
 	}
 
 	// вывод данных
-	w.Flush()
+	err := w.Flush()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 // displayHeader выводит заголовки таблицы.

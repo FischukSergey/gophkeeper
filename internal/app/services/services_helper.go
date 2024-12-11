@@ -8,7 +8,7 @@ import (
 	"github.com/FischukSergey/gophkeeper/internal/models"
 )
 
-// ValidateMetadata проверяет валидность метаданных
+// ValidateMetadata проверяет валидность метаданных.
 func ValidateMetadata(metadata []models.Metadata) error {
 	metadMap := make(map[string]string)
 	for _, m := range metadata {
@@ -31,18 +31,18 @@ func ValidateMetadata(metadata []models.Metadata) error {
 	return nil
 }
 
-// SerializeMetadata сериализует метаданные в JSON строку
+// SerializeMetadata сериализует метаданные в JSON строку.
 func SerializeMetadata(metadata []models.Metadata) (string, error) {
 	if len(metadata) == 0 {
 		return "", nil
 	}
-	
+
 	// Преобразуем массив в map
 	metadataMap := make(map[string]string)
 	for _, m := range metadata {
 		metadataMap[m.Key] = m.Value
 	}
-	
+
 	// Сериализуем map в JSON
 	metadataJSON, err := json.Marshal(metadataMap)
 	if err != nil {
@@ -51,7 +51,7 @@ func SerializeMetadata(metadata []models.Metadata) (string, error) {
 	return string(metadataJSON), nil
 }
 
-// DeserializeMetadata десериализует JSON строку в метаданные
+// DeserializeMetadata десериализует JSON строку в метаданные.
 func DeserializeMetadata(rawMetadata string) (map[string]string, error) {
 	var metadata map[string]string
 	err := json.Unmarshal([]byte(rawMetadata), &metadata)

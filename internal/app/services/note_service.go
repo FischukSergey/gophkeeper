@@ -51,12 +51,12 @@ func (s *NoteService) NoteAdd(ctx context.Context, note models.Note) error {
 	//добавляем заметку в базу данных
 	err = s.storage.NoteAdd(ctx, note, []byte(metaJSON))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add note to storage: %w", err)
 	}
 	return nil
 }
 
-// NoteGetListService функция для получения списка заметок.
+// NoteGetList функция для получения списка заметок.
 func (s *NoteService) NoteGetList(ctx context.Context, userID int64) ([]models.Note, error) {
 	s.log.Info("NoteGetList method called")
 	notes, err := s.storage.NoteGetList(ctx, userID)
@@ -86,7 +86,8 @@ func (s *NoteService) NoteGetList(ctx context.Context, userID int64) ([]models.N
 	}
 	return notes, nil
 }
-// NoteDeleteService функция для удаления заметки.
+
+// NoteDelete функция для удаления заметки.
 func (s *NoteService) NoteDelete(ctx context.Context, userID int64, noteID int64) error {
 	s.log.Info("NoteDelete method called")
 	err := s.storage.NoteDelete(ctx, userID, noteID)

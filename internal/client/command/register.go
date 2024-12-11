@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -30,16 +31,19 @@ func (c *commandRegister) Execute() {
 	//получение логина
 	login, err := c.promptLogin()
 	if err != nil {
+		fmt.Println(err.Error())
 		return
 	}
 	//получение пароля
 	password, err := c.promptPassword()
 	if err != nil {
+		fmt.Println(err.Error())
 		return
 	}
 	//вызываем регистрацию
 	token, err := c.registerUser(login, password)
 	if err != nil {
+		fmt.Println(err.Error())
 		return
 	}
 	c.token.Token = token
@@ -69,11 +73,11 @@ func (c *commandRegister) promptLogin() (string, error) {
 	}
 	login, err := loginPrompt.Run()
 	if err != nil {
-		return "", fmt.Errorf("ошибка при вводе логина: %w", err)
+		return "", fmt.Errorf("%s: %w", errLoginMessage, err)
 	}
 	err = modelsclient.ValidateLogin(login)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", errLoginMessage, err)
 	}
 	return login, nil
 }
@@ -86,12 +90,12 @@ func (c *commandRegister) promptPassword() (string, error) {
 	}
 	password, err := passwordPrompt.Run()
 	if err != nil {
-		return "", fmt.Errorf("ошибка при вводе пароля: %w", err)
+		return "", fmt.Errorf("%s: %w", errPasswordMessage, err)
 	}
 	//валидация пароля
 	err = modelsclient.ValidatePassword(password)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", errPasswordMessage, err)
 	}
 	//повторный ввод пароля
 	passwordConfirmPrompt := promptui.Prompt{
@@ -100,10 +104,10 @@ func (c *commandRegister) promptPassword() (string, error) {
 	}
 	passwordConfirm, err := passwordConfirmPrompt.Run()
 	if err != nil {
-		return "", fmt.Errorf("ошибка при вводе пароля: %w", err)
+		return "", fmt.Errorf("%s: %w", errPasswordMessage, err)
 	}
 	if password != passwordConfirm {
-		return "", fmt.Errorf("пароли не совпадают")
+		return "", errors.New("пароли не совпадают")
 	}
 	return password, nil
 }

@@ -24,10 +24,10 @@ type DBKeeper interface {
 
 // S3Keeper интерфейс для сервиса S3.
 type S3Keeper interface {
-	S3UploadFile(ctx context.Context, fileData io.Reader, filename string, bucket string) (string, error)
-	S3GetFileList(ctx context.Context, bucketID string, bucket string) ([]models.File, error)
-	S3DeleteFile(ctx context.Context, bucketID string, bucket string) error
-	S3DownloadFile(ctx context.Context, bucketID string, bucket string) ([]byte, error)
+	S3UploadFile(ctx context.Context, fileData io.Reader, filename string) (string, error)
+	S3GetFileList(ctx context.Context, bucketID string) ([]models.File, error)
+	S3DeleteFile(ctx context.Context, bucketID string) error
+	S3DownloadFile(ctx context.Context, bucketID string) ([]byte, error)
 }
 
 // CardKeeper интерфейс для сервиса карт.
@@ -130,13 +130,10 @@ func (g *GRPCService) FileUploadToS3(
 	userID int64,
 ) (string, error) {
 	g.log.Info("Service FileUploadToS3 method called")
-	bucket := initial.Cfg.GetS3Bucket()
 	bucketID := fmt.Sprintf("%d/%s", userID, filename)
-	g.log.Info("bucketID", slog.String("bucketID", bucketID))
-	g.log.Info("bucket", slog.String("bucket", bucket))
-	g.log.Info("userID", slog.Int64("userID", userID))
+	g.log.Info("bucket: ", slog.String("bucketID", bucketID), slog.Int64("userID", userID))
 
-	url, err := g.s3.S3UploadFile(ctx, fileData, bucketID, bucket)
+	url, err := g.s3.S3UploadFile(ctx, fileData, bucketID)
 	if err != nil {
 		return "", fmt.Errorf("failed to upload file: %w", err)
 	}
@@ -146,9 +143,8 @@ func (g *GRPCService) FileUploadToS3(
 // FileGetListFromS3 метод для получения списка файлов пользователя из S3.
 func (g *GRPCService) FileGetListFromS3(ctx context.Context, userID int64) ([]models.File, error) {
 	g.log.Info("Service FileGetListFromS3 method called")
-	bucket := initial.Cfg.GetS3Bucket()
 	bucketID := fmt.Sprintf("%d", userID)
-	files, err := g.s3.S3GetFileList(ctx, bucketID, bucket)
+	files, err := g.s3.S3GetFileList(ctx, bucketID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file list: %w", err)
 	}
@@ -158,9 +154,8 @@ func (g *GRPCService) FileGetListFromS3(ctx context.Context, userID int64) ([]mo
 // FileDeleteFromS3 метод для удаления файла из S3.
 func (g *GRPCService) FileDeleteFromS3(ctx context.Context, userID int64, filename string) error {
 	g.log.Info("Service FileDeleteFromS3 method called")
-	bucket := initial.Cfg.GetS3Bucket()
 	bucketID := fmt.Sprintf("%d/%s", userID, filename)
-	err := g.s3.S3DeleteFile(ctx, bucketID, bucket)
+	err := g.s3.S3DeleteFile(ctx, bucketID)
 	if err != nil {
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
@@ -170,9 +165,8 @@ func (g *GRPCService) FileDeleteFromS3(ctx context.Context, userID int64, filena
 // FileDownloadFromS3 метод для скачивания файла из S3.
 func (g *GRPCService) FileDownloadFromS3(ctx context.Context, userID int64, filename string) ([]byte, error) {
 	g.log.Info("Service FileDownloadFromS3 method called")
-	bucket := initial.Cfg.GetS3Bucket()
 	bucketID := fmt.Sprintf("%d/%s", userID, filename)
-	data, err := g.s3.S3DownloadFile(ctx, bucketID, bucket)
+	data, err := g.s3.S3DownloadFile(ctx, bucketID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}

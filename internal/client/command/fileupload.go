@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -58,10 +59,12 @@ func (c *CommandFileUpload) Execute() {
 	//чтение файла
 	fileData, filename, err := c.getFileData(filePath)
 	if err != nil {
+		fmt.Println(err)
 		return
 	}
 	//загрузка файла на сервер
 	if err := c.s3FileUpload(fileData, filename); err != nil {
+		fmt.Println(err)
 		return
 	}
 
@@ -94,15 +97,14 @@ func (c *CommandFileUpload) getFilePath() (string, error) {
 	}
 
 	fmt.Println("Файл не найден. Будьте внимательны при вводе пути к файлу.")
-	return "", err
+	return "", errors.New("файл не найден")
 }
 
 // getFileData получение данных файла.
 func (c *CommandFileUpload) getFileData(filePath string) ([]byte, string, error) {
 	fileData, err := os.ReadFile(filePath)
 	if err != nil {
-		fmt.Println("Ошибка при чтении файла:", err)
-		return nil, "", err
+		return nil, "", fmt.Errorf("ошибка при чтении файла: %w", err)
 	}
 	//получение названия файла
 	filename := filepath.Base(filePath)
@@ -117,11 +119,10 @@ func (c *CommandFileUpload) s3FileUpload(fileData []byte, filename string) error
 		if strings.Contains(err.Error(), auth.ErrNotFound) ||
 			strings.Contains(err.Error(), auth.ErrInvalid) ||
 			strings.Contains(err.Error(), models.UserIDNotFound) {
-			fmt.Println(errorAuth)
+			return fmt.Errorf("%s: %w", errorAuth, err)
 		} else {
-			fmt.Printf(errOutputMessage, err)
+			return fmt.Errorf("%s: %w", errOutputMessage, err)
 		}
-			return err
 	}
 	fmt.Println("Файл загружен на S3:", s3Filepath)
 	return nil

@@ -45,8 +45,6 @@ func (s *AuthService) Register(ctx context.Context, login string, password strin
 	if err != nil {
 		return "", fmt.Errorf("failed to register: %w", err)
 	}
-	//s.log.Debug("регистрация нового клиента", "login", login, "password", password)
-	//s.log.Debug("токен", "token", token)
 	return token.GetAccessToken().Token, nil
 }
 
@@ -68,8 +66,6 @@ func (s *AuthService) Authorization(ctx context.Context, login, password string)
 	if err != nil {
 		return "", fmt.Errorf("failed to authorization: %w", err)
 	}
-	//s.log.Debug("авторизация клиента", "login", login, "password", password)
-	//s.log.Debug("токен", "token", token)
 	return token.GetAccessToken().Token, nil
 }
 
@@ -183,14 +179,7 @@ func (s *AuthService) GetFileList(ctx context.Context, token string) ([]models.F
 	}
 	files := make([]models.File, 0, len(response.GetFiles()))
 	for _, file := range response.GetFiles() {
-		files = append(files, models.File{
-			FileID:    file.GetFileID(),
-			UserID:    file.GetUserID(),
-			Filename:  file.GetFilename(),
-			CreatedAt: file.GetCreatedAt().AsTime(),
-			DeletedAt: file.GetDeletedAt().AsTime(),
-			Size:      file.GetSize(),
-		})
+		files = append(files, ProtoToModel(file))
 	}
 	return files, nil
 }

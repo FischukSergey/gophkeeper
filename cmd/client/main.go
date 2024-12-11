@@ -58,9 +58,9 @@ func main() {
 		}
 	}()
 	// создание сервиса аутентификации
-	authService := service.NewAuthService(client, log)
+	authService = service.NewAuthService(client, log)
 	// создание сервиса карт
-	cardService := service.NewCardService(cardClient, log)
+	cardService = service.NewCardService(cardClient, log)
 	// создание сервиса заметок
 	noteService = service.NewNoteService(noteClient, log)
 

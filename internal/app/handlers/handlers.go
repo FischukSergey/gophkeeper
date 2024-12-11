@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/FischukSergey/gophkeeper/internal/app/converters"
-	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
+	"github.com/FischukSergey/gophkeeper/internal/logger"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
 	"google.golang.org/grpc"
@@ -136,7 +136,7 @@ func (s *PwdKeeperServer) FileUpload(
 	stream pb.GophKeeper_FileUploadServer) error {
 	log.Info("Handler FileUpload method called")
 	ctx := stream.Context()
-	userID, err := s.validateUserID(ctx)
+	userID, err := validateUserID(ctx)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,11 @@ func (s *PwdKeeperServer) FileUpload(
 
 	// Запускаем горутину для записи данных в pipe
 	go func() {
-		defer pw.Close()
+		defer func() {
+			if err := pw.Close(); err != nil {
+				log.Error("failed to close pipe writer", logger.Err(err))
+			}
+		}()
 		for {
 			req, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
@@ -203,7 +207,7 @@ func (s *PwdKeeperServer) FileUpload(
 func (s *PwdKeeperServer) FileGetList(
 	ctx context.Context, req *pb.FileGetListRequest) (*pb.FileGetListResponse, error) {
 	log.Info("Handler FileGetList method called")
-	userID, err := s.validateUserID(ctx)
+	userID, err := validateUserID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +228,7 @@ func (s *PwdKeeperServer) FileGetList(
 func (s *PwdKeeperServer) FileDelete(
 	ctx context.Context, req *pb.FileDeleteRequest) (*pb.FileDeleteResponse, error) {
 	log.Info("Handler FileDelete method called")
-	userID, err := s.validateUserID(ctx)
+	userID, err := validateUserID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +248,7 @@ func (s *PwdKeeperServer) FileDownload(
 	req *pb.FileDownloadRequest, stream pb.GophKeeper_FileDownloadServer) error {
 	log.Info("Handler FileDownload method called")
 	ctx := stream.Context()
-	userID, err := s.validateUserID(ctx)
+	userID, err := validateUserID(ctx)
 	if err != nil {
 		return err
 	}
@@ -270,16 +274,4 @@ func (s *PwdKeeperServer) FileDownload(
 		}
 	}
 	return nil
-}
-
-// validateUserID проверяет корректность ID пользователя из контекста
-func (h *PwdKeeperServer) validateUserID(ctx context.Context) (int, error) {
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return 0, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
-	}
-	if userID <= 0 {
-		return 0, status.Errorf(codes.InvalidArgument, "invalid user ID")
-	}
-	return userID, nil
 }

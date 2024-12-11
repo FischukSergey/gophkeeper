@@ -44,19 +44,19 @@ func (c *CommandLogin) Execute() {
 	//получение логина
 	login, err := c.getLogin()
 	if err != nil {
-		fmt.Println("Ошибка при вводе логина:", err)
+		fmt.Println(err)
 		return
 	}
 	//получение пароля
 	password, err := c.getPassword()
 	if err != nil {
-		fmt.Println("Ошибка при вводе пароля:", err)
+		fmt.Println(err)
 		return
 	}
 	//авторизация
 	token, err := c.authorization(login, password)
 	if err != nil {
-		fmt.Println("Ошибка при авторизации:", err)
+		fmt.Println(err)
 		return
 	}
 	c.token.Token = token
@@ -73,14 +73,12 @@ func (c *CommandLogin) getLogin() (string, error) {
 	}
 	login, err := loginPrompt.Run()
 	if err != nil {
-		fmt.Println("Ошибка при вводе логина:", err)
-		return "", err
+		return "", fmt.Errorf("%s: %w", errLoginMessage, err)
 	}
 	//валидация логина
 	err = modelsclient.ValidateLogin(login)
 	if err != nil {
-		fmt.Println(err)
-		return "", err
+		return "", fmt.Errorf("%s: %w", errLoginMessage, err)
 	}
 	return login, nil
 }
@@ -93,14 +91,12 @@ func (c *CommandLogin) getPassword() (string, error) {
 	}
 	password, err := passwordPrompt.Run()
 	if err != nil {
-		fmt.Println("Ошибка при вводе пароля:", err)
-		return "", err
+		return "", fmt.Errorf("%s: %w", errPasswordMessage, err)
 	}
 	//валидация пароля
 	err = modelsclient.ValidatePassword(password)
 	if err != nil {
-		fmt.Println(err)
-		return "", err
+		return "", fmt.Errorf("%s: %w", errPasswordMessage, err)
 	}
 	return password, nil
 }
@@ -109,8 +105,7 @@ func (c *CommandLogin) getPassword() (string, error) {
 func (c *CommandLogin) authorization(login, password string) (string, error) {
 	token, err := c.authService.Authorization(context.Background(), login, password)
 	if err != nil {
-		fmt.Println("Ошибка при авторизации:", err)
-		return "", err
+		return "", fmt.Errorf("ошибка при авторизации: %w", err)
 	}
 	return token, nil
 }

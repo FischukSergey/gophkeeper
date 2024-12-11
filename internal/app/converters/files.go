@@ -6,7 +6,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// ToProtoFile преобразует модель File в структуру pb.File
+// ToProtoFile преобразует модель File в структуру pb.File.
 func ToProtoFile(file models.File) *pb.File {
 	return &pb.File{
 		FileID:    file.FileID,

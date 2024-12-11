@@ -24,100 +24,106 @@ func MainMenuTUI(
 	reader := os.Stdin
 	writer := os.Stdout
 
-	// Создаем все команды
-	commandRegister := command.NewCommandRegister(authService, token, reader, writer)
-	commandLogin := command.NewCommandLogin(authService, token, reader, writer)
-	commandFileUpload := command.NewCommandFileUpload(authService, token, reader, writer)
-	commandFileDownload := command.NewCommandFileDownload(authService, token, reader, writer)
-	commandFileDelete := command.NewCommandFileDelete(authService, token, reader, writer)
-	commandFileGetList := command.NewCommandFileGetList(authService, token, reader, writer)
-	commandCardAdd := command.NewCommandCardAdd(cardService, token, reader, writer)
-	commandCardGetList := command.NewCommandCardGetList(cardService, token, reader, writer)
-	commandCardDelete := command.NewCommandCardDelete(cardService, token, reader, writer)
-	commandCardAddMetadata := command.NewCommandCardAddMetadata(cardService, token, reader, writer)
-	commandNoteAdd := command.NewCommandNoteAdd(noteService, token, reader, writer)
-	commandNoteGetList := command.NewCommandNoteGetList(noteService, token, reader, writer)
-	commandNoteDelete := command.NewCommandNoteDelete(noteService, token, reader, writer)
-	commandExit := command.NewCommandExit(reader, writer)
+	commands := initializeCommands(cardService, authService, noteService, token, reader, writer)
+	menus := createMenus(commands)
+	runMainMenu(commands.mainCommands, menus.mainMenu)
+}
 
-	// Определяем основное меню и подменю файлов
-	mainCommands := []command.ICommand{
-		commandLogin,
-		commandRegister,
+type commandGroups struct {
+	exitCommand  command.ICommand
+	mainCommands []command.ICommand
+	fileCommands []command.ICommand
+	cardCommands []command.ICommand
+	noteCommands []command.ICommand
+}
+
+type menuMaps struct {
+	mainMenu map[string]func()
+	fileMenu map[string]func()
+	cardMenu map[string]func()
+	noteMenu map[string]func()
+}
+
+// initializeCommands функция для инициализации команд.
+func initializeCommands(
+	cardService command.ICardService,
+	authService command.IAuthService,
+	noteService command.INoteService,
+	token *grpcclient.Token,
+	reader *os.File,
+	writer *os.File,
+) commandGroups {
+	return commandGroups{
+		mainCommands: []command.ICommand{
+			command.NewCommandLogin(authService, token, reader, writer),
+			command.NewCommandRegister(authService, token, reader, writer),
+		},
+		fileCommands: []command.ICommand{
+			command.NewCommandFileUpload(authService, token, reader, writer),
+			command.NewCommandFileDownload(authService, token, reader, writer),
+			command.NewCommandFileGetList(authService, token, reader, writer),
+			command.NewCommandFileDelete(authService, token, reader, writer),
+		},
+		cardCommands: []command.ICommand{
+			command.NewCommandCardAdd(cardService, token, reader, writer),
+			command.NewCommandCardGetList(cardService, token, reader, writer),
+			command.NewCommandCardAddMetadata(cardService, token, reader, writer),
+			command.NewCommandCardDelete(cardService, token, reader, writer),
+		},
+		noteCommands: []command.ICommand{
+			command.NewCommandNoteAdd(noteService, token, reader, writer),
+			command.NewCommandNoteGetList(noteService, token, reader, writer),
+			command.NewCommandNoteDelete(noteService, token, reader, writer),
+		},
+		exitCommand: command.NewCommandExit(reader, writer),
 	}
-	// команды для работы с файлами
-	fileCommands := []command.ICommand{
-		commandFileUpload,
-		commandFileDownload,
-		commandFileGetList,
-		commandFileDelete,
-	}
-	// команды для работы с картами
-	cardCommands := []command.ICommand{
-		commandCardAdd,
-		commandCardGetList,
-		commandCardAddMetadata,
-		commandCardDelete,
-	}
-	// команды для работы с заметками
-	noteCommands := []command.ICommand{
-		commandNoteAdd,
-		commandNoteGetList,
-		commandNoteDelete,
+}
+
+// createMenus функция для создания меню.
+func createMenus(commands commandGroups) menuMaps {
+	menus := menuMaps{
+		mainMenu: make(map[string]func()),
+		fileMenu: make(map[string]func()),
+		cardMenu: make(map[string]func()),
+		noteMenu: make(map[string]func()),
 	}
 
-	// Создаем мапы для команд
-	mainCommandsMenu := make(map[string]func())
-	fileCommandsMenu := make(map[string]func())
-	cardCommandsMenu := make(map[string]func())
-	noteCommandsMenu := make(map[string]func())
+	// инициализируем подменю
+	initializeSubmenu(commands.fileCommands, menus.fileMenu)
+	initializeSubmenu(commands.cardCommands, menus.cardMenu)
+	initializeSubmenu(commands.noteCommands, menus.noteMenu)
 
-	// Заполняем мапу основного меню
-	for _, cmd := range mainCommands {
-		mainCommandsMenu[cmd.Name()] = cmd.Execute
+	// добавляем команды для работы с главным меню
+	for _, cmd := range commands.mainCommands {
+		menus.mainMenu[cmd.Name()] = cmd.Execute
 	}
-	// добавляем специальную команду для перехода в подменю файлов
-	mainCommandsMenu["\tРАБОТА С ФАЙЛАМИ"] = func() {
-		handleSubmenu(fileCommands, fileCommandsMenu)
-	}
-	// добавляем специальную команду для перехода в подменю карт
-	mainCommandsMenu["\tРАБОТА С КАРТАМИ"] = func() {
-		handleSubmenu(cardCommands, cardCommandsMenu)
-	}
-	// добавляем специальную команду для перехода в подменю заметок
-	mainCommandsMenu["\tРАБОТА С ЗАМЕТКАМИ"] = func() {
-		handleSubmenu(noteCommands, noteCommandsMenu)
-	}
-	// добавляем команду выхода
-	mainCommandsMenu[commandExit.Name()] = commandExit.Execute
 
-	// заполняем мапу подменю файлов
-	for _, cmd := range fileCommands {
-		fileCommandsMenu[cmd.Name()] = cmd.Execute
+	// добавляем команды для работы с подменю
+	menus.mainMenu["\tРАБОТА С ФАЙЛАМИ"] = func() {
+		handleSubmenu(commands.fileCommands, menus.fileMenu)
 	}
-	fileCommandsMenu["Назад"] = func() {}
+	menus.mainMenu["\tРАБОТА С КАРТАМИ"] = func() {
+		handleSubmenu(commands.cardCommands, menus.cardMenu)
+	}
+	menus.mainMenu["\tРАБОТА С ЗАМЕТКАМИ"] = func() {
+		handleSubmenu(commands.noteCommands, menus.noteMenu)
+	}
+	menus.mainMenu["Выход"] = commands.exitCommand.Execute
 
-	// заполняем мапу подменю карт
-	for _, cmd := range cardCommands {
-		cardCommandsMenu[cmd.Name()] = cmd.Execute
-	}
-	cardCommandsMenu["Назад"] = func() {}
+	return menus
+}
 
-	// заполняем мапу подменю заметок
-	for _, cmd := range noteCommands {
-		noteCommandsMenu[cmd.Name()] = cmd.Execute
+// initializeSubmenu функция для инициализации подменю.
+func initializeSubmenu(commands []command.ICommand, menu map[string]func()) {
+	for _, cmd := range commands {
+		menu[cmd.Name()] = cmd.Execute
 	}
-	noteCommandsMenu["Назад"] = func() {}
+	menu["Назад"] = func() {}
+}
 
-	// формируем список названий команд для главного меню
-	mainCommandNames := make([]string, 0, len(mainCommands)+1)
-	for _, cmd := range mainCommands {
-		mainCommandNames = append(mainCommandNames, cmd.Name())
-	}
-	mainCommandNames = append(mainCommandNames, "\tРАБОТА С ФАЙЛАМИ")
-	mainCommandNames = append(mainCommandNames, "\tРАБОТА С КАРТАМИ")
-	mainCommandNames = append(mainCommandNames, "\tРАБОТА С ЗАМЕТКАМИ")
-	mainCommandNames = append(mainCommandNames, commandExit.Name())
+// runMainMenu функция для запуска главного меню.
+func runMainMenu(mainCommands []command.ICommand, mainMenu map[string]func()) {
+	mainCommandNames := buildMainMenuItems(mainCommands)
 
 	for {
 		templates := newTemplates()
@@ -130,10 +136,24 @@ func MainMenuTUI(
 		_, result, err := prompt.Run()
 		if err != nil {
 			log.Error("failed to run prompt", logger.Err(err))
-			os.Exit(1)
+			fmt.Println("Ошибка при выполнении команды")
+			return
 		}
-		mainCommandsMenu[result]()
+		mainMenu[result]()
 	}
+}
+
+// buildMainMenuItems функция для построения элементов главного меню.
+func buildMainMenuItems(mainCommands []command.ICommand) []string {
+	items := make([]string, 0, len(mainCommands)+4) // +4 for submenus and exit
+	for _, cmd := range mainCommands {
+		items = append(items, cmd.Name())
+	}
+	items = append(items, "\tРАБОТА С ФАЙЛАМИ")
+	items = append(items, "\tРАБОТА С КАРТАМИ")
+	items = append(items, "\tРАБОТА С ЗАМЕТКАМИ")
+	items = append(items, "Выход")
+	return items
 }
 
 // handleSubmenu функция для обработки подменю.
@@ -155,7 +175,7 @@ func handleSubmenu(commands []command.ICommand, commandsMenu map[string]func()) 
 		_, result, err := prompt.Run()
 		if err != nil {
 			fmt.Println("Ошибка при выполнении команды")
-			os.Exit(1)
+			return
 		}
 		if result == "Назад" {
 			return

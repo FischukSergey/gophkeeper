@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -130,7 +129,7 @@ func TestCardDelete(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, notes)
 	//удаляем карту
-	err = cardService.DeleteCard(context.Background(), strconv.FormatInt(notes[0].CardID, 10), token)
+	err = cardService.DeleteCard(context.Background(), notes[0].CardID, token)
 	require.NoError(t, err)
 	//проверяем, что карты удалены
 	notes, err = cardService.GetCardList(context.Background(), token)

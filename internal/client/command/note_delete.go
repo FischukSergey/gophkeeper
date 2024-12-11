@@ -50,11 +50,15 @@ func (c *NoteDeleteCommand) Execute() {
 	// получение списка заметок
 	notes, err := c.fetchNotes()
 	if err != nil {
+		fprintln(c.writer, err.Error())
+		waitEnter(c.reader)
 		return
 	}
 	// ввод номера заметки
 	noteID, err := c.inputNoteID()
 	if err != nil {
+		fprintln(c.writer, err.Error())
+		waitEnter(c.reader)
 		return
 	}
 	//проверяем, что есть такая заметка перебором списка заметок
@@ -92,11 +96,9 @@ func (c *NoteDeleteCommand) Execute() {
 func (c *NoteDeleteCommand) fetchNotes() ([]models.Note, error) {
 	notes, err := c.noteDeleteService.NoteGetList(context.Background(), c.token.Token)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ошибка при получении списка заметок: %w", err)
 	}
 	if len(notes) == 0 {
-		fprintln(c.writer, "Список заметок пуст")
-		waitEnter(c.reader)
 		return nil, errors.New("список заметок пуст")
 	}
 	return notes, nil
@@ -109,9 +111,7 @@ func (c *NoteDeleteCommand) inputNoteID() (int64, error) {
 	var noteID int64
 	_, err := fmt.Fscanln(c.reader, &noteID)
 	if err != nil {
-		fprintln(c.writer, "\033[0m"+"Неверный номер заметки")
-		waitEnter(c.reader)
-		return 0, err
+		return 0, fmt.Errorf("\033[0m"+"Неверный номер заметки: %w", err)
 	}
 	return noteID, nil
 }
@@ -130,7 +130,7 @@ func (c *NoteDeleteCommand) confirmDelete() (bool, error) {
 	}
 	confirm, err := continuePrompt.Run()
 	if err != nil || confirm == "n" {
-		return false, err
+		return false, fmt.Errorf("ошибка при подтверждении удаления заметки: %w", err)
 	}
 	return true, nil
 }
@@ -139,7 +139,7 @@ func (c *NoteDeleteCommand) confirmDelete() (bool, error) {
 func (c *NoteDeleteCommand) deleteNote(noteID int64) error {
 	err := c.noteDeleteService.NoteDelete(context.Background(), noteID, c.token.Token)
 	if err != nil {
-		return err
+		return fmt.Errorf("ошибка при удалении заметки: %w", err)
 	}
 	return nil
 }

@@ -236,10 +236,17 @@ func (s *Storage) NoteGetList(ctx context.Context, userID int64) ([]models.Note,
 // NoteDelete метод для удаления заметки.
 func (s *Storage) NoteDelete(ctx context.Context, userID int64, noteID int64) error {
 	query := `UPDATE entities SET deleted_at=now() WHERE entity_id=$1 AND user_id=$2;`
-	_, err := s.DB.Exec(ctx, query, noteID, userID)
+	result, err := s.DB.Exec(ctx, query, noteID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to delete note: %w", err)
 	}
+
+	// Проверяем, была ли обновлена хотя бы одна запись
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("note with id %d not found for user %d", noteID, userID)
+	}
+
 	return nil
 }
 

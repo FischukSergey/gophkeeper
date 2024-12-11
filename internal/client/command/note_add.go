@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -50,11 +51,13 @@ func (c *CommandNoteAdd) Execute() {
 	// ввод текста заметки
 	note, err := c.inputNoteText()
 	if err != nil {
+		fprintln(c.writer, err.Error())
 		return
 	}
 	// ввод метаданных
 	noteMetadata, err := c.inputNoteMetadata()
 	if err != nil {
+		fprintln(c.writer, err.Error())
 		return
 	}
 	//вызов сервиса
@@ -73,7 +76,6 @@ func (c *CommandNoteAdd) inputNoteText() (string, error) {
 	fprintln(c.writer, "Введите текст заметки (для завершения нажмите Enter и затем Ctrl+D):")
 	note := readMultilineString(c.reader) //читаем многострочную строку
 	if note == "" {
-		fprintln(c.writer, "Текст заметки не может быть пустым")
 		return "", errors.New("текст заметки не может быть пустым")
 	}
 	return note, nil
@@ -118,7 +120,10 @@ func (c *CommandNoteAdd) inputNoteMetadata() (map[string]string, error) {
 		}
 
 		shouldContinue, err := continuePrompt.Run()
-		if err != nil || shouldContinue == "n" {
+		if err != nil {
+			return nil, fmt.Errorf("ошибка при подтверждении добавления метаданных: %w", err)
+		}
+		if shouldContinue == "n" {
 			break //выход из цикла, если пользователь не хочет добавлять больше метаданных
 		}
 
@@ -135,8 +140,7 @@ func (c *CommandNoteAdd) inputNoteMetadata() (map[string]string, error) {
 
 		key, err := keyPrompt.Run()
 		if err != nil {
-			fprintln(c.writer, "Ошибка при вводе ключа:", err)
-			return nil, err
+			return nil, fmt.Errorf("ошибка при вводе ключа: %w", err)
 		}
 
 		// Ввод значения
@@ -152,15 +156,14 @@ func (c *CommandNoteAdd) inputNoteMetadata() (map[string]string, error) {
 
 		value, err := valuePrompt.Run()
 		if err != nil {
-			fprintln(c.writer, "Ошибка при вводе значения:", err)
-			return nil, err
+			return nil, fmt.Errorf("ошибка при вводе значения: %w", err)
 		}
 		//проверяем, нет ли такого ключа в map
 		if _, ok := noteMetadata[key]; ok {
 			fprintln(c.writer, "Такой ключ уже существует")
 			continue
 		}
-			noteMetadata[key] = value //добавление пары ключ-значение в map
+		noteMetadata[key] = value //добавление пары ключ-значение в map
 	}
 	return noteMetadata, nil
 }
@@ -169,7 +172,7 @@ func (c *CommandNoteAdd) inputNoteMetadata() (map[string]string, error) {
 func (c *CommandNoteAdd) addNote(note string, noteMetadata map[string]string) error {
 	err := c.noteAddService.NoteAdd(context.Background(), note, noteMetadata, c.token.Token)
 	if err != nil {
-		return err
+		return fmt.Errorf("ошибка при добавлении заметки: %w", err)
 	}
 	return nil
 }

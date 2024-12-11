@@ -2,12 +2,9 @@ package command
 
 import (
 	"context"
-	"errors"
 	"io"
-	"strconv"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
-	"github.com/manifoldco/promptui"
 )
 
 const cardDeleteCommandName = "CardDelete"
@@ -45,37 +42,15 @@ func (c *CommandCardDelete) Execute() {
 	fprintln(c.writer, "Ознакомтесь со списком карт и введите ID карты для удаления")
 
 	//получаем список карт
-	cardsList := NewCommandCardGetList(c.cardService, c.token, c.reader, c.writer)
-	cardsList.Execute()
-	cards, err := c.cardService.GetCardList(context.Background(), c.token.Token)
+	cards, err := getCardList(c.cardService, c.token, c.reader, c.writer)
 	if err != nil {
 		fprintln(c.writer, "Ошибка при получении списка карт:", err)
 		return
 	}
-	if len(cards) == 0 {
-		fprintln(c.writer, "Список карт пуст")
-		return
-	}
-	prompt := promptui.Prompt{
-		Label: "Введите ID карты для удаления: ",
-		Validate: func(input string) error {
-			if input == "" {
-				return errors.New("ID карты не может быть пустым")
-			}
-			if _, err := strconv.Atoi(input); err != nil {
-				return errors.New("ID карты должен быть числом")
-			}
-			return nil
-		},
-	}
-	cardID, err := prompt.Run()
+	//ввод ID карты
+	cardIDInt, err := promptCardID()
 	if err != nil {
 		fprintln(c.writer, "Ошибка при вводе ID карты:", err)
-		return
-	}
-	cardIDInt, err := strconv.Atoi(cardID)
-	if err != nil {
-		fprintln(c.writer, "Ошибка при преобразовании ID карты:", err)
 		return
 	}
 	//проверяем, что есть такая карта перебором списка карт
@@ -93,7 +68,7 @@ func (c *CommandCardDelete) Execute() {
 	}
 
 	//удаляем карту
-	err = c.cardService.DeleteCard(context.Background(), cardID, c.token.Token)
+	err = c.cardService.DeleteCard(context.Background(), int64(cardIDInt), c.token.Token)
 	if err != nil {
 		fprintln(c.writer, "Ошибка при удалении карты:", err)
 		return

@@ -56,24 +56,23 @@ func (m *MockS3Keeper) S3UploadFile(
 	ctx context.Context,
 	fileData io.Reader,
 	filename string,
-	bucket string,
 ) (string, error) {
-	args := m.Called(ctx, fileData, filename, bucket)
+	args := m.Called(ctx, fileData, filename)
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockS3Keeper) S3GetFileList(ctx context.Context, bucketID string, bucket string) ([]models.File, error) {
-	args := m.Called(ctx, bucketID, bucket)
+func (m *MockS3Keeper) S3GetFileList(ctx context.Context, bucketID string) ([]models.File, error) {
+	args := m.Called(ctx, bucketID)
 	return args.Get(0).([]models.File), args.Error(1)
 }
 
-func (m *MockS3Keeper) S3DeleteFile(ctx context.Context, bucketID string, bucket string) error {
-	args := m.Called(ctx, bucketID, bucket)
+func (m *MockS3Keeper) S3DeleteFile(ctx context.Context, bucketID string) error {
+	args := m.Called(ctx, bucketID)
 	return args.Error(0)
 }
 
-func (m *MockS3Keeper) S3DownloadFile(ctx context.Context, bucketID string, bucket string) ([]byte, error) {
-	args := m.Called(ctx, bucketID, bucket)
+func (m *MockS3Keeper) S3DownloadFile(ctx context.Context, bucketID string) ([]byte, error) {
+	args := m.Called(ctx, bucketID)
 	return args.Get(0).([]byte), args.Error(1)
 }
 

@@ -60,9 +60,9 @@ func (s *NoteService) NoteGetList(ctx context.Context, token string) ([]models.N
 	for _, note := range resp.GetNotes() {
 		metadata := make([]models.Metadata, 0, len(note.GetMetadata()))
 		for _, meta := range note.GetMetadata() {
-			metadata = append(metadata, models.Metadata{Key: meta.GetKey(), Value: meta.GetValue()})
+			metadata = append(metadata, ProtoToMetadata(meta))
 		}
-		notes = append(notes, models.Note{NoteID: note.GetNoteID(), NoteText: note.GetNoteText(), Metadata: metadata})
+		notes = append(notes, ProtoToNote(note, metadata))
 	}
 	return notes, nil
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	s3bucket "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -115,7 +116,7 @@ func InitLogger() *slog.Logger {
 }
 
 // InitS3 функция для инициализации подключения к S3.
-func InitS3() (*s3.S3, error) {
+func InitS3() (*s3.S3Storage, error) {
 	session, err := session.NewSession(&aws.Config{
 		Region:   aws.String(Cfg.S3.Region),
 		Endpoint: aws.String(Cfg.S3.Endpoint),
@@ -130,5 +131,22 @@ func InitS3() (*s3.S3, error) {
 		return nil, fmt.Errorf("error creating session s3: %w", err)
 	}
 
-	return &s3.S3{S3Session: session}, nil
+	//проверка на наличие бакета
+	bucket := Cfg.S3.Bucket
+	svc := s3bucket.New(session)
+
+	// Проверяем существование бакета
+	_, err = svc.HeadBucketWithContext(context.Background(), &s3bucket.HeadBucketInput{
+		Bucket: aws.String(bucket),
+	})
+	if err != nil {
+		// Создаем новый приватный бакет
+		_, err = svc.CreateBucketWithContext(context.Background(), &s3bucket.CreateBucketInput{
+			Bucket: aws.String(bucket),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create bucket: %w", err)
+		}
+	}
+	return &s3.S3Storage{S3Session: session, BucketName: bucket}, nil
 }

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/FischukSergey/gophkeeper/internal/app/converters"
-	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
 	"google.golang.org/grpc"
@@ -38,16 +37,15 @@ func RegisterCardAPI(
 // CardAdd хендлер для добавления карты.
 func (h *CardServer) CardAdd(ctx context.Context, req *pb.CardAddRequest) (*pb.CardAddResponse, error) {
 	log.Info("CardAdd", request, req)
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
+	userID, err := validateUserID(ctx)
+	if err != nil {
+		return nil, err
 	}
 	log.Info(userFound, slog.Int(user, userID))
-
 	//формируем карту
 	card := converters.ToModelCard(req.Card, strconv.Itoa(userID))
 	//добавляем карту
-	err := h.CardService.CardAdd(ctx, card)
+	err = h.CardService.CardAdd(ctx, card)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "ошибка при добавлении карты: %v", err)
 	}
@@ -57,7 +55,7 @@ func (h *CardServer) CardAdd(ctx context.Context, req *pb.CardAddRequest) (*pb.C
 // CardGetList хендлер для получения списка карт пользователя.
 func (h *CardServer) CardGetList(ctx context.Context, req *pb.CardGetListRequest) (*pb.CardGetListResponse, error) {
 	log.Info("CardGetList", request, req)
-	userID, err := h.validateUserID(ctx)
+	userID, err := validateUserID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +76,7 @@ func (h *CardServer) CardGetList(ctx context.Context, req *pb.CardGetListRequest
 // CardDelete хендлер для удаления карты.
 func (h *CardServer) CardDelete(ctx context.Context, req *pb.CardDeleteRequest) (*pb.CardDeleteResponse, error) {
 	log.Info("CardDelete", request, req)
-	userID, err := h.validateUserID(ctx)
+	userID, err := validateUserID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +92,7 @@ func (h *CardServer) CardDelete(ctx context.Context, req *pb.CardDeleteRequest) 
 func (h *CardServer) CardAddMetadata(ctx context.Context, req *pb.CardAddMetadataRequest) (
 	*pb.CardAddMetadataResponse, error) {
 	log.Info("CardAddMetadata", request, req)
-	userID, err := h.validateUserID(ctx)
+	userID, err := validateUserID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -111,16 +109,4 @@ func (h *CardServer) CardAddMetadata(ctx context.Context, req *pb.CardAddMetadat
 	}
 
 	return &pb.CardAddMetadataResponse{Success: true}, nil
-}
-
-// validateUserID проверяет корректность ID пользователя из контекста
-func (h *CardServer) validateUserID(ctx context.Context) (int, error) {
-	userID, ok := ctx.Value(auth.CtxKeyUserGrpc).(int)
-	if !ok {
-		return 0, status.Errorf(codes.Unauthenticated, models.UserIDNotFound)
-	}
-	if userID <= 0 {
-		return 0, status.Errorf(codes.InvalidArgument, "invalid user ID")
-	}
-	return userID, nil
 }

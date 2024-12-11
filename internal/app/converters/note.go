@@ -5,7 +5,7 @@ import (
 	pb "github.com/FischukSergey/gophkeeper/internal/proto"
 )
 
-// ToModelNote преобразует структуру pb.Note в модель Note
+// ToModelNote преобразует структуру pb.Note в модель Note.
 func ToModelNote(protoNote *pb.Note, userID int64, metadata []models.Metadata) models.Note {
 	return models.Note{
 		UserID:   userID,
@@ -14,7 +14,7 @@ func ToModelNote(protoNote *pb.Note, userID int64, metadata []models.Metadata) m
 	}
 }
 
-// ToProtoNote преобразует модель Note в структуру pb.Note
+// ToProtoNote преобразует модель Note в структуру pb.Note.
 func ToProtoNote(note models.Note, metadataPb []*pb.Metadata) *pb.Note {
 	return &pb.Note{
 		NoteID:   note.NoteID,
