@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: cr.selcloud.ru
-  APP_IMAGE_NAME: gophkeeper-app
+  APP_IMAGE_NAME: gophkeeper
   DB_IMAGE_NAME: gophkeeper-db
 
 jobs:
