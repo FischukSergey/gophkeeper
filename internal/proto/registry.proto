@@ -10,15 +10,23 @@ service GophKeeper {
     rpc Registration(RegistrationRequest) returns (RegistrationResponse) {}
     rpc Authorization(AuthorizationRequest) returns (AuthorizationResponse) {}
 
-    rpc FileUpload(FileUploadRequest) returns (FileUploadResponse) {}
-    rpc FileDownload(FileDownloadRequest) returns (FileDownloadResponse) {}
+    rpc FileUpload(stream FileUploadRequest) returns (FileUploadResponse) {}
+    rpc FileDownload(FileDownloadRequest) returns (stream FileDownloadResponse) {}
     rpc FileDelete(FileDeleteRequest) returns (FileDeleteResponse) {}   
     rpc FileGetList(FileGetListRequest) returns (FileGetListResponse) {}
-
+}
+service NoteService {
     rpc NoteAdd(NoteAddRequest) returns (NoteAddResponse) {}
     rpc NoteGetList(NoteGetListRequest) returns (NoteGetListResponse) {}
     rpc NoteUpdate(NoteUpdateRequest) returns (NoteUpdateResponse) {}
     rpc NoteDelete(NoteDeleteRequest) returns (NoteDeleteResponse) {}
+}
+
+service CardService {
+    rpc CardAdd(CardAddRequest) returns (CardAddResponse) {}
+    rpc CardGetList(CardGetListRequest) returns (CardGetListResponse) {}
+    rpc CardDelete(CardDeleteRequest) returns (CardDeleteResponse) {}
+    rpc CardAddMetadata(CardAddMetadataRequest) returns (CardAddMetadataResponse) {}
 }
 
 // Ping
@@ -64,17 +72,25 @@ message AuthorizationResponse {
 
 // File структура данных о пользовательском файле
 message File {
-    int64 fileID = 1;
+    string fileID = 1;
     string userID = 2;
     string filename = 3;
-    google.protobuf.Timestamp createdAt = 4;
-    google.protobuf.Timestamp deletedAt = 5;
+    int64 size = 4;
+    google.protobuf.Timestamp createdAt = 5;
+    google.protobuf.Timestamp deletedAt = 6;
 }
 
+// FileInfo структура информации о файле
+message FileInfo {
+    string filename = 1;
+    int64 size = 2;
+}
 // FileUpload
 message FileUploadRequest {
-    string filename = 1;
-    bytes data = 2;
+    oneof file {
+        FileInfo info = 1;
+        bytes chunk = 2;
+    }
 }
 message FileUploadResponse {
     string message = 1;
@@ -85,8 +101,7 @@ message FileDownloadRequest {
     string filename = 1;
 }
 message FileDownloadResponse {
-    string filename = 1;
-    bytes data = 2;
+    bytes chunk = 1;
 }
 
 // FileDelete
@@ -105,10 +120,10 @@ message FileGetListResponse {
 
 // Note структура заметки
 message Note {
-    int64 nodeID = 1;
-    int64 userID = 2;
-    bytes data = 3;
-    string metadata = 4;
+    int64 noteID = 1;
+    string userID = 2;
+    string noteText = 3;
+    repeated Metadata metadata = 4;
     google.protobuf.Timestamp createdAt = 5;
     google.protobuf.Timestamp updatedAt = 6;
     google.protobuf.Timestamp deletedAt = 7;
@@ -116,11 +131,10 @@ message Note {
 
 // NoteAdd
 message NoteAddRequest {
-    bytes data = 1;
-    string metadata = 2;
+    Note note = 1;
 }
 message NoteAddResponse {
-    int64 noteID = 1;
+    bool success = 1;
 }
 
 // NoteGetList
@@ -131,12 +145,10 @@ message NoteGetListResponse {
 
 // NoteUpdate
 message NoteUpdateRequest {
-    int64 noteID = 1;
-    bytes data = 2;
-    string metadata = 3;
+    Note note = 1;
 }
 message NoteUpdateResponse {
-    int64 noteID = 1;
+    bool success = 1;
 }
 
 // NoteDelete
@@ -144,5 +156,51 @@ message NoteDeleteRequest {
     int64 noteID = 1;
 }
 message NoteDeleteResponse {
-    int64 noteID = 1;
+    bool success = 1;
+}
+
+// Card структура карты
+message Card {
+    string cardNumber = 1;
+    string cardHolder = 2;
+    google.protobuf.Timestamp cardExpirationDate = 3;
+    string cardCVV = 4;
+    string cardBank = 5;
+    string metadata = 6;
+    int64 cardID = 7;
+}
+
+// CardAdd
+message CardAddRequest {
+    Card card = 1;
+}
+message CardAddResponse {
+    int64 cardID = 1;
+}
+
+// CardGetList
+message CardGetListRequest {}
+message CardGetListResponse {
+    repeated Card cards = 1;
+}
+
+// CardDelete
+message CardDeleteRequest {
+    int64 cardID = 1;
+}
+message CardDeleteResponse {
+    bool success = 1;
+}
+
+message Metadata {
+    string key = 1;
+    string value = 2;
+}
+// CardAddMetadata
+message CardAddMetadataRequest {
+    int64 cardID = 1;
+    repeated Metadata metadata = 2;
+}
+message CardAddMetadataResponse {
+    bool success = 1;
 }

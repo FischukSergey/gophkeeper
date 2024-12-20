@@ -2,6 +2,16 @@
 .idea/
 # Ignore VSCode settings
 .vscode/
+# Ignore bin directory
+cmd/client/bin/
 # Ignore executable files
 *.exe
 *.exe~
+*.log
+*.pdf
+#ignore golangci-lint cache
+golangci-lint/
+# Ignore environment variables
+.env
+*.env
+cmd/server/initial/GophKeeper.code-workspace

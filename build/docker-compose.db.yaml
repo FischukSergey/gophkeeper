@@ -1,0 +1,47 @@
+services:
+  app:
+    env_file:
+      - .env
+    image: ${REGISTRY}/${SELECTEL_PROJECT_ID}/${APP_IMAGE_NAME}:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - gophkeeper-network
+    
+
+  db:
+    env_file:
+     - .env
+    image: ${REGISTRY}/${SELECTEL_PROJECT_ID}/${DB_IMAGE_NAME}:latest
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - gophkeeper-network
+
+migrations:
+  image: ${REGISTRY}/${SELECTEL_PROJECT_ID}/${DB_IMAGE_NAME}:latest
+  command: ["migrate", "-path", "/migrations", "-database",  "postgres://postgres:postgres@db:5432/gophkeeper?sslmode=disable", "up"]
+  depends_on:
+    - db
+  networks:
+    - gophkeeper-network
+
+volumes:
+  postgres_data:
+networks:
+  gophkeeper-network:
+    driver: bridge

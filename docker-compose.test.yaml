@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:alpine
+    networks:
+      gophkeeper:
+        aliases:
+          - database
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    ports:
+      - "5433:5432"
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate
+    networks:
+      gophkeeper:
+        aliases:
+          - migrate
+    volumes:
+      - ./migrations:/migrations
+    command:
+      - "-path"
+      - "/migrations"
+      - "-database"
+      - "postgres://test:test@db:5432/test?sslmode=disable"
+      - "up"
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  gophkeeper:
