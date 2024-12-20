@@ -1,17 +1,15 @@
 FROM postgres:16-alpine
 
-# Аргументы для настройки базы данных (можно переопределить при сборке)
+# Аргументы для настройки базы данных (не чувствительные данные)
 ARG POSTGRES_DB=gophkeeper
 ARG POSTGRES_USER=postgres
-ARG POSTGRES_PASSWORD=postgres
 
-# Установка переменных окружения
-ENV POSTGRES_DB=$POSTGRES_DB
-ENV POSTGRES_USER=$POSTGRES_USER
-ENV POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+# Установка переменных окружения (пароль будет передан при запуске)
+ENV POSTGRES_DB=$POSTGRES_DB \
+    POSTGRES_USER=$POSTGRES_USER
 
-# Копирование всех SQL миграций
-COPY migration/*.sql /docker-entrypoint-initdb.d/
+# Копирование всех SQL миграций из корректного пути
+COPY ./migration/*.sql /docker-entrypoint-initdb.d/
 
 # Настройка прав доступа к директории с данными
 RUN chmod 0700 /var/lib/postgresql/data
