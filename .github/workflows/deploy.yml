@@ -59,7 +59,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./build/docker-compose.db.yaml
+          file: ./build/db/db.Dockerfile
           push: true
           platforms: linux/amd64
           tags: cr.selcloud.ru/gophkeeper/db:latest

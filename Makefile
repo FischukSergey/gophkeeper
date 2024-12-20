@@ -55,3 +55,8 @@ build-client:
 	@echo "Building client"
 	./build.sh
 .PHONY: build-client
+
+build-db-image:
+	@echo "Building db image"
+	docker compose -f docker-compose.yaml up --force-recreate -d
+.PHONY: build-db-image
