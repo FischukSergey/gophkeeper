@@ -51,9 +51,9 @@ jobs:
           file: ./build/app.Dockerfile
           push: true
           platforms: linux/amd64
-          tags: |
-            ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:${{ github.sha }}
+          tags: cr.selcloud.ru/gophkeeper/app:latest
+            #${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:latest
+            #${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:${{ github.sha }}
 
       - name: Build and push DB image
         uses: docker/build-push-action@v5
@@ -62,9 +62,9 @@ jobs:
           file: ./build/docker-compose.db.yaml
           push: true
           platforms: linux/amd64
-          tags: |
-            ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:${{ github.sha }}
+          tags: cr.selcloud.ru/gophkeeper/db:latest
+            #${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:latest
+            #${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:${{ github.sha }}
 
   deploy:
     needs: build-and-push
