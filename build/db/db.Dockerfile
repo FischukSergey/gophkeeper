@@ -9,7 +9,7 @@ ENV POSTGRES_DB=$POSTGRES_DB \
     POSTGRES_USER=$POSTGRES_USER
 
 # Копирование всех SQL миграций из корректного пути
-COPY ./migration/*.sql /docker-entrypoint-initdb.d/
+COPY ./migrations/*.sql /docker-entrypoint-initdb.d/
 
 # Настройка прав доступа к директории с данными
 RUN chmod 0700 /var/lib/postgresql/data
