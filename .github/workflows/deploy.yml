@@ -47,7 +47,7 @@ jobs:
       - name: Build and push App image
         uses: docker/build-push-action@v5
         with:
-          context: ./build/app
+          context: .
           file: ./build/app.Dockerfile
           push: true
           platforms: linux/amd64
@@ -58,7 +58,7 @@ jobs:
       - name: Build and push DB image
         uses: docker/build-push-action@v5
         with:
-          context: ./build/db
+          context: .
           file: ./build/docker-compose.db.yaml
           push: true
           platforms: linux/amd64
