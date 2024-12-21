@@ -7,8 +7,8 @@ on:
 
 env:
   REGISTRY: cr.selcloud.ru
-  APP_IMAGE_NAME: gophkeeper
-  DB_IMAGE_NAME: gophkeeper-db
+  APP_IMAGE_NAME: gophkeeper/app
+  DB_IMAGE_NAME: gophkeeper/db
 
 jobs:
   test:
@@ -51,9 +51,8 @@ jobs:
           file: ./build/app.Dockerfile
           push: true
           platforms: linux/amd64
-          tags: cr.selcloud.ru/gophkeeper/app:latest
-            #${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:latest
-            #${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:${{ github.sha }}
+          tags: ${REGISTRY}/${APP_IMAGE_NAME}:latest
+            #${REGISTRY}/${APP_IMAGE_NAME}:${{ github.sha }}
 
       - name: Build and push DB image
         uses: docker/build-push-action@v5
@@ -62,9 +61,8 @@ jobs:
           file: ./build/db/db.Dockerfile
           push: true
           platforms: linux/amd64
-          tags: cr.selcloud.ru/gophkeeper/db:latest
-            #${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:latest
-            #${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:${{ github.sha }}
+          tags: ${REGISTRY}/${DB_IMAGE_NAME}:latest
+            #${REGISTRY}/${DB_IMAGE_NAME}:${{ github.sha }}
 
   deploy:
     needs: build-and-push
@@ -89,8 +87,8 @@ jobs:
           key: ${{ secrets.SELECTEL_SSH_KEY }}
           script: |
             cd /root/app
-            docker login ${{ env.REGISTRY }} -u ${{ secrets.SELECTEL_USERNAME }} -p ${{ secrets.SELECTEL_PASSWORD }}
-            docker pull ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.APP_IMAGE_NAME }}:latest
-            docker pull ${{ env.REGISTRY }}/${{ secrets.SELECTEL_PROJECT_ID }}/${{ env.DB_IMAGE_NAME }}:latest
+            docker login ${{ env.REGISTRY }} -u ${{ secrets.SELECTEL_TOKEN_NAME }} -p ${{ secrets.SELECTEL_TOKEN }}
+            docker pull ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest
+            docker pull ${{ env.REGISTRY }}/${{ env.DB_IMAGE_NAME }}:latest
             docker-compose -f docker-compose.prod.yaml down
             docker-compose -f docker-compose.prod.yaml up -d
