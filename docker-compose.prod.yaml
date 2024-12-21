@@ -1,6 +1,6 @@
 services:
   app:
-    image: cr.selcloud.ru/${PROJECT_ID}/gophkeeper-app:latest
+    image: ${REGISTRY}/${APP_IMAGE_NAME}:latest
     container_name: gophkeeper_app
     ports:
       - "${APP_PORT}:8080"  # внешний порт берем из .env
@@ -18,7 +18,7 @@ services:
       - gophkeeper_network
 
   db:
-    image: cr.selcloud.ru/${PROJECT_ID}/gophkeeper-db:latest
+    image: ${REGISTRY}/${DB_IMAGE_NAME}:latest
     container_name: gophkeeper_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
