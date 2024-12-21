@@ -51,7 +51,7 @@ jobs:
           file: ./build/app.Dockerfile
           push: true
           platforms: linux/amd64
-          tags: ${REGISTRY}/${APP_IMAGE_NAME}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest
             #${REGISTRY}/${APP_IMAGE_NAME}:${{ github.sha }}
 
       - name: Build and push DB image
@@ -61,7 +61,7 @@ jobs:
           file: ./build/db/db.Dockerfile
           push: true
           platforms: linux/amd64
-          tags: ${REGISTRY}/${DB_IMAGE_NAME}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.DB_IMAGE_NAME }}:latest
             #${REGISTRY}/${DB_IMAGE_NAME}:${{ github.sha }}
 
   deploy:
