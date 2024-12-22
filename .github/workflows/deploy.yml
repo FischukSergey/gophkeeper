@@ -78,7 +78,6 @@ jobs:
           key: ${{ secrets.SELECTEL_SSH_KEY }}
           source: |
             docker-compose.prod.yaml
-            .env
             config/config.yaml
           strip_components: 0
           target: "/root/app"
