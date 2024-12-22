@@ -76,7 +76,7 @@ jobs:
           host: ${{ secrets.SELECTEL_HOST }}
           username: ${{ secrets.SELECTEL_SSH_USER }}
           key: ${{ secrets.SELECTEL_SSH_KEY }}
-          source: "docker-compose.prod.yaml,.env"
+          source: "docker-compose.prod.yaml,.env,config/config.yaml"
           target: "/root/app"
 
       - name: Deploy to Selectel Cloud
@@ -91,4 +91,4 @@ jobs:
             docker pull ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest
             docker pull ${{ env.REGISTRY }}/${{ env.DB_IMAGE_NAME }}:latest
             docker-compose -f docker-compose.prod.yaml down
-            docker-compose -f docker-compose.prod.yaml up -d
+            docker-compose -f docker-compose.prod.yaml up --force-recreate -d
