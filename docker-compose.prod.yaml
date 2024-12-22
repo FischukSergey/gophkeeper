@@ -12,7 +12,8 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
-
+    volumes:
+      - ./config/config.yaml:/app/config/config.yaml
     restart: unless-stopped
     networks:
       - gophkeeper_network

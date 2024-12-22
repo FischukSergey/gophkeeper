@@ -1,6 +1,6 @@
 envConfigPath:=CONFIG_PATH=./config/local.yml
 envDBPassword:=DB_PASSWORD=postgres	
-envServerClientAddress:=SERVER_CLIENT_ADDRESS=localhost:8080
+envServerClientAddress:=SERVER_CLIENT_ADDRESS=87.228.37.67:8080
 envDBTest:=DB_TEST=true
 server:	
 	@echo "Running server"
