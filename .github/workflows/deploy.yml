@@ -76,9 +76,7 @@ jobs:
           host: ${{ secrets.SELECTEL_HOST }}
           username: ${{ secrets.SELECTEL_SSH_USER }}
           key: ${{ secrets.SELECTEL_SSH_KEY }}
-          source: |
-            ./docker-compose.prod.yaml
-            ./config/local.yaml
+          source: "./docker-compose.prod.yaml,./config/local.yml"
           #strip_components: 0
           target: "/root/app"
 
