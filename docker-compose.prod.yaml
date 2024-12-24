@@ -17,6 +17,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    stop_grace_period: 1m  # Даем время на корректное завершение
     networks:
       - gophkeeper_network
   

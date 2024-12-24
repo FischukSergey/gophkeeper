@@ -91,5 +91,8 @@ jobs:
             docker login ${{ env.REGISTRY }} -u ${{ secrets.SELECTEL_TOKEN_NAME }} -p ${{ secrets.SELECTEL_TOKEN }}
             docker pull ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest
             docker pull ${{ env.REGISTRY }}/${{ env.DB_IMAGE_NAME }}:latest
-            docker-compose -f docker-compose.prod.yaml down
+            # Graceful shutdown
+            docker-compose -f docker-compose.prod.yaml down --timeout 60
+            # Clear any remaining volumes if needed
+            docker volume rm gophkeeper_postgres_data || true
             docker-compose -f docker-compose.prod.yaml up --force-recreate -d
