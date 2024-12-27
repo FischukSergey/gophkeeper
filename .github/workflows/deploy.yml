@@ -94,5 +94,5 @@ jobs:
             # Graceful shutdown
             docker-compose -f docker-compose.prod.yaml down --timeout 60
             # Clear any remaining volumes if needed
-            docker volume rm gophkeeper_postgres_data || true
+            # docker volume rm gophkeeper_postgres_data || true
             docker-compose -f docker-compose.prod.yaml up --force-recreate -d

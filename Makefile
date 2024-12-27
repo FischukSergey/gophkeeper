@@ -1,6 +1,7 @@
 envConfigPath:=CONFIG_PATH=./config/local.yml
 envDBPassword:=DB_PASSWORD=postgres	
 envServerClientAddress:=SERVER_CLIENT_ADDRESS=87.228.37.67:8080
+envServerClientAddressLocal:=SERVER_CLIENT_ADDRESS=localhost:8080
 envDBTest:=DB_TEST=true
 server:	
 	@echo "Running server"
@@ -24,7 +25,12 @@ migration:
 client:
 	@echo "Running client"
 	$(envServerClientAddress) go run ./cmd/client/
-.PHONY: client	
+.PHONY: client
+
+client-local:
+	@echo "Running client"
+	$(envServerClientAddressLocal) go run ./cmd/client/
+.PHONY: client-local
 
 lint:
 	@echo "Running lint"

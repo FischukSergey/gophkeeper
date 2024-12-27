@@ -28,12 +28,15 @@ const (
 
 // глобальные переменные для хранения флагов и конфигурации.
 var (
-	FlagConfigPath string         // путь к файлу конфигурации
-	FlagDBPassword string         // пароль для подключения к базе данных
-	FlagDBHost     string         // хост для подключения к базе данных
-	FlagDBPort     string         // порт для подключения к базе данных
-	FlagDBTest     bool           // флаг для тестовой базы данных
-	Cfg            *config.Config // конфигурация
+	FlagConfigPath  string         // путь к файлу конфигурации
+	FlagDBPassword  string         // пароль для подключения к базе данных
+	FlagDBHost      string         // хост для подключения к базе данных
+	FlagDBPort      string         // порт для подключения к базе данных
+	FlagDBTest      bool           // флаг для тестовой базы данных
+	FlagS3SecretKey string         // секретный ключ для доступа к S3
+	FlagS3AccessKey string         // ключ для доступа к S3
+	FlagS3Bucket    string         // бакет для доступа к S3
+	Cfg             *config.Config // конфигурация
 )
 
 // InitConfig функция для инициализации конфигурации.
@@ -43,12 +46,21 @@ func InitConfig() {
 	flag.StringVar(&FlagDBHost, "db_host", "", "database host")
 	flag.StringVar(&FlagDBPort, "db_port", "", "database port")
 	flag.BoolVar(&FlagDBTest, "db_test", false, "use test database")
+	flag.StringVar(&FlagS3SecretKey, "s3_secret_key", "", "s3 secret key")
+	flag.StringVar(&FlagS3AccessKey, "s3_access_key", "", "s3 access key")
+	flag.StringVar(&FlagS3Bucket, "s3_bucket", "", "s3 bucket")
 	flag.Parse()
 
+
+	//получаем путь к файлу конфигурации
 	if envConfigPath := os.Getenv("CONFIG_PATH"); envConfigPath != "" {
 		FlagConfigPath = envConfigPath
 	}
 
+	//загружаем конфигурацию
+	Cfg = config.MustLoad(FlagConfigPath) // загрузка конфигурации	.yaml
+
+	//получаем оставшиеся параметры из переменных окружения
 	if envDBPassword := os.Getenv("DB_PASSWORD"); envDBPassword != "" {
 		FlagDBPassword = envDBPassword
 	}
@@ -62,7 +74,19 @@ func InitConfig() {
 		FlagDBPort = envDBPort
 	}
 
-	Cfg = config.MustLoad(FlagConfigPath) // загрузка конфигурации	.yaml
+	if envS3SecretKey := os.Getenv("S3_SECRET_KEY"); envS3SecretKey != "" {
+		FlagS3SecretKey = envS3SecretKey
+	}
+	if envS3AccessKey := os.Getenv("S3_ACCESS_KEY"); envS3AccessKey != "" {
+		FlagS3AccessKey = envS3AccessKey
+	} else if FlagS3AccessKey == "" {
+		FlagS3AccessKey = Cfg.S3.AccessKey
+	}
+	if envS3Bucket := os.Getenv("S3_BUCKET"); envS3Bucket != "" {
+		FlagS3Bucket = envS3Bucket
+	} else if FlagS3Bucket == "" {
+		FlagS3Bucket = Cfg.S3.Bucket
+	}
 }
 
 // InitStorage функция для инициализации подключения к базе данных.
@@ -121,8 +145,8 @@ func InitS3() (*s3.S3Storage, error) {
 		Region:   aws.String(Cfg.S3.Region),
 		Endpoint: aws.String(Cfg.S3.Endpoint),
 		Credentials: credentials.NewStaticCredentials(
-			Cfg.S3.AccessKey,
-			Cfg.S3.SecretKey,
+			FlagS3AccessKey,
+			FlagS3SecretKey,
 			"",
 		),
 		S3ForcePathStyle: aws.Bool(Cfg.S3.ForcePathStyle),
@@ -132,7 +156,7 @@ func InitS3() (*s3.S3Storage, error) {
 	}
 
 	//проверка на наличие бакета
-	bucket := Cfg.S3.Bucket
+	bucket := FlagS3Bucket
 	svc := s3bucket.New(session)
 
 	// Проверяем существование бакета
