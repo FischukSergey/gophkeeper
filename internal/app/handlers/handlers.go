@@ -10,7 +10,7 @@ import (
 	"github.com/FischukSergey/gophkeeper/internal/app/converters"
 	"github.com/FischukSergey/gophkeeper/internal/logger"
 	"github.com/FischukSergey/gophkeeper/internal/models"
-	pb "github.com/FischukSergey/gophkeeper/internal/proto"
+	pb "github.com/FischukSergey/protos/gen/gophkeeper/gophkeeper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

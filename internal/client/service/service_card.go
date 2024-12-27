@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/FischukSergey/gophkeeper/internal/models"
-	pb "github.com/FischukSergey/gophkeeper/internal/proto"
+	pb "github.com/FischukSergey/protos/gen/gophkeeper/gophkeeper"
 	"google.golang.org/grpc/metadata"
 )
 

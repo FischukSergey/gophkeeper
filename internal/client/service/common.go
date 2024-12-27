@@ -7,7 +7,7 @@ import (
 
 	"github.com/FischukSergey/gophkeeper/internal/lib/luhn"
 	"github.com/FischukSergey/gophkeeper/internal/models"
-	pb "github.com/FischukSergey/gophkeeper/internal/proto"
+	pb "github.com/FischukSergey/protos/gen/gophkeeper/gophkeeper"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

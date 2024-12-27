@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/config"
-	pb "github.com/FischukSergey/gophkeeper/internal/proto"
+	pb "github.com/FischukSergey/protos/gen/gophkeeper/gophkeeper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

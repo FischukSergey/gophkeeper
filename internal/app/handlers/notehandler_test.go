@@ -12,7 +12,7 @@ import (
 	"github.com/FischukSergey/gophkeeper/internal/app/handlers/mock"
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
 	"github.com/FischukSergey/gophkeeper/internal/models"
-	pb "github.com/FischukSergey/gophkeeper/internal/proto"
+	pb "github.com/FischukSergey/protos/gen/gophkeeper/gophkeeper"
 )
 
 func TestProtoNoteService_NoteAdd(t *testing.T) {
