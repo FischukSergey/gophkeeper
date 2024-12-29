@@ -9,9 +9,7 @@ env:
   REGISTRY: cr.selcloud.ru
   APP_IMAGE_NAME: gophkeeper/app
   DB_IMAGE_NAME: gophkeeper/db
-  DB_USER: postgres
-  DB_PASSWORD: postgres
-  DB_PORT: 5432
+
 
 jobs:
   # test:
@@ -90,17 +88,16 @@ jobs:
           username: ${{ secrets.SELECTEL_SSH_USER }}
           key: ${{ secrets.SELECTEL_SSH_KEY }}
           script: |
-            cd /root/app
-            # Установка golang-migrate если еще не установлен
-            if ! command -v migrate &> /dev/null; then
-              curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
-              mv migrate /usr/local/bin/migrate
-              chmod +x /usr/local/bin/migrate
-            fi
             
             docker login ${{ env.REGISTRY }} -u ${{ secrets.SELECTEL_TOKEN_NAME }} -p ${{ secrets.SELECTEL_TOKEN }}
             docker pull ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest
             docker pull ${{ env.REGISTRY }}/${{ env.DB_IMAGE_NAME }}:latest
+
+            cd /root/app
+            # Загрузка переменных окружения
+            set -a
+            source .env
+            set +a
             
             # Graceful shutdown
             docker-compose -f docker-compose.prod.yaml down --timeout 60
