@@ -70,14 +70,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Copy docker-compose file to server
+      - name: Copy files to server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SELECTEL_HOST }}
           username: ${{ secrets.SELECTEL_SSH_USER }}
           key: ${{ secrets.SELECTEL_SSH_KEY }}
-          source: "./docker-compose.prod.yaml,./config/local.yml"
-          #strip_components: 0
+          source: "docker-compose.prod.yaml,config/local.yml,migrations"
+          strip_components: 0
           target: "/root/app"
 
       - name: Deploy to Selectel Cloud
