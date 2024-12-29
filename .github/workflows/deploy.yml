@@ -99,9 +99,15 @@ jobs:
             source .env
             set +a
             
-            # Graceful shutdown
+            # Graceful shutdown с таймаутом 60 секунд
             docker-compose -f docker-compose.prod.yaml down --timeout 60
-            docker volume rm gophkeeper_postgres_data || true
+            
+            # Удаление всех остановленных контейнеров
+            docker container prune -f
+            
+            # Удаление volume если он существует
+            #docker volume rm gophkeeper_postgres_data || true
+
             # Запуск только базы данных
             docker-compose -f docker-compose.prod.yaml up -d db
             
