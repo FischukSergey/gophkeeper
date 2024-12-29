@@ -88,11 +88,29 @@ jobs:
           key: ${{ secrets.SELECTEL_SSH_KEY }}
           script: |
             cd /root/app
+            # Установка golang-migrate если еще не установлен
+            if ! command -v migrate &> /dev/null; then
+              curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
+              mv migrate /usr/local/bin/migrate
+              chmod +x /usr/local/bin/migrate
+            fi
+            
             docker login ${{ env.REGISTRY }} -u ${{ secrets.SELECTEL_TOKEN_NAME }} -p ${{ secrets.SELECTEL_TOKEN }}
             docker pull ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest
             docker pull ${{ env.REGISTRY }}/${{ env.DB_IMAGE_NAME }}:latest
+            
             # Graceful shutdown
             docker-compose -f docker-compose.prod.yaml down --timeout 60
-            # Clear any remaining volumes if needed
-            # docker volume rm gophkeeper_postgres_data || true
-            docker-compose -f docker-compose.prod.yaml up --force-recreate -d
+            
+            # Запуск только базы данных
+            docker-compose -f docker-compose.prod.yaml up -d db
+            
+            # Ждем готовности базы данных
+            echo "Waiting for database to be ready..."
+            sleep 10
+            
+            # Выполнение миграций
+            migrate -path ./migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/gophkeeper?sslmode=disable" up
+            
+            # Запуск остальных сервисов
+            docker-compose -f docker-compose.prod.yaml up -d
