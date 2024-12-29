@@ -101,7 +101,7 @@ jobs:
             
             # Graceful shutdown
             docker-compose -f docker-compose.prod.yaml down --timeout 60
-            
+            docker volume rm gophkeeper_postgres_data || true
             # Запуск только базы данных
             docker-compose -f docker-compose.prod.yaml up -d db
             
