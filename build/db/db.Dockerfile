@@ -20,4 +20,5 @@ EXPOSE 5432
 # Точка монтирования для данных
 VOLUME ["/var/lib/postgresql/data"]
 
-COPY build/db/init.sql /docker-entrypoint-initdb.d/
+COPY build/db/init-db.sh /docker-entrypoint-initdb.d/
+RUN chmod +x /docker-entrypoint-initdb.d/init-db.sh

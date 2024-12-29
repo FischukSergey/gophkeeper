@@ -12,7 +12,7 @@ services:
     ports:
       - "${DB_PORT}:5432"  # опционально, для доступа к БД извне
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d gophkeeper"]
       interval: 5s
       timeout: 5s
       retries: 5
