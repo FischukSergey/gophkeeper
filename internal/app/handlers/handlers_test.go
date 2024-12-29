@@ -99,7 +99,7 @@ func Test_pwdKeeperServer_Registration(t *testing.T) {
 			},
 			mock: func() {
 				mockService.EXPECT().
-					RegisterUser(gomock.Any(), "testuser", "testpass123").
+					RegisterUser(gomock.Any(), models.User{Login: "testuser", Password: "testpass123"}).
 					Return(models.Token{CreatedAt: time.Unix(0, 0), ExpiredAt: time.Unix(0, 0)}, nil)
 			},
 		},
@@ -234,7 +234,7 @@ func Test_PwdKeeperServer_Authorization(t *testing.T) {
 			},
 			mock: func() {
 				mockService.EXPECT().
-					Authorization(gomock.Any(), "testuser", "testpass123").
+					Authorization(gomock.Any(), models.User{Login: "testuser", Password: "testpass123"}).
 					Return(models.Token{CreatedAt: time.Unix(0, 0), ExpiredAt: time.Unix(0, 0)}, nil)
 			},
 		},

@@ -38,13 +38,13 @@ func (m *MockDBKeeper) GetPingDB(ctx context.Context) error {
 	return args.Error(0)
 }
 
-func (m *MockDBKeeper) RegisterUser(ctx context.Context, login, password string) (int64, error) {
-	args := m.Called(ctx, login, password)
+func (m *MockDBKeeper) RegisterUser(ctx context.Context, user models.User) (int64, error) {
+	args := m.Called(ctx, user)
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (m *MockDBKeeper) GetUserByLogin(ctx context.Context, login string) (models.User, error) {
-	args := m.Called(ctx, login)
+func (m *MockDBKeeper) GetUserByLogin(ctx context.Context, user *models.User) (models.User, error) {
+	args := m.Called(ctx, user)
 	return args.Get(0).(models.User), args.Error(1)
 }
 
@@ -183,9 +183,9 @@ func TestRegisterUser(t *testing.T) {
 			service := NewGRPCService(logger, mockStorage, mockS3)
 			ctx := context.Background()
 
-			mockStorage.On("RegisterUser", ctx, tt.login, mock.AnythingOfType("string")).Return(tt.userID, tt.dbError)
+			mockStorage.On("RegisterUser", ctx, mock.AnythingOfType("models.User")).Return(tt.userID, tt.dbError)
 
-			token, err := service.RegisterUser(ctx, tt.login, tt.password)
+			token, err := service.RegisterUser(ctx, models.User{Login: tt.login, Password: tt.password})
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -230,7 +230,7 @@ func TestAuthorization(t *testing.T) {
 			name:       "invalid password",
 			login:      "testuser",
 			password:   "wrongpass",
-			storedPass: "correctpass",
+			storedPass: "testpass",
 			userID:     1,
 			dbError:    nil,
 			wantErr:    true,
@@ -245,16 +245,23 @@ func TestAuthorization(t *testing.T) {
 			service := NewGRPCService(logger, mockStorage, mockS3)
 			ctx := context.Background()
 
-			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(tt.storedPass), bcrypt.DefaultCost)
+			// Хешируем пароль, который "хранится" в базе
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(tt.storedPass), bcrypt.DefaultCost)
+			assert.NoError(t, err)
+
 			user := models.User{
 				ID:             tt.userID,
 				Login:          tt.login,
+				Password:       tt.password,
 				HashedPassword: string(hashedPassword),
+				ApplicationName: "",
 			}
 
-			mockStorage.On("GetUserByLogin", ctx, tt.login).Return(user, tt.dbError)
+			mockStorage.On("GetUserByLogin", ctx, mock.MatchedBy(func(u *models.User) bool {
+				return u.Login == tt.login && u.ApplicationName == ""
+			})).Return(user, tt.dbError)
 
-			token, err := service.Authorization(ctx, tt.login, tt.password)
+			token, err := service.Authorization(ctx, models.User{Login: tt.login, Password: tt.password})
 
 			if tt.wantErr {
 				assert.Error(t, err)

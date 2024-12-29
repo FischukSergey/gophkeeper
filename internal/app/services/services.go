@@ -18,8 +18,8 @@ import (
 // DBKeeper интерфейс для сервиса парольного хранилища.
 type DBKeeper interface {
 	GetPingDB(ctx context.Context) error
-	RegisterUser(ctx context.Context, login, password string) (int64, error)
-	GetUserByLogin(ctx context.Context, login string) (models.User, error)
+	RegisterUser(ctx context.Context, user models.User) (int64, error)
+	GetUserByLogin(ctx context.Context, user *models.User) (models.User, error)
 }
 
 // S3Keeper интерфейс для сервиса S3.
@@ -71,25 +71,24 @@ func (g *GRPCService) Ping(ctx context.Context) error {
 }
 
 // RegisterUser метод для регистрации пользователя.
-func (g *GRPCService) RegisterUser(ctx context.Context, login, password string) (models.Token, error) {
+func (g *GRPCService) RegisterUser(ctx context.Context, user models.User) (models.Token, error) {
 	g.log.Info("Service RegisterUser method called")
 
 	// хешируем пароль
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return models.Token{}, fmt.Errorf("failed to hash password: %w", err)
 	}
+	user.HashedPassword = string(hashedPassword)
 
 	// регистрируем пользователя
-	userID, err := g.storage.RegisterUser(ctx, login, string(hashedPassword))
+	userID, err := g.storage.RegisterUser(ctx, user)
 	if err != nil {
 		return models.Token{}, fmt.Errorf("failed to register user: %w", err)
 	}
 
-	user := models.User{
-		ID:    userID,
-		Login: login,
-	}
+	user.ID = userID
+
 	// генерируем токен
 	token, err := g.GenerateToken(ctx, user)
 	if err != nil {
@@ -99,17 +98,17 @@ func (g *GRPCService) RegisterUser(ctx context.Context, login, password string) 
 }
 
 // Authorization метод для авторизации пользователя.
-func (g *GRPCService) Authorization(ctx context.Context, login, password string) (models.Token, error) {
+func (g *GRPCService) Authorization(ctx context.Context, user models.User) (models.Token, error) {
 	g.log.Info("Service Authorization method called")
 
 	// получаем пользователя из базы данных по логину
-	user, err := g.storage.GetUserByLogin(ctx, login)
+	user, err := g.storage.GetUserByLogin(ctx, &user)
 	if err != nil {
-		return models.Token{}, fmt.Errorf("failed to get user by login: %w", err)
+		return models.Token{}, fmt.Errorf("not authorized: %w", err)
 	}
 
 	// проверяем пароль
-	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(user.Password))
 	if err != nil {
 		return models.Token{}, fmt.Errorf("invalid password: %w", err)
 	}

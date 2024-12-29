@@ -37,18 +37,18 @@ func (m *MockProtoKeeperSaver) EXPECT() *MockProtoKeeperSaverMockRecorder {
 }
 
 // Authorization mocks base method.
-func (m *MockProtoKeeperSaver) Authorization(ctx context.Context, login, password string) (models.Token, error) {
+func (m *MockProtoKeeperSaver) Authorization(ctx context.Context, user models.User) (models.Token, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Authorization", ctx, login, password)
+	ret := m.ctrl.Call(m, "Authorization", ctx, user)
 	ret0, _ := ret[0].(models.Token)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Authorization indicates an expected call of Authorization.
-func (mr *MockProtoKeeperSaverMockRecorder) Authorization(ctx, login, password interface{}) *gomock.Call {
+func (mr *MockProtoKeeperSaverMockRecorder) Authorization(ctx, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authorization", reflect.TypeOf((*MockProtoKeeperSaver)(nil).Authorization), ctx, login, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Authorization", reflect.TypeOf((*MockProtoKeeperSaver)(nil).Authorization), ctx, user)
 }
 
 // FileDeleteFromS3 mocks base method.
@@ -125,16 +125,16 @@ func (mr *MockProtoKeeperSaverMockRecorder) Ping(ctx interface{}) *gomock.Call {
 }
 
 // RegisterUser mocks base method.
-func (m *MockProtoKeeperSaver) RegisterUser(ctx context.Context, login, password string) (models.Token, error) {
+func (m *MockProtoKeeperSaver) RegisterUser(ctx context.Context, user models.User) (models.Token, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterUser", ctx, login, password)
+	ret := m.ctrl.Call(m, "RegisterUser", ctx, user)
 	ret0, _ := ret[0].(models.Token)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RegisterUser indicates an expected call of RegisterUser.
-func (mr *MockProtoKeeperSaverMockRecorder) RegisterUser(ctx, login, password interface{}) *gomock.Call {
+func (mr *MockProtoKeeperSaverMockRecorder) RegisterUser(ctx, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterUser", reflect.TypeOf((*MockProtoKeeperSaver)(nil).RegisterUser), ctx, login, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterUser", reflect.TypeOf((*MockProtoKeeperSaver)(nil).RegisterUser), ctx, user)
 }

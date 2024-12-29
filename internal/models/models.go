@@ -21,13 +21,15 @@ const (
 
 // User структура для пользователя.
 type User struct {
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	DeletedAt      time.Time
-	Login          string
-	Password       string
-	HashedPassword string
-	ID             int64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       time.Time
+	Login           string
+	Password        string
+	HashedPassword  string
+	ApplicationName string
+	Role            string
+	ID              int64
 }
 
 // Token структура для токена.
@@ -35,6 +37,7 @@ type Token struct {
 	CreatedAt time.Time
 	ExpiredAt time.Time
 	Token     string
+	Role      string
 	UserID    int64
 }
 

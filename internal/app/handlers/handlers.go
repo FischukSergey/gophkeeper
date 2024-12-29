@@ -34,8 +34,8 @@ type PwdKeeperServer struct {
 // ProtoKeeperSaver интерфейс для методов сервера.
 type ProtoKeeperSaver interface {
 	Ping(ctx context.Context) error
-	RegisterUser(ctx context.Context, login, password string) (models.Token, error)
-	Authorization(ctx context.Context, login, password string) (models.Token, error)
+	RegisterUser(ctx context.Context, user models.User) (models.Token, error)
+	Authorization(ctx context.Context, user models.User) (models.Token, error)
 	FileUploadToS3(ctx context.Context, fileData io.Reader, filename string, userID int64) (string, error)
 	FileGetListFromS3(ctx context.Context, userID int64) ([]models.File, error)
 	FileDeleteFromS3(ctx context.Context, userID int64, filename string) error
@@ -65,6 +65,8 @@ func (s *PwdKeeperServer) Registration(
 	log.Info("Handler Registration method called")
 	login := req.GetUsername()
 	password := req.GetPassword()
+	applicationName := req.GetAppName()
+	role := req.GetRole()
 
 	// проводим валидацию данных
 	if login == "" || password == "" {
@@ -72,8 +74,10 @@ func (s *PwdKeeperServer) Registration(
 	}
 	//
 	user := models.User{
-		Login:    login,
-		Password: password,
+		Login:           login,
+		Password:        password,
+		ApplicationName: applicationName,
+		Role:            role,
 	}
 	err := user.Validate()
 	if err != nil {
@@ -81,7 +85,7 @@ func (s *PwdKeeperServer) Registration(
 	}
 
 	// регистрируем пользователя
-	token, err := s.PwdKeeper.RegisterUser(ctx, req.Username, req.Password)
+	token, err := s.PwdKeeper.RegisterUser(ctx, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to register user: %v", err)
 	}
@@ -101,14 +105,16 @@ func (s *PwdKeeperServer) Authorization(
 	log.Info("Handler Authorization method called")
 	login := req.GetUsername()
 	password := req.GetPassword()
+	applicationName := req.GetAppName()
 
 	//проводим валидацию данных
 	if login == "" || password == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "username and password cannot be empty")
 	}
 	user := models.User{
-		Login:    login,
-		Password: password,
+		Login:           login,
+		Password:        password,
+		ApplicationName: applicationName,
 	}
 	err := user.Validate()
 	if err != nil {
@@ -116,7 +122,7 @@ func (s *PwdKeeperServer) Authorization(
 	}
 
 	// авторизуем пользователя
-	token, err := s.PwdKeeper.Authorization(ctx, login, password)
+	token, err := s.PwdKeeper.Authorization(ctx, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to authorize user: %v", err)
 	}

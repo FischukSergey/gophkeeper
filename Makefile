@@ -2,11 +2,12 @@ envConfigPath:=CONFIG_PATH=./config/local.yml
 envDBPassword:=DB_PASSWORD=postgres	
 envServerClientAddress:=SERVER_CLIENT_ADDRESS=87.228.37.67:8080
 envServerClientAddressLocal:=SERVER_CLIENT_ADDRESS=localhost:8080
+envS3SecretKey:=S3_SECRET_KEY=
 envDBTest:=DB_TEST=true
 
 server:	
 	@echo "Running server"
-	$(envConfigPath) $(envDBPassword) go run ./cmd/server/
+	$(envConfigPath) $(envDBPassword) $(envS3SecretKey) go run ./cmd/server/
 .PHONY: server
 
 proto:
@@ -45,7 +46,7 @@ testdb:
 	docker compose -f docker-compose.test.yaml up -d --build
 	@echo "Database is ready"
 	@echo "Run server with test database"
-	$(envDBTest) $(envConfigPath) go run ./cmd/server/
+	$(envDBTest) $(envConfigPath) $(envS3SecretKey) go run ./cmd/server/
 .PHONY: testdb
 
 test-functional:
@@ -63,7 +64,8 @@ build-client:
 	./build.sh
 .PHONY: build-client
 
-build-db-image:
-	@echo "Building db image"
+build-docker-container:
+	@echo "Building db and app image"
+	docker compose down
 	docker compose -f docker-compose.yaml up --force-recreate -d
-.PHONY: build-db-image
+.PHONY: build-docker-container
