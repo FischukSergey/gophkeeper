@@ -9,6 +9,9 @@ env:
   REGISTRY: cr.selcloud.ru
   APP_IMAGE_NAME: gophkeeper/app
   DB_IMAGE_NAME: gophkeeper/db
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  DB_PORT: 5432
 
 jobs:
   # test:
