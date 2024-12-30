@@ -115,6 +115,9 @@ jobs:
             echo "Waiting for database to be ready..."
             sleep 10
             
+            # Создаем базу данных, если она не существует
+            docker-compose -f docker-compose.prod.yaml exec -T db psql -U ${DB_USER} -c "CREATE DATABASE gophkeeper WITH OWNER ${DB_USER};" || true
+
             # Выполнение миграций
             migrate -path ./migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/gophkeeper?sslmode=disable" up
             
