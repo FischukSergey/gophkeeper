@@ -11,6 +11,8 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       #- POSTGRES_DB=${DB_NAME}
       - POSTGRES_DB=gophkeeper
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    user: postgres
     ports:
       - "${DB_PORT}:5432" # опционально, для доступа к БД извне
     healthcheck:
