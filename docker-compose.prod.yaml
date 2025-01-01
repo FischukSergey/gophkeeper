@@ -4,7 +4,8 @@ services:
     image: ${REGISTRY}/${DB_IMAGE_NAME}:latest
     container_name: gophkeeper_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # - postgres_data:/var/lib/postgresql/data
+      - ./volumes/postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -46,9 +47,9 @@ services:
     networks:
       - gophkeeper_network
 
-volumes:
-  postgres_data:
-    name: gophkeeper_postgres_data
+# volumes:
+#   postgres_data:
+#     name: gophkeeper_postgres_data
 
 networks:
   gophkeeper_network:

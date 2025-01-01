@@ -98,6 +98,9 @@ jobs:
             set -a
             source .env
             set +a
+
+            # Создаем директорию для volume
+            mkdir -p volumes/postgres_data
             
             # Graceful shutdown с таймаутом 60 секунд
             docker-compose -f docker-compose.prod.yaml down --timeout 60
