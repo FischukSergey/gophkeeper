@@ -108,9 +108,6 @@ jobs:
             # Удаление всех остановленных контейнеров
             docker container prune -f
             
-            # Удаление volume если он существует
-            #docker volume rm gophkeeper_postgres_data || true
-
             # Запуск только базы данных
             docker-compose -f docker-compose.prod.yaml up -d db
             
@@ -118,14 +115,11 @@ jobs:
             echo "Waiting for database to be ready..."
             sleep 10
 
-            # Проверяем подключение к базе данных
-            until docker-compose -f docker-compose.prod.yaml exec -T db pg_isready -U ${DB_USER}; do
-              echo "Waiting for postgres..."
+            # Проверяем подключение к базе данных и создаем БД если её нет
+            until docker-compose -f docker-compose.prod.yaml exec -T db bash -c "pg_isready -U ${DB_USER} && psql -U ${DB_USER} -lqt | cut -d \| -f 1 | grep -qw gophkeeper || psql -U ${DB_USER} -c 'CREATE DATABASE gophkeeper;'"; do
+              echo "Waiting for postgres and creating database if needed..."
               sleep 2
             done
-            
-            # Создаем базу данных, если она не существует
-            docker-compose -f docker-compose.prod.yaml exec -T db psql -U ${DB_USER} -c "CREATE DATABASE gophkeeper WITH OWNER ${DB_USER};" || true
 
             # Выполнение миграций
             migrate -path ./migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/gophkeeper?sslmode=disable" up
