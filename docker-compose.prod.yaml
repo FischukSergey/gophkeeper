@@ -11,10 +11,15 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       #- POSTGRES_DB=${DB_NAME}
       - POSTGRES_DB=gophkeeper
+      - POSTGRES_INITDB_ARGS="--auth-host=scram-sha-256 --auth-local=trust"
       - PGDATA=/var/lib/postgresql/data/pgdata
     user: postgres
     ports:
       - "${DB_PORT}:5432" # опционально, для доступа к БД извне
+    command:
+      - "postgres"
+      - "-c"
+      - "password_encryption=scram-sha-256"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d gophkeeper" ]
       interval: 5s

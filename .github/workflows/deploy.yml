@@ -117,6 +117,12 @@ jobs:
             # Ждем готовности базы данных
             echo "Waiting for database to be ready..."
             sleep 10
+
+            # Проверяем подключение к базе данных
+            until docker-compose -f docker-compose.prod.yaml exec -T db pg_isready -U ${DB_USER}; do
+              echo "Waiting for postgres..."
+              sleep 2
+            done
             
             # Создаем базу данных, если она не существует
             docker-compose -f docker-compose.prod.yaml exec -T db psql -U ${DB_USER} -c "CREATE DATABASE gophkeeper WITH OWNER ${DB_USER};" || true
