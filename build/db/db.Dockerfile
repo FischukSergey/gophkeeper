@@ -1,4 +1,4 @@
-FROM postgres:15-alpine
+FROM postgres:16-alpine
 # Аргументы для настройки базы данных (не чувствительные данные)
 ARG POSTGRES_DB=gophkeeper
 ARG POSTGRES_USER=postgres
