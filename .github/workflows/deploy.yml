@@ -116,11 +116,16 @@ jobs:
             echo "Waiting for database to be ready..."
             sleep 10
 
-            # Проверяем подключение к базе данных и создаем БД если её нет
-            until docker-compose -f docker-compose.prod.yaml exec -T db bash -c "pg_isready -U ${DB_USER} && psql -U ${DB_USER} -lqt | cut -d \| -f 1 | grep -qw gophkeeper || psql -U ${DB_USER} -c 'CREATE DATABASE gophkeeper;'"; do
-              echo "Waiting for postgres and creating database if needed..."
-              sleep 2
-            done
+            # # Проверяем подключение к базе данных и создаем БД если её нет
+            # until docker-compose -f docker-compose.prod.yaml exec -T db bash -c "pg_isready -U ${DB_USER} && psql -U ${DB_USER} -lqt | cut -d \| -f 1 | grep -qw gophkeeper || psql -U ${DB_USER} -c 'CREATE DATABASE gophkeeper;'"; do
+            #   echo "Waiting for postgres and creating database if needed..."
+            #   sleep 2
+            # done
+            
+            # Создаем базу данных, если её нет
+            docker-compose -f docker-compose.prod.yaml exec -T db psql -U "${DB_USER}" -c "SELECT 1 FROM pg_database WHERE datname = 'gophkeeper'" | grep -q 1 || \
+            docker-compose -f docker-compose.prod.yaml exec -T db psql -U "${DB_USER}" -c "CREATE DATABASE gophkeeper;"
+
 
              # Выполнение миграций с явным указанием параметров подключения
             echo "Running migrations..."
