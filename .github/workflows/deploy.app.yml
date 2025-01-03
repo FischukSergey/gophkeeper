@@ -1,0 +1,95 @@
+name: Deploy to Selectel without DB
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+env:
+  REGISTRY: cr.selcloud.ru
+  APP_IMAGE_NAME: gophkeeper/app
+  DB_IMAGE_NAME: gophkeeper/db
+
+
+jobs:
+  # test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+      
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v4
+  #       with:
+  #         go-version: '1.23.2'
+          
+  #     - name: Run tests
+  #       run: go test -v -count=1 ./internal/app/... ./internal/client/... ./internal/lib/...
+
+  build-and-push:
+#    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.SELECTEL_TOKEN_NAME }}
+          password: ${{ secrets.SELECTEL_TOKEN }}
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push App image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./build/app.Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Copy files to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SELECTEL_HOST }}
+          username: ${{ secrets.SELECTEL_SSH_USER }}
+          key: ${{ secrets.SELECTEL_SSH_KEY }}
+          source: "docker-compose.app.yaml,config/local.yml,migrations"
+          strip_components: 0
+          target: "/root/app"
+
+      - name: Deploy to Selectel Cloud
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SELECTEL_HOST }}
+          username: ${{ secrets.SELECTEL_SSH_USER }}
+          key: ${{ secrets.SELECTEL_SSH_KEY }}
+          script: |
+            docker login ${{ env.REGISTRY }} -u ${{ secrets.SELECTEL_TOKEN_NAME }} -p ${{ secrets.SELECTEL_TOKEN }}
+            docker pull ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest
+
+            cd /root/app
+            # Загрузка переменных окружения
+            set -a
+            source .env
+            set +a
+            
+            # Run migrations directly against Selectel Cloud DB
+            echo "Running migrations..."
+            PGPASSWORD="${DB_PASSWORD}" migrate -path ./migrations \
+              -database "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" up
+            
+            # Start the application
+            docker-compose -f docker-compose.app.yaml up -d

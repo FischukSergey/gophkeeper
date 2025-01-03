@@ -2,8 +2,8 @@ name: Deploy to Selectel
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]
 
 env:
   REGISTRY: cr.selcloud.ru
@@ -121,7 +121,7 @@ jobs:
             #   echo "Waiting for postgres and creating database if needed..."
             #   sleep 2
             # done
-            
+
             # Создаем базу данных, если её нет
             docker-compose -f docker-compose.prod.yaml exec -T db psql -U "${DB_USER}" -c "SELECT 1 FROM pg_database WHERE datname = 'gophkeeper'" | grep -q 1 || \
             docker-compose -f docker-compose.prod.yaml exec -T db psql -U "${DB_USER}" -c "CREATE DATABASE gophkeeper;"
