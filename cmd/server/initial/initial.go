@@ -29,6 +29,7 @@ const (
 // глобальные переменные для хранения флагов и конфигурации.
 var (
 	FlagConfigPath  string         // путь к файлу конфигурации
+	FlagDBUser      string         // имя пользователя для подключения к базе данных
 	FlagDBPassword  string         // пароль для подключения к базе данных
 	FlagDBHost      string         // хост для подключения к базе данных
 	FlagDBPort      string         // порт для подключения к базе данных
@@ -42,6 +43,7 @@ var (
 // InitConfig функция для инициализации конфигурации.
 func InitConfig() {
 	flag.StringVar(&FlagConfigPath, "config", "", "path to config file")
+	flag.StringVar(&FlagDBUser, "db_user", "", "database user")
 	flag.StringVar(&FlagDBPassword, "db_password", "", "database password")
 	flag.StringVar(&FlagDBHost, "db_host", "", "database host")
 	flag.StringVar(&FlagDBPort, "db_port", "", "database port")
@@ -61,6 +63,9 @@ func InitConfig() {
 	Cfg = config.MustLoad(FlagConfigPath) // загрузка конфигурации	.yaml
 
 	//получаем оставшиеся параметры из переменных окружения
+	if envDBUser := os.Getenv("DB_USER"); envDBUser != "" {
+		FlagDBUser = envDBUser
+	}
 	if envDBPassword := os.Getenv("DB_PASSWORD"); envDBPassword != "" {
 		FlagDBPassword = envDBPassword
 	}
@@ -108,8 +113,14 @@ func InitStorage() (*dbstorage.Storage, error) {
 	} else {
 		port = strconv.Itoa(int(dbConfig.Port))
 	}
+	var user string
+	if FlagDBUser != "" {
+		user = FlagDBUser
+	} else {
+		user = dbConfig.User
+	}
 	dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
-		dbConfig.User, FlagDBPassword, host, port, dbConfig.Database)
+		user, FlagDBPassword, host, port, dbConfig.Database)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

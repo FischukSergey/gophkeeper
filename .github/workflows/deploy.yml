@@ -101,6 +101,7 @@ jobs:
 
             # Создаем директорию для volume
             mkdir -p volumes/postgres_data
+            chmod -R 700 volumes/postgres_data
             
             # Graceful shutdown с таймаутом 60 секунд
             docker-compose -f docker-compose.prod.yaml down --timeout 60
@@ -121,8 +122,10 @@ jobs:
               sleep 2
             done
 
-            # Выполнение миграций
-            migrate -path ./migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/gophkeeper?sslmode=disable" up
+             # Выполнение миграций с явным указанием параметров подключения
+            echo "Running migrations..."
+            PGPASSWORD="${DB_PASSWORD}" migrate -path ./migrations \
+              -database "postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/gophkeeper?sslmode=disable" up
             
             # Запуск остальных сервисов
             docker-compose -f docker-compose.prod.yaml up -d

@@ -1,13 +1,17 @@
+include .env
+export
+
 envConfigPath:=CONFIG_PATH=./config/local.yml
-envDBPassword:=DB_PASSWORD=postgres	
+envDBPassword:=DB_PASSWORD=${DB_PASSWORD}	
 envServerClientAddress:=SERVER_CLIENT_ADDRESS=87.228.37.67:8080
 envServerClientAddressLocal:=SERVER_CLIENT_ADDRESS=localhost:8080
-envS3SecretKey:=S3_SECRET_KEY=
+envS3SecretKey:=S3_SECRET_KEY=${S3_SECRET_KEY}
 envDBTest:=DB_TEST=true
-
+envDBPort:=DB_PORT=${DB_PORT}	
+envDBUser:=DB_USER=${DB_USER}
 server:	
 	@echo "Running server"
-	$(envConfigPath) $(envDBPassword) $(envS3SecretKey) go run ./cmd/server/
+	$(envConfigPath) $(envDBPassword) $(envS3SecretKey) $(envDBPort) $(envDBUser) go run ./cmd/server/
 .PHONY: server
 
 proto:
@@ -66,6 +70,6 @@ build-client:
 
 build-docker-container:
 	@echo "Building db and app image"
-	docker compose down
-	docker compose -f docker-compose.yaml up --force-recreate -d
+	docker compose down || true # удаляет контейнеры и сети если они существуют
+	docker compose -f docker-compose.yaml up --force-recreate -d  # создает и запускает контейнеры и сети
 .PHONY: build-docker-container
