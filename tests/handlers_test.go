@@ -92,7 +92,7 @@ func TestRegister(t *testing.T) {
 	//авторизуем пользователя
 	user.Login = login
 	user.Password = password
-	token, err = authService.Authorization(context.Background(), user.Login, user.Password)
+	token, err = authService.Authorization(context.Background(), user.Login, user.Password, "")
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
@@ -134,7 +134,7 @@ func TestAuthorization(t *testing.T) {
 	//авторизуем пользователя
 	user.Login = login
 	user.Password = password
-	token, err = authService.Authorization(context.Background(), user.Login, user.Password)
+	token, err = authService.Authorization(context.Background(), user.Login, user.Password, "")
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	//создаем табличные тесты на проверку обработки ошибок
@@ -151,7 +151,7 @@ func TestAuthorization(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := authService.Authorization(context.Background(), test.login, test.password)
+			_, err := authService.Authorization(context.Background(), test.login, test.password, "")
 			assert.Error(t, err)
 		})
 	}
