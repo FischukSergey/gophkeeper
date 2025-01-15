@@ -6,13 +6,18 @@ import (
 
 	"github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/require"
+	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
 )
 
 func TestNoteAdd(t *testing.T) {
 	login := gofakeit.Username()
 	password := gofakeit.Password(true, true, true, false, false, 10)
 	//регистрируем пользователя
-	token, err := authService.Register(context.Background(), login, password)
+	user := modelsclient.User{
+		Login:    login,
+		Password: password,
+	}
+	token, err := authService.Register(context.Background(), user)
 	require.NoError(t, err)
 	//добавляем заметку
 	tests := []struct {
@@ -46,7 +51,11 @@ func TestNoteGet(t *testing.T) {
 	login := gofakeit.Username()
 	password := gofakeit.Password(true, true, true, false, false, 10)
 	//регистрируем пользователя
-	token, err := authService.Register(context.Background(), login, password)
+	user := modelsclient.User{
+		Login:    login,
+		Password: password,
+	}
+	token, err := authService.Register(context.Background(), user)
 	require.NoError(t, err)
 
 	noteText := gofakeit.Sentence(10)
@@ -88,7 +97,11 @@ func TestNoteDelete(t *testing.T) {
 	login := gofakeit.Username()
 	password := gofakeit.Password(true, true, true, false, false, 10)
 	//регистрируем пользователя
-	token, err := authService.Register(context.Background(), login, password)
+	user := modelsclient.User{
+		Login:    login,
+		Password: password,
+	}
+	token, err := authService.Register(context.Background(), user)
 	require.NoError(t, err)
 	//добавляем заметку
 	err = noteService.NoteAdd(context.Background(), gofakeit.Sentence(10), map[string]string{

@@ -9,6 +9,7 @@ import (
 	"github.com/FischukSergey/gophkeeper/cmd/server/initial"
 	"github.com/FischukSergey/gophkeeper/internal/client/config"
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
+	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
 	"github.com/FischukSergey/gophkeeper/internal/client/service"
 	"github.com/brianvoe/gofakeit"
 	"github.com/golang-jwt/jwt/v5"
@@ -70,7 +71,11 @@ func TestRegister(t *testing.T) {
 	password := gofakeit.Password(true, true, true, false, false, 10)
 
 	//регистрируем пользователя
-	token, err := authService.Register(context.Background(), login, password)
+	user := modelsclient.User{
+		Login:    login,
+		Password: password,
+	}
+	token, err := authService.Register(context.Background(), user)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
@@ -85,9 +90,11 @@ func TestRegister(t *testing.T) {
 	assert.Equal(t, login, claims["login"])
 
 	//авторизуем пользователя
-	user, err := authService.Authorization(context.Background(), login, password)
+	user.Login = login
+	user.Password = password
+	token, err = authService.Authorization(context.Background(), user.Login, user.Password)
 	require.NoError(t, err)
-	require.NotEmpty(t, user)
+	require.NotEmpty(t, token)
 
 	//создаем табличные тесты на проверку обработки ошибок
 	tests := []struct {
@@ -104,7 +111,11 @@ func TestRegister(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := authService.Register(context.Background(), test.login, test.password)
+			user := modelsclient.User{
+				Login:    test.login,
+				Password: test.password,
+			}
+			_, err := authService.Register(context.Background(), user)
 			assert.Error(t, err)
 		})
 	}
@@ -113,13 +124,19 @@ func TestAuthorization(t *testing.T) {
 	login := gofakeit.Username()
 	password := gofakeit.Password(true, true, true, false, false, 10)
 	//регистрируем пользователя
-	token, err := authService.Register(context.Background(), login, password)
+	user := modelsclient.User{
+		Login:    login,
+		Password: password,
+	}
+	token, err := authService.Register(context.Background(), user)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	//авторизуем пользователя
-	user, err := authService.Authorization(context.Background(), login, password)
+	user.Login = login
+	user.Password = password
+	token, err = authService.Authorization(context.Background(), user.Login, user.Password)
 	require.NoError(t, err)
-	require.NotEmpty(t, user)
+	require.NotEmpty(t, token)
 	//создаем табличные тесты на проверку обработки ошибок
 	tests := []struct {
 		name     string
