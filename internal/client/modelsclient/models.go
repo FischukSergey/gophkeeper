@@ -20,8 +20,10 @@ const (
 
 // User структура для пользователя.
 type User struct {
-	Login    string
-	Password string
+	Login           string
+	Password        string
+	ApplicationName string
+	Role            string
 }
 
 // ErrInvalidLogin ошибка, если логин не валидный.
@@ -59,6 +61,38 @@ func ValidatePassword(password string) error {
 	)
 	if err != nil {
 		return fmt.Errorf("invalid password: %w", err)
+	}
+	return nil
+}
+
+// ValidateApplicationName валидация названия приложения.
+func ValidateApplicationName(applicationName string) error {
+	if applicationName == "" {
+		return nil // название приложения не обязательно
+	}
+	u := User{ApplicationName: applicationName}
+	err := validation.ValidateStruct(
+		&u,
+		validation.Field(&u.ApplicationName, validation.Required, validation.Length(1, 100)),
+	)
+	if err != nil {
+		return fmt.Errorf("invalid application name: %w", err)
+	}
+	return nil
+}
+
+// ValidateRole валидация роли пользователя.
+func ValidateRole(role string) error {
+	if role == "" {
+		return nil // роль не обязательна
+	}
+	u := User{Role: role}
+	err := validation.ValidateStruct(
+		&u,
+		validation.Field(&u.Role, validation.Required, validation.Length(1, 100)),
+	)
+	if err != nil {
+		return fmt.Errorf("invalid role: %w", err)
 	}
 	return nil
 }

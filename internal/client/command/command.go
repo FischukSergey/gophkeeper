@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
+	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 )
 
@@ -18,6 +19,8 @@ const (
 	errLoginMessage    = "Ошибка при вводе логина: "
 	errPasswordMessage = "Ошибка при вводе пароля: "
 	errGetCardsMessage = "Ошибка получения списка карт: "
+	errApplicationNameMessage = "Ошибка при вводе названия приложения: "
+	errRoleMessage = "Ошибка при вводе роли пользователя: "
 	messageContinue    = "\nНажмите Enter для продолжения..."
 )
 
@@ -29,8 +32,8 @@ type ICommand interface {
 
 // IAuthService интерфейс для сервиса авторизации.
 type IAuthService interface {
-	Register(ctx context.Context, login, password string) (string, error)
-	Authorization(ctx context.Context, login, password string) (string, error)
+	Register(ctx context.Context, user modelsclient.User) (string, error)
+	Authorization(ctx context.Context, login, password, applicationName string) (string, error)
 	Check(ctx context.Context) error
 	S3FileUpload(ctx context.Context, token string, fileData []byte, filename string) (string, error)
 	S3FileDownload(ctx context.Context, token string, filename string) ([]byte, error)

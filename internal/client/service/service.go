@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/FischukSergey/gophkeeper/internal/app/interceptors/auth"
+	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
 	"github.com/FischukSergey/gophkeeper/internal/logger"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	pb "github.com/FischukSergey/protos/gen/gophkeeper/gophkeeper"
@@ -37,10 +38,12 @@ func NewAuthService(client pb.GophKeeperClient, log *slog.Logger) *AuthService {
 }
 
 // Register регистрация нового клиента.
-func (s *AuthService) Register(ctx context.Context, login string, password string) (string, error) {
+func (s *AuthService) Register(ctx context.Context, user modelsclient.User) (string, error) {
 	token, err := s.client.Registration(ctx, &pb.RegistrationRequest{
-		Username: login,
-		Password: password,
+		Username: user.Login,
+		Password: user.Password,
+		AppName:  user.ApplicationName,
+		Role:     user.Role,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to register: %w", err)
@@ -58,10 +61,16 @@ func (s *AuthService) Check(ctx context.Context) error {
 }
 
 // Authorization авторизация клиента.
-func (s *AuthService) Authorization(ctx context.Context, login, password string) (string, error) {
+func (s *AuthService) Authorization(
+	ctx context.Context,
+	login,
+	password,
+	applicationName string,
+) (string, error) {
 	token, err := s.client.Authorization(ctx, &pb.AuthorizationRequest{
 		Username: login,
 		Password: password,
+		AppName:  applicationName,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to authorization: %w", err)

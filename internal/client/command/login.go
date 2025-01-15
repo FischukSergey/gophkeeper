@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-
+	"strings"
 	"github.com/FischukSergey/gophkeeper/internal/client/grpcclient"
 	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
 	"github.com/manifoldco/promptui"
@@ -53,8 +53,14 @@ func (c *CommandLogin) Execute() {
 		fmt.Println(err)
 		return
 	}
+	//получение названия приложения
+	applicationName, err := c.getApplicationName()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	//авторизация
-	token, err := c.authorization(login, password)
+	token, err := c.authorization(login, password, applicationName)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -100,10 +106,22 @@ func (c *CommandLogin) getPassword() (string, error) {
 	}
 	return password, nil
 }
+// getApplicationName получение названия приложения.
+func (c *CommandLogin) getApplicationName() (string, error) {
+	applicationNamePrompt := promptui.Prompt{
+		Label: "Введите название приложения (не обязательно)",
+	}
+	applicationName, err := applicationNamePrompt.Run()
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", errApplicationNameMessage, err)
+	}
+	applicationName = strings.ToLower(strings.TrimSpace(applicationName))
+	return applicationName, nil
+}
 
 // authorization выполнение авторизации.
-func (c *CommandLogin) authorization(login, password string) (string, error) {
-	token, err := c.authService.Authorization(context.Background(), login, password)
+func (c *CommandLogin) authorization(login, password, applicationName string) (string, error) {
+	token, err := c.authService.Authorization(context.Background(), login, password, applicationName)
 	if err != nil {
 		return "", fmt.Errorf("ошибка при авторизации: %w", err)
 	}

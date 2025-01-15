@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/FischukSergey/gophkeeper/internal/client/modelsclient"
 	"github.com/FischukSergey/gophkeeper/internal/models"
 	"github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,11 @@ func TestCardAdd(t *testing.T) {
 	login := gofakeit.Username()
 	password := gofakeit.Password(true, true, true, false, false, 10)
 	//регистрируем пользователя
-	token, err := authService.Register(context.Background(), login, password)
+	user := modelsclient.User{
+		Login:    login,
+		Password: password,
+	}
+	token, err := authService.Register(context.Background(), user)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
@@ -80,7 +85,11 @@ func TestCardGetList(t *testing.T) {
 	login := gofakeit.Username()
 	password := gofakeit.Password(true, true, true, false, false, 10)
 	//регистрируем пользователя
-	token, err := authService.Register(context.Background(), login, password)
+	user := modelsclient.User{
+		Login:    login,
+		Password: password,
+	}
+	token, err := authService.Register(context.Background(), user)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	//создаем карту
@@ -110,7 +119,11 @@ func TestCardDelete(t *testing.T) {
 	login := gofakeit.Username()
 	password := gofakeit.Password(true, true, true, false, false, 10)
 	//регистрируем пользователя
-	token, err := authService.Register(context.Background(), login, password)
+	user := modelsclient.User{
+		Login:    login,
+		Password: password,
+	}
+	token, err := authService.Register(context.Background(), user)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	//создаем карту
@@ -142,7 +155,11 @@ func TestCardAddMetadata(t *testing.T) {
 	login := gofakeit.Username()
 	password := gofakeit.Password(true, true, true, false, false, 10)
 	//регистрируем пользователя
-	token, err := authService.Register(context.Background(), login, password)
+	user := modelsclient.User{
+		Login:    login,
+		Password: password,
+	}
+	token, err := authService.Register(context.Background(), user)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	//создаем карту
