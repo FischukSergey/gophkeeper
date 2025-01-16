@@ -4,7 +4,10 @@
 mkdir -p cmd/client/bin
 
 # Версия приложения
-VERSION="1.0.0"
+VERSION="1.0.1"
+
+# Определяем переменную окружения для сервера клиента
+SERVER_CLIENT_ADDRESS="87.228.37.67:8080"
 
 # Функция для сборки
 build() {
@@ -17,7 +20,11 @@ build() {
     fi
     
     echo "Building for $os/$arch..."
-    GOOS=$os GOARCH=$arch go build -o "cmd/client/bin/gophkeeper-client-${os}-${arch}${extension}" ./cmd/client/
+    GOOS=$os GOARCH=$arch go build \
+    -o "cmd/client/bin/gophkeeper-client-${os}-${arch}${extension}" \
+    -ldflags="-X 'main.VERSION=${VERSION}' \
+              -X 'main.SERVER_CLIENT_ADDRESS=${SERVER_CLIENT_ADDRESS}'" \
+    ./cmd/client/
     
     # Добавляем права на выполнение для Unix-систем
     if [ "$os" != "windows" ]; then

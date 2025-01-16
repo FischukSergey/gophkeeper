@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"fmt"
 	"os"
 
 	"github.com/spf13/viper"
@@ -25,11 +24,13 @@ func NewConfigServerClient() (*Config, error) {
 
 	var cfg Config
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("failed to read config: %w", err)
+		cfg.ServerAddress = "localhost:8080"
+		//return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 
 	if err := viper.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+		cfg.ServerAddress = "localhost:8080"
+		//return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
 	flag.StringVar(&FlagServerClientAddress, "server_address", cfg.ServerAddress, "server client address")
