@@ -23,6 +23,7 @@ func GenerateToken(user models.User) (string, error) {
 		claims["uid"] = user.ID
 		claims["login"] = user.Login
 		claims["exp"] = time.Now().Add(initial.Cfg.JWT.ExpiresKey).Unix()
+		claims["role"] = user.Role
 	} else {
 		return "", fmt.Errorf("can't create JWT, invalid user id or login")
 	}

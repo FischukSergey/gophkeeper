@@ -67,8 +67,8 @@ func (s *Storage) RegisterUser(ctx context.Context, user models.User) (int64, er
 
 // GetUserByLogin метод для получения пользователя по логину.
 func (s *Storage) GetUserByLogin(ctx context.Context, user *models.User) (models.User, error) {
-	query := `SELECT user_id, username, password, created_at FROM users WHERE username=$1 AND application_name=$2;`
-	err := s.DB.QueryRow(ctx, query, user.Login, user.ApplicationName).Scan(&user.ID, &user.Login, &user.HashedPassword, &user.CreatedAt)
+	query := `SELECT user_id, username, password, created_at, role FROM users WHERE username=$1 AND application_name=$2;`
+	err := s.DB.QueryRow(ctx, query, user.Login, user.ApplicationName).Scan(&user.ID, &user.Login, &user.HashedPassword, &user.CreatedAt, &user.Role)
 	if err != nil {
 		return models.User{}, fmt.Errorf("failed to get user by login %s appName %s: %w", user.Login, user.ApplicationName, err)
 	}
