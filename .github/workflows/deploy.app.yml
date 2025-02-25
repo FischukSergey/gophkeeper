@@ -2,8 +2,8 @@ name: Deploy to Selectel without DB
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
+#  push:
+#    branches: [ main ]
 
 env:
   REGISTRY: cr.selcloud.ru
