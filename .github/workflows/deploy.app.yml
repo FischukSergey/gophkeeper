@@ -92,4 +92,4 @@ jobs:
               -database "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" up
             
             # Start the application
-            docker-compose -f docker-compose.app.yaml up -d
+            docker-compose --env-file .env.app -f docker-compose.app.yaml up -d
